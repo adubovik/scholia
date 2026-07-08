@@ -4,6 +4,10 @@ import { parseNumberedTree } from "@/lib/tree/numbering";
 const P = (...texts: string[]) => texts.map((text) => ({ text }));
 
 describe("parseNumberedTree", () => {
+  it("returns null for empty input", () => {
+    expect(parseNumberedTree([])).toBeNull();
+  });
+
   it("builds Tractatus decimal nesting, climbing to the nearest existing ancestor", () => {
     const rels = parseNumberedTree(P(
       "1 The world is all that is the case.",

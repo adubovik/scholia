@@ -7,7 +7,7 @@ export interface NumberedRelation {
 
 const LABEL = /^(\d+(?:\.\d+)*)(\s+)/;
 
-/** Ancestors of a single-dot decimal label, nearest first, ending at the integer root. */
+/** Ancestors of a single-dot decimal label, nearest first, down to and including the integer root. */
 function ancestorChain(label: string): string[] {
   const dot = label.indexOf(".");
   if (dot === -1) return []; // integer label: no ancestors
