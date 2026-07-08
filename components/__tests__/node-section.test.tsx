@@ -4,8 +4,8 @@ import { NodeSection } from "@/components/NodeSection";
 import type { TreeNode } from "@/lib/tree/build";
 
 const node: TreeNode = {
-  id: "a", label: "1", title: null, text: "Parent prose.",
-  children: [{ id: "b", label: "1.1", title: null, text: "Child prose.", children: [] }],
+  id: "a", label: "1", title: null, text: "Parent prose.", sourceId: "s1", startOffset: 0, annotations: [],
+  children: [{ id: "b", label: "1.1", title: null, text: "Child prose.", sourceId: "s1", startOffset: 100, annotations: [], children: [] }],
 };
 
 describe("NodeSection", () => {

@@ -1,8 +1,9 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { documents, sources, paragraphs, nodes, nodeSourceRanges } from "@/lib/db/schema";
+import { documents, sources, paragraphs, nodes, nodeSourceRanges, inlineAnnotations } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
 import { buildTree } from "@/lib/tree/build";
+import type { Color, InlineAnnotationView } from "@/lib/annotations/types";
 
 export async function listDocuments() {
   const user = await requireUser();
@@ -29,16 +30,31 @@ export async function getDocument(docId: string) {
     : [];
 
   const nodeRows = await db.select().from(nodes).where(eq(nodes.documentId, doc.id)).orderBy(nodes.position);
-  // M2 has a single (primary) source; ranges are keyed to it. When M4 adds
-  // translations, select ranges for all of the document's sources, not just this one.
   const rangeRows = source
     ? await db.select().from(nodeSourceRanges).where(eq(nodeSourceRanges.sourceId, source.id))
     : [];
+  const annRows = source
+    ? await db
+        .select()
+        .from(inlineAnnotations)
+        .where(eq(inlineAnnotations.sourceId, source.id))
+        .orderBy(inlineAnnotations.createdAt) // oldest→newest: newest is the "top" underline
+    : [];
+  const annViews: InlineAnnotationView[] = annRows.map((a) => ({
+    id: a.id,
+    startOffset: a.startOffset,
+    endOffset: a.endOffset,
+    color: a.color as Color,
+    note: a.note,
+    tags: a.tags,
+    authorId: a.authorId,
+  }));
   const tree = source
     ? buildTree(
         nodeRows,
-        rangeRows.map((r) => ({ nodeId: r.nodeId, startOffset: r.startOffset, endOffset: r.endOffset })),
+        rangeRows.map((r) => ({ nodeId: r.nodeId, sourceId: r.sourceId, startOffset: r.startOffset, endOffset: r.endOffset })),
         source.text,
+        annViews,
       )
     : [];
 

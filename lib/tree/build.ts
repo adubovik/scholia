@@ -1,3 +1,5 @@
+import type { InlineAnnotationView } from "@/lib/annotations/types";
+
 export interface NodeRow {
   id: string;
   parentId: string | null;
@@ -8,6 +10,7 @@ export interface NodeRow {
 
 export interface NodeRange {
   nodeId: string;
+  sourceId: string;
   startOffset: number;
   endOffset: number;
 }
@@ -17,17 +20,39 @@ export interface TreeNode {
   label: string | null;
   title: string | null;
   text: string;
+  sourceId: string;
+  startOffset: number;
+  annotations: InlineAnnotationView[];
   children: TreeNode[];
 }
 
-/** Fold flat node rows + their source ranges into an ordered nested tree. */
-export function buildTree(nodes: NodeRow[], ranges: NodeRange[], sourceText: string): TreeNode[] {
-  const textById = new Map<string, string>();
-  for (const r of ranges) textById.set(r.nodeId, sourceText.slice(r.startOffset, r.endOffset));
+/** Fold flat node rows + source ranges (+ optional annotations) into a nested tree. */
+export function buildTree(
+  nodes: NodeRow[],
+  ranges: NodeRange[],
+  sourceText: string,
+  annotations: InlineAnnotationView[] = [],
+): TreeNode[] {
+  const rangeById = new Map(ranges.map((r) => [r.nodeId, r]));
 
   const byId = new Map<string, TreeNode>();
   for (const n of nodes) {
-    byId.set(n.id, { id: n.id, label: n.label, title: n.title, text: textById.get(n.id) ?? "", children: [] });
+    const r = rangeById.get(n.id);
+    const startOffset = r?.startOffset ?? 0;
+    const endOffset = r?.endOffset ?? 0;
+    const nodeAnns = r
+      ? annotations.filter((a) => a.startOffset < endOffset && a.endOffset > startOffset)
+      : [];
+    byId.set(n.id, {
+      id: n.id,
+      label: n.label,
+      title: n.title,
+      text: r ? sourceText.slice(r.startOffset, r.endOffset) : "",
+      sourceId: r?.sourceId ?? "",
+      startOffset,
+      annotations: nodeAnns,
+      children: [],
+    });
   }
 
   const roots: TreeNode[] = [];
@@ -38,7 +63,7 @@ export function buildTree(nodes: NodeRow[], ranges: NodeRange[], sourceText: str
     else roots.push(tn);
   }
 
-  const sortByPos = (a: TreeNode, b: TreeNode) => (positionById.get(a.id)! - positionById.get(b.id)!);
+  const sortByPos = (a: TreeNode, b: TreeNode) => positionById.get(a.id)! - positionById.get(b.id)!;
   const sortRec = (list: TreeNode[]) => {
     list.sort(sortByPos);
     for (const n of list) sortRec(n.children);
