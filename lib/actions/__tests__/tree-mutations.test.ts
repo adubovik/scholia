@@ -12,7 +12,7 @@ vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
 import { createDocument } from "@/lib/actions/documents";
 import { getDocument } from "@/lib/data/documents";
-import { indentNode, moveNodeDown } from "@/lib/actions/tree";
+import { indentNode, outdentNode, moveNodeDown, moveNodeUp } from "@/lib/actions/tree";
 
 describe("tree mutations", () => {
   const created: string[] = [];
@@ -33,7 +33,7 @@ describe("tree mutations", () => {
     await indentNode(second.id);
 
     const after = await getDocument(id);
-    expect(after!.tree.map((n) => n.text)).toEqual(["One.", "Three."]); // "Two." left top level
+    expect(after!.tree.map((n) => n.text)).toEqual(["One.", "Three."]); // "Two." moved under "One.", no longer at top level
     expect(after!.tree[0].children.map((n) => n.text)).toEqual(["Two."]);
   });
 
@@ -55,5 +55,45 @@ describe("tree mutations", () => {
       .values({ documentId: doc.id, parentId: null, position: 0, label: null, title: null }).returning();
 
     await expect(indentNode(node.id)).rejects.toThrow("Forbidden");
+  });
+
+  it("outdent lands node right after its former parent", async () => {
+    const id = await createDocument({ title: "R3", text: "A.\n\nB.\n\nC.\n\nD." });
+    created.push(id);
+
+    // Nest C under B: top-level becomes A, B[C], D
+    const before = await getDocument(id);
+    const cNode = before!.tree[2]; // "C."
+    await indentNode(cNode.id);
+
+    // Outdent C: should become A, B, C, D at top level
+    const mid = await getDocument(id);
+    const cNested = mid!.tree[1].children[0]; // C is now child of B
+    await outdentNode(cNested.id);
+
+    const after = await getDocument(id);
+    expect(after!.tree.map((n) => n.text)).toEqual(["A.", "B.", "C.", "D."]);
+    expect(after!.tree[1].children).toEqual([]);
+  });
+
+  it("move up swaps with the previous sibling", async () => {
+    const id = await createDocument({ title: "R4", text: "A.\n\nB.\n\nC." });
+    created.push(id);
+
+    const before = await getDocument(id);
+    const cNode = before!.tree[2]; // "C."
+    await moveNodeUp(cNode.id);
+
+    const after = await getDocument(id);
+    expect(after!.tree.map((n) => n.text)).toEqual(["A.", "C.", "B."]);
+  });
+
+  it("outdent denies a non-owner (Forbidden)", async () => {
+    const [doc] = await db.insert(documents).values({ ownerId: foreignUser, title: "Theirs2" }).returning();
+    created.push(doc.id);
+    const [node] = await db.insert(nodes)
+      .values({ documentId: doc.id, parentId: null, position: 0, label: null, title: null }).returning();
+
+    await expect(outdentNode(node.id)).rejects.toThrow("Forbidden");
   });
 });

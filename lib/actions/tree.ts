@@ -55,6 +55,7 @@ export async function outdentNode(nodeId: string): Promise<void> {
   if (node.parentId === null) return; // already top-level
 
   const [parent] = await db.select().from(nodes).where(eq(nodes.id, node.parentId));
+  if (!parent) throw new Error("Not found");
   const grandSiblings = await siblingsOf(node.documentId, parent.parentId);
   const oldSiblings = await siblingsOf(node.documentId, node.parentId);
 
