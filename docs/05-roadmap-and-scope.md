@@ -6,6 +6,8 @@ Status: **Approved** · Date: 2026-07-07
 
 - Import a text (paste / URL / file / numbered auto-parse) → immutable Source.
 - Build & reorganize a **node tree** over the Source (manual + auto-parsed).
+- Add **multiple translations** as parallel Sources, **node-aligned**, viewed
+  **interleaved (stacked)** on the same surface.
 - **Inline annotations**: highlighter underline + note (Markdown) + tags,
   overlapping allowed, collapsed by default.
 - **Node (entity) annotations**: revealed on hover/tap.
@@ -14,6 +16,8 @@ Status: **Approved** · Date: 2026-07-07
   + command-palette authoring.
 - **Cloud accounts** (Google OAuth + email magic link), sync desktop↔mobile.
 - **Async sharing** with owner / collaborator roles; author filtering.
+- **Clone/fork** a shared document into your own workspace (copies Sources + tree,
+  strips all annotations & threads; cloner gets full edit rights).
 
 ## Device matrix
 
@@ -23,7 +27,10 @@ Status: **Approved** · Date: 2026-07-07
 | Inline & node annotate | ✓ | ✓ |
 | Threaded comment | ✓ | ✓ |
 | Filter by author | ✓ | ✓ |
+| View parallel translations (interleaved) | ✓ | ✓ |
+| Clone a shared document | ✓ | ✓ |
 | **Tree-building / restructure** | ✓ (primary) | — (not in V1) |
+| **Add / align a translation** | ✓ (primary) | — (not in V1) |
 
 ## V1 stretch (nice-to-have, not blocking)
 

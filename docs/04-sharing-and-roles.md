@@ -40,6 +40,23 @@ Collaboration is **async** (no real-time co-editing in V1) and **signed-in**
 - Others' highlights carry a **subtle author marker** so ownership is legible
   without breaking the austere look.
 
+## Cloning a document (fork)
+
+Anyone who can open a shared document can **clone it into their own workspace**,
+becoming its owner with **full edit rights** (including tree restructuring).
+
+- **What clone copies ("the layout"):** all Sources/translations and the entire
+  **Node tree structure** (nesting, order, labels, titles).
+- **What clone strips:** **every inline highlight, every node annotation, and all
+  comment threads** — the clone starts as clean, un-annotated prose over the same
+  structure.
+- The clone is an **independent copy**: no live link back to the original, and
+  later changes on either side do not propagate.
+
+This is the escape hatch from "comment-only on someone else's canonical tree": if
+a collaborator wants to restructure or annotate freely, they clone and own their
+copy.
+
 ## Deferred (post-V1)
 
 - **Real-time co-editing** (live cursors/presence, CRDT/websockets).

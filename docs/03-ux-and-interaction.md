@@ -31,6 +31,30 @@ The tree is **not** a sidebar. It is expressed *in* the document:
               ‾‾‾‾‾ (pink)  found full of contradictions.
 ```
 
+## Parallel translations (interleaved)
+
+When more than one translation is shown, each node renders its Sources **stacked
+(interleaved)** — original above, translation(s) below, separated by a thin rule —
+on **every device**. One layout everywhere, very terminal-like. The node tree and
+its numbering are shared; only the prose repeats per translation.
+
+```
+1 ▾ ...
+   Die Welt ist alles, was der Fall ist.
+   ─
+   The world is all that is the case.
+
+1.1 ▾ ...
+   Die Welt ist die Gesamtheit der Tatsachen ...
+   ─
+   The world is the totality of facts ...
+```
+
+- Which translations are visible is a per-reader toggle (via the command palette
+  / a small control), defaulting to the primary Source.
+- **Inline** highlighter underlines appear only on the translation they belong to.
+  **Node** notes attach to the node and show once regardless of translation.
+
 ## Reveal states (default = clean)
 
 | Element | Default | Reveal on |

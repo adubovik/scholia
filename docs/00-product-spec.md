@@ -23,10 +23,11 @@ the tree feature is central rather than cosmetic.
 
 ## The one-sentence shape
 
-> Import a text (immutable), organize it into an editable tree of nodes, layer
-> **inline** and **per-node** annotations onto it, and optionally share it so
-> signed-in collaborators add their own annotations and **forum-threaded**
-> replies — all on a single, austere reading surface.
+> Import a text (immutable) — optionally with **multiple aligned translations** —
+> organize it into an editable tree of nodes, layer **inline** and **per-node**
+> annotations onto it, and optionally share it so signed-in collaborators add
+> their own annotations and **forum-threaded** replies, or **clone** it into their
+> own workspace to edit freely — all on a single, austere reading surface.
 
 ## Decision index
 
@@ -55,11 +56,18 @@ the tree feature is central rather than cosmetic.
    reached by acting on the text.
 7. **Monochrome + highlighter pastels**, flat/terminal-like, outline/Unicode
    icons.
+8. **Multiple translations** as parallel Sources, **node-aligned** and rendered
+   **interleaved** on the same surface. Inline annotations are per-translation;
+   node annotations are shared across all translations.
+9. **Cloning** — anyone with access can fork a document into their own workspace
+   with full edit rights; the clone keeps the Sources + tree layout but **strips
+   all annotations and threads**.
 
 ## Non-negotiable invariants
 
-- The **Source is immutable** once imported. All structure and annotation are
-  overlays that reference Source ranges by offset.
-- Reorganizing the **Node tree never alters Source text**.
+- **Every Source (translation) is immutable** once imported. All structure and
+  annotation are overlays that reference Source ranges by offset.
+- Reorganizing the **Node tree never alters any Source text**.
+- The **Node tree is translation-agnostic** — it aligns all Sources at node level.
 - Inline highlights are **collapsed by default**; per-node notes are **hidden
   until hover/tap**. The default reading state is clean prose.

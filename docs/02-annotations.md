@@ -6,7 +6,9 @@ Two kinds of annotation, plus a shared threaded-comment mechanism.
 
 ## 1. Inline annotations (span-level)
 
-Anchor: a **span** of the Source (character range).
+Anchor: a **span of one specific Source/translation** (character range). Because
+offsets differ per language, an inline annotation **belongs to the translation it
+was drawn on** and is shown only when that translation is visible.
 
 - Rendered as a **bold pastel highlighter underline** (not a filled background).
 - Highlighter palette: a small fixed set of pastel tones (yellow / pink / green /
@@ -20,7 +22,9 @@ Anchor: a **span** of the Source (character range).
 
 ## 2. Entity (node) annotations
 
-Anchor: a whole **node** in the tree.
+Anchor: a whole **node** in the tree. Because the tree is translation-agnostic, a
+node annotation is **shared across all translations** — it shows regardless of
+which translation(s) are visible.
 
 - **Hidden until hover** (desktop) or **tap on the node heading** (mobile).
 - One note (Markdown) + tags per node.

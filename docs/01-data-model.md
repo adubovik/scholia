@@ -4,27 +4,42 @@ Status: **Approved** · Date: 2026-07-07
 
 ## The hybrid model
 
-Two separate layers, deliberately decoupled:
+Three layers, deliberately decoupled: parallel **Sources** (translations), an
+editable **Node tree** that aligns them, and the annotation overlays.
 
-### 1. Source (immutable)
+### 1. Sources — one or more parallel translations (immutable)
 
-The imported text, stored verbatim and never edited after import. On import it is
-split into **paragraphs** (the atomic addressable units). Every annotation and
-every node ultimately anchors to **character offsets within the Source**.
+A document holds **one or more Sources**, each an imported text in a given
+**language/translation** (e.g. Tractatus: German original + one or more English
+translations). Each Source is stored verbatim and **never edited after import**,
+and is split into **paragraphs** (the atomic addressable units). Inline
+annotations anchor to **character offsets within a specific Source**.
 
-Immutability is the load-bearing invariant: because the Source never changes,
+Immutability is the load-bearing invariant: because a Source never changes,
 offsets stay valid, and reorganizing structure can never corrupt the prose.
 
-### 2. Node tree (editable overlay)
+The first Source added is the **primary** (usually the original language);
+further Sources are **added translations**. All Sources of a document share the
+same Node tree — see below.
 
-An editable tree of **nodes** ("entities"). Each node:
+### 2. Node tree (editable overlay + translation backbone)
 
-- **maps to one or more Source ranges** (a range = `{paragraphId?, startOffset,
-  endOffset}` or a whole-paragraph span);
-- can be **freely nested and reordered** without touching the Source;
+An editable tree of **nodes** ("entities"). The tree is **translation-agnostic**:
+it is the alignment layer that unifies every Source. Each node:
+
+- **maps to a range in _each_ Source** it exists in (a range =
+  `{sourceId, paragraphId?, startOffset, endOffset}` or a whole-paragraph span).
+  Alignment is **node-level**: the "same" node points at the corresponding
+  passage in German, in English, etc.;
+- can be **freely nested and reordered** without touching any Source;
 - has an optional **label** (auto-derived from numbering when present, e.g.
   `1.2.1`) and **title**;
-- may carry a **node-level annotation** (see [annotations](02-annotations.md)).
+- may carry a **node-level annotation**, which is **shared across all
+  translations** (see [annotations](02-annotations.md)).
+
+For **Tractatus**, decimal numbering auto-aligns nodes across translations (the
+`1.1` node maps to `1.1` in every Source). For prose without shared numbering,
+the user maps each node's range per Source when adding a translation.
 
 Default top-level nodes = **chapters**. The user adds sub-nodes to express
 argument structure (e.g. a paragraph that _justifies_ a prior claim becomes its
@@ -47,6 +62,14 @@ child).
 
 Auto-parse and manual structuring coexist: an auto-parsed tree remains fully
 editable afterward.
+
+### Adding a translation
+
+A translation is imported through the same four paths as **an additional Source**
+attached to an existing document. Once added, each node is aligned to a range in
+the new Source (auto-aligned by numbering for Tractatus; mapped by the user
+otherwise). Existing node annotations immediately apply to the new translation;
+inline annotations remain bound to whichever Source they were drawn on.
 
 ## Persistence
 
