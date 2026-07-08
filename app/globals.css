@@ -5,6 +5,7 @@
   --paper:      #fafafa;   /* off-white background       */
   --rule:       #e3e3e3;   /* hairline separators        */
   --muted:      #6b6b6b;   /* labels, numbering, glyphs  */
+  --error:      #9b2c2c;   /* rare color accent: error   */
   /* highlighter pastels — the ONLY color in the app */
   --hl-yellow:  #f2e6a8;
   --hl-pink:    #f0cdd6;
@@ -141,4 +142,4 @@ body { background: var(--paper); color: var(--ink); }
 
 /* ── Utility ─────────────────────────────────────────────── */
 .muted { color: var(--muted); font-size: 0.9rem; }
-.error { color: #b00; font-size: 0.875rem; margin-top: 0.5rem; }
+.error { color: var(--error); font-size: 0.875rem; margin-top: 0.5rem; }
