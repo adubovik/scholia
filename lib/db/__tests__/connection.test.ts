@@ -4,7 +4,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 describe("db users", () => {
-  const id = "test_user_" + Date.now();
+  const id = "test_user_" + crypto.randomUUID();
   afterAll(async () => { await db.delete(users).where(eq(users.id, id)); });
 
   it("inserts and reads a user", async () => {

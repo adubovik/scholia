@@ -5,7 +5,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 describe("upsertUser", () => {
-  const id = "clerk_" + Date.now();
+  const id = "clerk_" + crypto.randomUUID();
   afterAll(async () => { await db.delete(users).where(eq(users.id, id)); });
 
   it("creates then updates the mirrored user row", async () => {

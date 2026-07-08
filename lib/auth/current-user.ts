@@ -8,7 +8,7 @@ export async function requireUser() {
   if (!userId) throw new Error("Unauthenticated");
   const cu = await currentUser();
   const email = cu?.emailAddresses[0]?.emailAddress ?? "";
-  const displayName = cu?.firstName ?? cu?.username ?? email ?? "Reader";
+  const displayName = cu?.firstName || cu?.username || email || "Reader";
   await upsertUser({ id: userId, email, displayName });
   return { id: userId, displayName };
 }
