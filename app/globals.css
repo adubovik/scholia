@@ -144,6 +144,9 @@ body { background: var(--paper); color: var(--ink); }
 .muted { color: var(--muted); font-size: 0.9rem; }
 .error { color: var(--error); font-size: 0.875rem; margin-top: 0.5rem; }
 
+/* ── Inline annotations ──────────────────────────────────── */
+.hl { cursor: pointer; }
+
 /* ── Tree ────────────────────────────────────────────────── */
 .node { margin-top: 0.75rem; }
 .node-head { display: flex; align-items: baseline; gap: 0.5rem; font-family: var(--mono, ui-monospace, monospace); color: var(--muted); }

@@ -28,7 +28,14 @@ export function NodeSection({ node, depth, canEdit }: { node: TreeNode; depth: n
         {canEdit && <TreeEditControls nodeId={node.id} />}
       </div>
 
-      {node.text && <SourcePassage text={node.text} />}
+      {node.text && (
+        <SourcePassage
+          text={node.text}
+          sourceId={node.sourceId}
+          startOffset={node.startOffset}
+          annotations={node.annotations}
+        />
+      )}
 
       {!collapsed && hasChildren && (
         <div className="node-children">
