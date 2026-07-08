@@ -42,4 +42,14 @@ describe("splitSpans", () => {
       { text: "ef", charStart: 14, annotations: [{ id: "b", color: "yellow" }] },
     ]);
   });
+
+  it("ignores an annotation entirely outside the node range", () => {
+    const segs = splitSpans("abcdef", 10, [ann("x", 0, 5)]);
+    expect(segs).toEqual([{ text: "abcdef", charStart: 10, annotations: [] }]);
+  });
+
+  it("returns no segments for an empty node", () => {
+    const segs = splitSpans("", 0, []);
+    expect(segs).toEqual([]);
+  });
 });

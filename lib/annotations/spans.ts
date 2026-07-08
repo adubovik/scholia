@@ -26,6 +26,9 @@ export function splitSpans(nodeText: string, nodeStart: number, annotations: Inl
     const start = sorted[i];
     const end = sorted[i + 1];
     if (start >= end) continue;
+    // `start`/`end` are always node ends or CLAMPED annotation boundaries (nothing
+    // else is added to `points`), so any segment lies fully inside or fully outside
+    // each annotation's clamped range — testing the raw offsets here is equivalent.
     const covering = annotations
       .filter((a) => a.startOffset <= start && a.endOffset >= end)
       .map((a) => ({ id: a.id, color: a.color }));
