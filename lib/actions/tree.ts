@@ -67,6 +67,7 @@ export async function outdentNode(nodeId: string): Promise<void> {
   ];
   const remaining = oldSiblings.filter((s) => s.id !== node.id);
 
+  // The two renumbered groups have distinct parentIds, so they are disjoint — no position collision.
   await db.batch([
     db.update(nodes).set({ parentId: parent.parentId }).where(eq(nodes.id, node.id)),
     ...renumber(newOrder),  // includes node at its new slot

@@ -29,6 +29,8 @@ export async function getDocument(docId: string) {
     : [];
 
   const nodeRows = await db.select().from(nodes).where(eq(nodes.documentId, doc.id)).orderBy(nodes.position);
+  // M2 has a single (primary) source; ranges are keyed to it. When M4 adds
+  // translations, select ranges for all of the document's sources, not just this one.
   const rangeRows = source
     ? await db.select().from(nodeSourceRanges).where(eq(nodeSourceRanges.sourceId, source.id))
     : [];
