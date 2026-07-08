@@ -100,19 +100,25 @@ structure (→ caller builds a flat tree).
 **Label detection:** leading token matching `^(\d+(?:\.\d+)*)\s+` on each paragraph.
 
 **Tractatus digit scheme** (per the spec's `1`, `1.1`, `1.11` example): a label's
-path is `[integerPart, ...each digit of the fractional part]`, so:
-- `1` → `[1]`, parent `null`
-- `1.1` → `[1,1]`, parent `1`
-- `1.11` → `[1,1,1]`, parent `1.1`
-- `2.01` → `[2,0,1]`, parent `2.0`
+path is `[integerPart, ...each digit of the fractional part]`. The parent is the
+**nearest existing ancestor** — generate the ancestor chain by dropping the last
+fractional digit repeatedly down to the integer, and take the first one that
+actually appears among the document's labels:
+- `1` → ancestors `[]` → parent `null`
+- `1.1` → ancestors `[1]` → parent `1`
+- `1.11` → ancestors `[1.1, 1]` → parent `1.1`
+- `2.01` → ancestors `[2.0, 2]` → parent `2` (real Tractatus has `2` but **no**
+  `2.0`, so the immediate ancestor is skipped)
 
-Parent label = **drop the last fractional digit** (and the trailing dot when only
-the integer remains). Dot-group section numbering (`1.2.3` as three levels) is
-**out of scope** — Tractatus is the target text.
+Climbing (not assuming the immediate ancestor exists) is required because
+Wittgenstein's numbering is gappy. If no ancestor exists, the label is top-level.
+Dot-group section numbering (`1.2.3` as three levels) is **out of scope** — a label
+with more than one dot makes the parser bail to flat.
 
-**Trigger (numbered mode) iff both:**
-1. **every** non-empty paragraph carries a label, and
-2. every non-root label's computed parent exists among earlier labels.
+**Trigger (numbered mode) iff all of:**
+1. **every** non-empty paragraph carries a leading label,
+2. no label contains more than one dot, and
+3. no label is duplicated.
 
 Otherwise return `null`. This prevents false positives on ordinary prose (e.g. a
 paragraph that happens to start with "1. ").
