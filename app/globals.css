@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+:root {
+  --ink:        #111;      /* near-black text            */
+  --paper:      #fafafa;   /* off-white background       */
+  --rule:       #e3e3e3;   /* hairline separators        */
+  --muted:      #6b6b6b;   /* labels, numbering, glyphs  */
+  /* highlighter pastels — the ONLY color in the app */
+  --hl-yellow:  #f2e6a8;
+  --hl-pink:    #f0cdd6;
+  --hl-green:   #cfe6c9;
+  --hl-blue:    #cdd9ee;
+}
+
+body { background: var(--paper); color: var(--ink); }
