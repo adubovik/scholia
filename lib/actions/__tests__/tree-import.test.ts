@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll, vi } from "vitest";
+import { describe, it, expect, afterAll, beforeAll, vi } from "vitest";
 import { db } from "@/lib/db";
 import { users, documents } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -13,13 +13,15 @@ import { getDocument } from "@/lib/data/documents";
 
 describe("import builds nodes", () => {
   const created: string[] = [];
+  beforeAll(async () => {
+    await db.insert(users).values({ id: userId, email: "a@b.c", displayName: "T" });
+  });
   afterAll(async () => {
     for (const id of created) await db.delete(documents).where(eq(documents.id, id));
     await db.delete(users).where(eq(users.id, userId));
   });
 
   it("flat paste → one top-level node per paragraph", async () => {
-    await db.insert(users).values({ id: userId, email: "a@b.c", displayName: "T" });
     const id = await createDocument({ title: "Russell", text: "One.\n\nTwo." });
     created.push(id);
 
