@@ -2,6 +2,6 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
-  test: { environment: "jsdom", globals: true, include: ["**/*.test.ts", "**/*.test.tsx"] },
+  test: { environment: "jsdom", globals: true, include: ["**/*.test.ts", "**/*.test.tsx"], setupFiles: ["./vitest.setup.ts"] },
   resolve: { alias: { "@": new URL(".", import.meta.url).pathname } },
 });
