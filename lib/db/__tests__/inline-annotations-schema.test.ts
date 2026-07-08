@@ -35,4 +35,18 @@ describe("inline_annotations schema", () => {
     const rows = await db.select().from(inlineAnnotations).where(eq(inlineAnnotations.sourceId, src2.id));
     expect(rows).toEqual([]);
   });
+
+  it("cascades: deleting the document removes its annotations", async () => {
+    const uid2 = "clerk_" + crypto.randomUUID();
+    const [doc2] = await db.insert(documents).values({ ownerId: uid, title: "DocCascadeTest" }).returning();
+    const [src3] = await db.insert(sources).values({ documentId: doc2.id, position: 0, text: "Test cascade." }).returning();
+    const [ann2] = await db.insert(inlineAnnotations).values({
+      documentId: doc2.id, sourceId: src3.id, authorId: uid, startOffset: 0, endOffset: 4, color: "green",
+    }).returning();
+
+    const annId = ann2.id;
+    await db.delete(documents).where(eq(documents.id, doc2.id));
+    const rows = await db.select().from(inlineAnnotations).where(eq(inlineAnnotations.id, annId));
+    expect(rows).toEqual([]);
+  });
 });
