@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, boolean, integer, unique, index } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),            // Clerk user id
@@ -34,3 +34,32 @@ export const paragraphs = pgTable("paragraphs", {
   charStart: integer("char_start").notNull(),
   charEnd: integer("char_end").notNull(),
 });
+
+export const nodes = pgTable(
+  "nodes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    documentId: uuid("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+    parentId: uuid("parent_id"), // self-ref, app-enforced (matches documents.clonedFrom pattern)
+    position: integer("position").notNull(),
+    label: text("label"),
+    title: text("title"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => ({ byParent: index("nodes_doc_parent_pos").on(t.documentId, t.parentId, t.position) }),
+);
+
+export const nodeSourceRanges = pgTable(
+  "node_source_ranges",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    nodeId: uuid("node_id").notNull().references(() => nodes.id, { onDelete: "cascade" }),
+    sourceId: uuid("source_id").notNull().references(() => sources.id, { onDelete: "cascade" }),
+    startParagraphId: uuid("start_paragraph_id").notNull().references(() => paragraphs.id, { onDelete: "cascade" }),
+    startOffset: integer("start_offset").notNull(),
+    endParagraphId: uuid("end_paragraph_id").notNull().references(() => paragraphs.id, { onDelete: "cascade" }),
+    endOffset: integer("end_offset").notNull(),
+  },
+  (t) => ({ nodeSourceUnique: unique("node_source_ranges_node_source").on(t.nodeId, t.sourceId) }),
+);
