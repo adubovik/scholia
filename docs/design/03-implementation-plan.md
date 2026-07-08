@@ -88,7 +88,7 @@ import { appName } from "@/lib/config";
 
 describe("config", () => {
   it("exposes the app name", () => {
-    expect(appName).toBe("TextAnnotator");
+    expect(appName).toBe("Scholia");
   });
 });
 ```
@@ -102,7 +102,7 @@ Expected: FAIL — `Cannot find module '@/lib/config'`.
 
 `lib/config.ts`:
 ```ts
-export const appName = "TextAnnotator";
+export const appName = "Scholia";
 ```
 
 - [ ] **Step 6: Run test to verify it passes**
@@ -112,7 +112,7 @@ Expected: PASS (1 test).
 
 - [ ] **Step 7: Apply austere design tokens**
 
-Replace `app/globals.css` `:root` with the token block from [`02-frontend-and-permissions.md`](02-frontend-and-permissions.md) (ink/paper/rule/muted + four `--hl-*`). Set `body { background: var(--paper); color: var(--ink); }`. Remove default Next.js demo markup from `app/page.tsx`, leaving `<main>TextAnnotator</main>`.
+Replace `app/globals.css` `:root` with the token block from [`02-frontend-and-permissions.md`](02-frontend-and-permissions.md) (ink/paper/rule/muted + four `--hl-*`). Set `body { background: var(--paper); color: var(--ink); }`. Remove default Next.js demo markup from `app/page.tsx`, leaving `<main>Scholia</main>`.
 
 - [ ] **Step 8: Verify dev build**
 
