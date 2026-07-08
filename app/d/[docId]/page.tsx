@@ -6,13 +6,10 @@ export default async function DocumentPage({ params }: { params: Promise<{ docId
   const { docId } = await params;
   const data = await getDocument(docId);
   if (!data || !data.source) notFound();
+  // M2: only the owner can read (getDocument gates on owner_id), so canEdit is true.
   return (
     <main className="page">
-      <ReadingSurface
-        title={data.doc.title}
-        sourceText={data.source.text}
-        paragraphs={data.paragraphs.map((p) => ({ charStart: p.charStart, charEnd: p.charEnd }))}
-      />
+      <ReadingSurface title={data.doc.title} tree={data.tree} canEdit />
     </main>
   );
 }

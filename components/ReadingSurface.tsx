@@ -1,15 +1,14 @@
-import { SourcePassage } from "./SourcePassage";
-
-export interface ParagraphRange { charStart: number; charEnd: number }
+import { NodeSection } from "./NodeSection";
+import type { TreeNode } from "@/lib/tree/build";
 
 export function ReadingSurface({
-  title, sourceText, paragraphs,
-}: { title: string; sourceText: string; paragraphs: ParagraphRange[] }) {
+  title, tree, canEdit,
+}: { title: string; tree: TreeNode[]; canEdit: boolean }) {
   return (
     <article className="reading">
       <h1 className="reading-title">{title}</h1>
-      {paragraphs.map((p, i) => (
-        <SourcePassage key={i} text={sourceText.slice(p.charStart, p.charEnd)} />
+      {tree.map((node) => (
+        <NodeSection key={node.id} node={node} depth={0} canEdit={canEdit} />
       ))}
     </article>
   );
