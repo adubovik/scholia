@@ -1,14 +1,7 @@
-import { config } from "dotenv";
-config({ path: ".env.local" });
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { eq } = require("drizzle-orm");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { db } = require("../lib/db");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { documents, sources, paragraphs, nodes, nodeSourceRanges } = require("../lib/db/schema");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { planNodes } = require("../lib/tree/plan");
+import { eq } from "drizzle-orm";
+import { db } from "../lib/db";
+import { documents, sources, paragraphs, nodes, nodeSourceRanges } from "../lib/db/schema";
+import { planNodes } from "../lib/tree/plan";
 
 async function main() {
   const docs = await db.select().from(documents);

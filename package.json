@@ -11,7 +11,7 @@
     "test:watch": "vitest",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "backfill": "tsx scripts/backfill-nodes.ts"
+    "backfill": "tsx --env-file=.env.local scripts/backfill-nodes.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.13",
