@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, uuid, boolean, integer, unique, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),            // Clerk user id
@@ -62,4 +63,26 @@ export const nodeSourceRanges = pgTable(
     endOffset: integer("end_offset").notNull(),
   },
   (t) => ({ nodeSourceUnique: unique("node_source_ranges_node_source").on(t.nodeId, t.sourceId) }),
+);
+
+export const inlineAnnotations = pgTable(
+  "inline_annotations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    documentId: uuid("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+    sourceId: uuid("source_id").notNull().references(() => sources.id, { onDelete: "cascade" }),
+    authorId: text("author_id").notNull().references(() => users.id),
+    startOffset: integer("start_offset").notNull(),
+    endOffset: integer("end_offset").notNull(),
+    color: text("color").notNull(), // app-checked enum: yellow|pink|green|blue
+    note: text("note"),
+    tags: text("tags").array().notNull().default(sql`ARRAY[]::text[]`),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    bySource: index("inline_annotations_source").on(t.sourceId),
+    byAuthor: index("inline_annotations_doc_author").on(t.documentId, t.authorId),
+    tagsGin: index("inline_annotations_tags_gin").using("gin", t.tags),
+  }),
 );
