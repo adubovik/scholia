@@ -34,6 +34,7 @@ export function NodeSection({ node, depth, canEdit }: { node: TreeNode; depth: n
           sourceId={node.sourceId}
           startOffset={node.startOffset}
           annotations={node.annotations}
+          canEdit={canEdit}
         />
       )}
 

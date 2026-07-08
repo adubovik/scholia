@@ -158,3 +158,17 @@ body { background: var(--paper); color: var(--ink); }
 .tree-controls { display: inline-flex; gap: 0.35rem; margin-left: 0.5rem; opacity: 0; transition: opacity 0.1s; }
 .node-head:hover .tree-controls { opacity: 1; }
 @media (max-width: 640px) { .tree-controls { display: none; } } /* tree-building is desktop-only */
+
+/* ── Inline note ─────────────────────────────────────────── */
+.inline-note { border-left: 2px solid var(--rule); margin: 0.4rem 0 0.75rem 0.5rem; padding: 0.35rem 0.6rem; font-family: var(--mono, ui-monospace, monospace); font-size: 0.85rem; }
+.note-body :is(p, ul, ol) { margin: 0 0 0.35rem; }
+.note-actions { display: flex; gap: 0.75rem; margin-top: 0.35rem; }
+.link-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 0; font-size: 0.8rem; text-decoration: underline; }
+.link-btn:hover { color: var(--ink); }
+.note-colors { display: flex; gap: 0.35rem; margin-bottom: 0.4rem; }
+.note-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin-bottom: 0.35rem; }
+.tag { background: none; border: 1px solid var(--rule); color: var(--muted); font-size: 0.75rem; padding: 0.05rem 0.35rem; cursor: default; }
+.tag-input { border: none; border-bottom: 1px solid var(--rule); background: var(--paper); font-size: 0.75rem; outline: none; width: 5rem; }
+.swatch { width: 1rem; height: 1rem; border: 1px solid var(--rule); cursor: pointer; padding: 0; }
+.note-picker { border-left: 2px solid var(--rule); margin: 0.4rem 0 0.5rem 0.5rem; padding: 0.3rem 0.6rem; display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start; }
+.note-textarea { min-height: 4rem; }
