@@ -35,7 +35,7 @@ export function htmlToParagraphs(html: string): ExtractedText {
   const article = new Readability(document as unknown as Document).parse();
   if (article?.content) {
     return {
-      title: extractTitle(article.title, article.content),
+      title: extractTitle(article.title ?? null, article.content),
       paragraphs: collectParagraphs(article.content),
     };
   }
