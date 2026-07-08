@@ -7,7 +7,7 @@ export interface SourceRange {
 /** Nearest ancestor that is a source run (`data-source-id` + `data-char-start`). */
 function runFor(node: Node | null): HTMLElement | null {
   let el: HTMLElement | null = node instanceof HTMLElement ? node : (node?.parentElement ?? null);
-  while (el && !(el.dataset.sourceId !== undefined && el.dataset.charStart !== undefined)) {
+  while (el && (el.dataset.sourceId === undefined || el.dataset.charStart === undefined)) {
     el = el.parentElement;
   }
   return el;

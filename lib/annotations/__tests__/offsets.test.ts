@@ -58,4 +58,35 @@ describe("rangeToOffsets", () => {
     r.setStart(outside.firstChild!, 0); r.setEnd(outside.firstChild!, 3);
     expect(rangeToOffsets(r, root)).toBeNull();
   });
+
+  it("returns null when the selection spans two different sources", () => {
+    const container = document.createElement("section");
+    container.setAttribute("data-node-id", "cross-node");
+    container.innerHTML =
+      `<span data-source-id="s1" data-char-start="0">First</span>` +
+      `<span data-source-id="s2" data-char-start="0">Second</span>`;
+    document.body.appendChild(container);
+
+    const run1 = container.querySelector<HTMLElement>('[data-source-id="s1"]')!;
+    const run2 = container.querySelector<HTMLElement>('[data-source-id="s2"]')!;
+    const r = document.createRange();
+    r.setStart(run1.firstChild!, 1); // offset 1 in run1
+    r.setEnd(run2.firstChild!, 3);   // offset 3 in run2
+    expect(rangeToOffsets(r, root)).toBeNull();
+  });
+
+  it("returns null when an endpoint's run is outside the given root", () => {
+    const otherRoot = document.createElement("div");
+    otherRoot.innerHTML =
+      `<section data-node-id="external">` +
+      `<span data-source-id="s1" data-char-start="0">External</span>` +
+      `</section>`;
+    document.body.appendChild(otherRoot);
+
+    const externalRun = otherRoot.querySelector<HTMLElement>('[data-source-id="s1"]')!;
+    const r = document.createRange();
+    r.setStart(externalRun.firstChild!, 0);
+    r.setEnd(externalRun.firstChild!, 3);
+    expect(rangeToOffsets(r, root)).toBeNull();
+  });
 });
