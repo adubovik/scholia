@@ -15,20 +15,17 @@ function collectParagraphs(html: string): string[] {
     .filter((t) => t.length > 0);
 }
 
-/** Extract the most descriptive title from Readability output.
- *  Readability often returns the site name from <title>; prefer the first
- *  heading found inside the extracted content when available. */
-function extractTitle(
-  readabilityTitle: string | null,
-  content: string,
-): string | undefined {
+function extractTitle(readabilityTitle: string | null, content: string): string | undefined {
+  // Readability.title is reliable when the page has a proper <title> that agrees
+  // with the body. Fall back to the first heading only when the title looks like a
+  // site name (i.e. it does not appear in the extracted content itself).
+  if (readabilityTitle && content.includes(readabilityTitle)) {
+    return readabilityTitle;
+  }
   const { document } = parseHTML(`<body>${content}</body>`);
   const heading = document.querySelector("h1, h2, h3");
-  if (heading) {
-    const text = (heading.textContent ?? "").trim();
-    if (text.length > 0) return text;
-  }
-  return readabilityTitle ?? undefined;
+  const text = (heading?.textContent ?? "").trim();
+  return text || readabilityTitle || undefined;
 }
 
 /** Server-only: extract a clean title + body paragraphs from arbitrary HTML. */
