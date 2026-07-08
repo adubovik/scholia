@@ -31,7 +31,6 @@ export default function NewDocumentPage() {
       });
       if (!res.ok) throw new Error((await res.json()).error ?? "Import failed");
       const { title: t, paragraphs } = await res.json();
-      if (t && !title) setTitle(t);
       await submit(t ?? title, (paragraphs as string[]).join("\n\n"));
     } catch (e) { setError((e as Error).message); setBusy(false); }
   }
@@ -44,7 +43,6 @@ export default function NewDocumentPage() {
       let finalText = raw;
       if (/\.html?$/i.test(file.name)) {
         const { title: t, paragraphs } = await extractHtml(raw);
-        if (t && !title) setTitle(t);
         finalText = paragraphs.join("\n\n");
       }
       await submit(title || base, finalText);

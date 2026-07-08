@@ -3,9 +3,9 @@ import { db } from "@/lib/db";
 import { users, documents } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-const userId = "clerk_" + crypto.randomUUID();
+const mockAuth = vi.hoisted(() => ({ id: "clerk_" + Math.random().toString(36).slice(2) }));
 vi.mock("@/lib/auth/current-user", () => ({
-  requireUser: async () => ({ id: userId, displayName: "T" }),
+  requireUser: async () => ({ id: mockAuth.id, displayName: "T" }),
 }));
 
 import { createDocument } from "@/lib/actions/documents";
@@ -15,11 +15,11 @@ describe("document actions", () => {
   let docId = "";
   afterAll(async () => {
     if (docId) await db.delete(documents).where(eq(documents.id, docId));
-    await db.delete(users).where(eq(users.id, userId));
+    await db.delete(users).where(eq(users.id, mockAuth.id));
   });
 
   it("creates a document with paragraphs and reads it back", async () => {
-    await db.insert(users).values({ id: userId, email: "a@b.c", displayName: "T" });
+    await db.insert(users).values({ id: mockAuth.id, email: "a@b.c", displayName: "T" });
     docId = await createDocument({ title: "Russell", text: "One.\r\n\r\nTwo." });
 
     const got = await getDocument(docId);
@@ -34,5 +34,16 @@ describe("document actions", () => {
 
   it("owner-gates getDocument (returns null for a non-existent id)", async () => {
     expect(await getDocument(crypto.randomUUID())).toBeNull();
+  });
+
+  it("getDocument returns null for a document owned by another user", async () => {
+    // docId was created above under mockAuth.id
+    const realOwner = mockAuth.id;
+    mockAuth.id = "clerk_" + Math.random().toString(36).slice(2); // now a different user
+    try {
+      expect(await getDocument(docId)).toBeNull();
+    } finally {
+      mockAuth.id = realOwner; // restore so afterAll cleanup deletes as the owner
+    }
   });
 });
