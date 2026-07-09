@@ -4,9 +4,22 @@ import { useState } from "react";
 import type { TreeNode } from "@/lib/tree/build";
 import { SourcePassage } from "./SourcePassage";
 import { TreeEditControls } from "./TreeEditControls";
+import { NodeAnnotationMarker } from "./NodeAnnotationMarker";
+import { NodeNote } from "./NodeNote";
 
-export function NodeSection({ node, depth, canEdit }: { node: TreeNode; depth: number; canEdit: boolean }) {
+export function NodeSection({
+  node,
+  depth,
+  canEdit,
+  documentId,
+}: {
+  node: TreeNode;
+  depth: number;
+  canEdit: boolean;
+  documentId: string;
+}) {
   const [collapsed, setCollapsed] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
   const hasChildren = node.children.length > 0;
   // Leaf prose nodes need no header chrome — the paragraph flows on its own.
   const showHead = hasChildren || Boolean(node.label) || Boolean(node.title);
@@ -14,6 +27,7 @@ export function NodeSection({ node, depth, canEdit }: { node: TreeNode; depth: n
   return (
     <section className="node" style={{ marginLeft: depth ? "1.25rem" : undefined }} data-node-id={node.id}>
       {canEdit && <TreeEditControls nodeId={node.id} />}
+      <NodeAnnotationMarker hasNote={node.nodeAnnotation !== null} onOpen={() => setNoteOpen(true)} />
 
       {showHead && (
         <div className="node-head">
@@ -42,10 +56,20 @@ export function NodeSection({ node, depth, canEdit }: { node: TreeNode; depth: n
         />
       )}
 
+      {noteOpen && (
+        <NodeNote
+          documentId={documentId}
+          nodeId={node.id}
+          annotation={node.nodeAnnotation}
+          canEdit={canEdit}
+          onClose={() => setNoteOpen(false)}
+        />
+      )}
+
       {!collapsed && hasChildren && (
         <div className="node-children">
           {node.children.map((child) => (
-            <NodeSection key={child.id} node={child} depth={depth + 1} canEdit={canEdit} />
+            <NodeSection key={child.id} node={child} depth={depth + 1} canEdit={canEdit} documentId={documentId} />
           ))}
         </div>
       )}

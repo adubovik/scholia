@@ -334,3 +334,23 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   align-items: flex-start;
 }
 .note-textarea { min-height: 4.5rem; }
+
+/* ── Node-note gutter marker ─────────────────────────────── */
+.node-note-dot {
+  position: absolute;
+  right: 100%;
+  top: -0.15rem;
+  margin-right: 0.6rem;
+  background: none;
+  border: none;
+  padding: 0 0.2rem;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--muted);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity 0.12s, color 0.12s;
+}
+.node:hover > .node-note-dot { opacity: 1; }
+.node-note-dot--set { color: var(--ink); opacity: 1; }
+.node-note-dot:hover { color: var(--ink); }

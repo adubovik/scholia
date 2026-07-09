@@ -10,7 +10,7 @@ const node: TreeNode = {
 
 describe("NodeSection", () => {
   it("toggles child visibility when the collapse glyph is clicked", () => {
-    render(<NodeSection node={node} depth={0} canEdit={false} />);
+    render(<NodeSection node={node} depth={0} canEdit={false} documentId="d1" />);
     expect(screen.getByText("Child prose.")).toBeDefined();
 
     fireEvent.click(screen.getByRole("button", { name: "Collapse" }));

@@ -18,7 +18,7 @@ export function ReadingSurface({
       <article id="reading-root" className="reading">
         <h1 className="reading-title">{title}</h1>
         {tree.map((node) => (
-          <NodeSection key={node.id} node={node} depth={0} canEdit={canEdit} />
+          <NodeSection key={node.id} node={node} depth={0} canEdit={canEdit} documentId={documentId} />
         ))}
       </article>
       <SelectionPopover documentId={documentId} rootId="reading-root" />
