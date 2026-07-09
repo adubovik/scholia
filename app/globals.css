@@ -231,16 +231,33 @@ body {
   margin-top: 0.75rem;
 }
 
-/* restructure controls: a compact 2×2 pad in the left gutter, revealed on
-   node hover. Anchored by its RIGHT edge so it can never overlap node content
-   (the collapse triangle) regardless of how many controls it holds. Dropped
-   below the top of the gutter so it never overlaps the persistent
-   .node-note-dot, which owns the top-of-gutter slot. */
+/* Gutter controls cluster: a persistent note pencil plus an editor-only 2×2
+   move/indent grid revealed on node hover. Anchored by its RIGHT edge in the
+   left margin so it never overlaps the node's toggle/text. The container stays
+   fully opaque so the pencil can show when a note exists (opacity compounds —
+   a persistent child cannot live inside an opacity:0 box). */
 .tree-controls {
   position: absolute;
   right: 100%;
-  top: 1.2rem;
+  top: -0.1rem;
   margin-right: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+.note-pencil {
+  font-size: 0.95rem;
+  color: var(--muted);
+  opacity: 0.45;
+  padding: 0 0.2rem;
+  transition: opacity 0.12s, color 0.12s;
+}
+.node:hover > .tree-controls .note-pencil,
+.tree-controls:focus-within .note-pencil { opacity: 1; }
+.note-pencil:hover { color: var(--ink); }
+.note-pencil--set { color: var(--ink); opacity: 1; }
+.tree-controls-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.1rem;
@@ -250,16 +267,17 @@ body {
   opacity: 0;
   transition: opacity 0.12s;
 }
-.node:hover > .tree-controls,
-.tree-controls:focus-within { opacity: 1; }
-.tree-controls .glyph {
+.node:hover > .tree-controls .tree-controls-grid,
+.tree-controls:focus-within .tree-controls-grid { opacity: 1; }
+.tree-controls-grid .glyph {
   font-size: 0.95rem;
   color: var(--muted);
   padding: 0.15rem 0.3rem;
   min-width: 1.4rem;
 }
-.tree-controls .glyph:hover { color: var(--ink); }
-@media (max-width: 860px) { .tree-controls { display: none; } }
+.tree-controls-grid .glyph:hover { color: var(--ink); }
+/* Keep the note pencil reachable on mobile; only hide the move/indent grid. */
+@media (max-width: 860px) { .tree-controls-grid { display: none; } }
 
 /* ── Inline note (marginal apparatus) ────────────────────── */
 .inline-note {
@@ -363,23 +381,3 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   align-items: flex-start;
 }
 .note-textarea { min-height: 4.5rem; }
-
-/* ── Node-note gutter marker ─────────────────────────────── */
-.node-note-dot {
-  position: absolute;
-  right: 100%;
-  top: -0.15rem;
-  margin-right: 0.6rem;
-  background: none;
-  border: none;
-  padding: 0 0.2rem;
-  font-size: 0.9rem;
-  line-height: 1;
-  color: var(--muted);
-  opacity: 0.45;
-  cursor: pointer;
-  transition: opacity 0.12s, color 0.12s;
-}
-.node:hover > .node-note-dot { opacity: 1; }
-.node-note-dot--set { color: var(--ink); opacity: 1; }
-.node-note-dot:hover { color: var(--ink); }

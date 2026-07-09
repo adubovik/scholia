@@ -5,7 +5,6 @@ import type { TreeNode } from "@/lib/tree/build";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
 import { TreeEditControls } from "./TreeEditControls";
-import { NodeAnnotationMarker } from "./NodeAnnotationMarker";
 import { NodeNote } from "./NodeNote";
 
 export function NodeSection({
@@ -35,8 +34,12 @@ export function NodeSection({
 
   return (
     <section className="node" style={{ marginLeft: depth ? "1.25rem" : undefined }} data-node-id={node.id}>
-      {canEdit && <TreeEditControls nodeId={node.id} />}
-      <NodeAnnotationMarker hasNote={node.nodeAnnotation !== null} onOpen={() => setNoteOpen(true)} />
+      <TreeEditControls
+        nodeId={node.id}
+        canEdit={canEdit}
+        hasNote={node.nodeAnnotation !== null}
+        onOpenNote={() => setNoteOpen(true)}
+      />
 
       <div className="node-toggle-col">
         {collapsible && (
