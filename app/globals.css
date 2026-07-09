@@ -300,6 +300,9 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 }
 .tag-input:focus { border-bottom-color: var(--muted); }
 
+/* ── Node (entity) note ──────────────────────────────────── */
+.node-note { border-left-color: var(--rule); }
+
 /* swatches — recolor row + selection popover */
 .swatch {
   width: 1.15rem;
