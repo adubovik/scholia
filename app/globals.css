@@ -164,8 +164,35 @@ body {
 .hl { cursor: pointer; }
 
 /* ── Tree ────────────────────────────────────────────────── */
-.node { position: relative; margin-top: 1.6rem; }
+.node { position: relative; margin-top: 1.6rem; display: flex; align-items: flex-start; gap: 0.35rem; }
 .node:first-child { margin-top: 0; }
+.node-toggle-col { flex: 0 0 1.1rem; display: flex; justify-content: center; padding-top: 0.1rem; }
+.node-body { flex: 1 1 auto; min-width: 0; }
+.node-toggle {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.12s;
+}
+.node-toggle:hover { color: var(--ink); }
+.node-preview {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.node-preview:hover { color: var(--ink); }
 .node-head {
   display: flex;
   align-items: baseline;

@@ -8,15 +8,37 @@ const node: TreeNode = {
   children: [{ id: "b", label: "1.1", title: null, text: "Child prose.", sourceId: "s1", startOffset: 100, annotations: [], nodeAnnotation: null, children: [] }],
 };
 
+const leaf: TreeNode = {
+  id: "x", label: null, title: null, text: "First one. Second two.", sourceId: "s1",
+  startOffset: 0, annotations: [], nodeAnnotation: null, children: [],
+};
+
 describe("NodeSection", () => {
-  it("toggles child visibility when the collapse glyph is clicked", () => {
+  it("toggles child visibility when the parent collapse glyph is clicked", () => {
     render(<NodeSection node={node} depth={0} canEdit={false} documentId="d1" />);
     expect(screen.getByText("Child prose.")).toBeDefined();
 
-    fireEvent.click(screen.getByRole("button", { name: "Collapse" }));
+    // Parent is first in the DOM; the child now has its own toggle too.
+    fireEvent.click(screen.getAllByRole("button", { name: "Collapse" })[0]);
     expect(screen.queryByText("Child prose.")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Expand" }));
     expect(screen.getByText("Child prose.")).toBeDefined();
+  });
+
+  it("collapses a text-only top-level node to its first sentence", () => {
+    render(<NodeSection node={leaf} depth={0} canEdit={false} documentId="d1" />);
+    expect(screen.getByText(/Second two\./)).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse" }));
+    expect(screen.queryByText(/Second two\./)).toBeNull();
+    expect(screen.getByText(/First one\./)).toBeDefined();
+  });
+
+  it("expands again when the collapsed preview is clicked", () => {
+    render(<NodeSection node={leaf} depth={0} canEdit={false} documentId="d1" />);
+    fireEvent.click(screen.getByRole("button", { name: "Collapse" }));
+    fireEvent.click(screen.getByText(/First one\./));
+    expect(screen.getByText(/Second two\./)).toBeDefined();
   });
 });
