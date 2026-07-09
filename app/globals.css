@@ -168,6 +168,7 @@ body { background: var(--paper); color: var(--ink); }
 .note-colors { display: flex; gap: 0.35rem; margin-bottom: 0.4rem; }
 .note-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin-bottom: 0.35rem; }
 .tag { background: none; border: 1px solid var(--rule); color: var(--muted); font-size: 0.75rem; padding: 0.05rem 0.35rem; cursor: default; }
+button.tag { cursor: pointer; }
 .tag-input { border: none; border-bottom: 1px solid var(--rule); background: var(--paper); font-size: 0.75rem; outline: none; width: 5rem; }
 .swatch { width: 1rem; height: 1rem; border: 1px solid var(--rule); cursor: pointer; padding: 0; }
 .note-picker { border-left: 2px solid var(--rule); margin: 0.4rem 0 0.5rem 0.5rem; padding: 0.3rem 0.6rem; display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start; }

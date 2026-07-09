@@ -45,4 +45,16 @@ describe("SourcePassage", () => {
     fireEvent.click(screen.getByText("cd")); // overlap region: two annotations
     expect(document.querySelector(".note-picker")).not.toBeNull();
   });
+
+  it("opening an overlap picker closes a previously open note", () => {
+    const anns = [ann("a", 0, 6, "yellow"), ann("b", 2, 4, "pink")];
+    render(<SourcePassage text="abcdef" sourceId="s1" startOffset={0} annotations={anns} canEdit={false} />);
+    // Click "ab" to open annotation 'a' (single annotation)
+    fireEvent.click(screen.getByText("ab"));
+    expect(document.querySelector(".inline-note")).not.toBeNull();
+    // Click "cd" to show the picker (two annotations: a and b)
+    fireEvent.click(screen.getByText("cd"));
+    expect(document.querySelector(".note-picker")).not.toBeNull();
+    expect(document.querySelector(".inline-note")).toBeNull();
+  });
 });

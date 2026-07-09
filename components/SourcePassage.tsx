@@ -27,7 +27,7 @@ export function SourcePassage({
   function onSpanClick(ids: string[]) {
     setPicker(null);
     if (ids.length === 1) setOpenId(ids[0]);
-    else setPicker(ids);
+    else { setOpenId(null); setPicker(ids); }
   }
 
   const open = openId ? byId.get(openId) : undefined;

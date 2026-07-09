@@ -55,7 +55,7 @@ export function InlineNote({
                 className="swatch"
                 aria-label={`Recolor ${c}`}
                 style={{ background: `var(--hl-${c})` }}
-                onClick={() => updateInlineAnnotation({ id: annotation.id, color: c })}
+                onClick={() => void updateInlineAnnotation({ id: annotation.id, color: c })}
               />
             ))}
           </div>
