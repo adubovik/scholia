@@ -39,7 +39,11 @@ export function InlineNote({
   }
 
   return (
-    <aside className="inline-note" data-annotation-id={annotation.id}>
+    <aside
+      className="inline-note"
+      data-annotation-id={annotation.id}
+      style={{ borderLeftColor: `var(--hl-${annotation.color})` }}
+    >
       {editing ? (
         <>
           <textarea
@@ -52,8 +56,9 @@ export function InlineNote({
             {COLORS.map((c) => (
               <button
                 key={c}
-                className="swatch"
+                className={c === annotation.color ? "swatch swatch--active" : "swatch"}
                 aria-label={`Recolor ${c}`}
+                aria-pressed={c === annotation.color}
                 style={{ background: `var(--hl-${c})` }}
                 onClick={() => void updateInlineAnnotation({ id: annotation.id, color: c })}
               />
@@ -81,7 +86,7 @@ export function InlineNote({
           <div className="note-actions">
             <button className="btn" disabled={busy} onClick={save}>Save</button>
             <button className="link-btn" disabled={busy} onClick={() => setEditing(false)}>Cancel</button>
-            <button className="link-btn" disabled={busy} onClick={remove}>Delete</button>
+            <button className="link-btn link-btn--danger" disabled={busy} onClick={remove}>Delete</button>
           </div>
         </>
       ) : (
