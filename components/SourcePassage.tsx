@@ -77,7 +77,7 @@ export function SourcePassage({
       )}
 
       {open && (
-        <InlineNote annotation={open} canEdit={canEdit} onClose={() => setOpenId(null)} />
+        <InlineNote key={open.id} annotation={open} canEdit={canEdit} onClose={() => setOpenId(null)} />
       )}
     </>
   );

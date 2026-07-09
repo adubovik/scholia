@@ -33,6 +33,7 @@ export async function getDocument(docId: string) {
   const rangeRows = source
     ? await db.select().from(nodeSourceRanges).where(eq(nodeSourceRanges.sourceId, source.id))
     : [];
+  // M3: annotations are scoped to the primary source only; M4 must query all of the document's sources.
   const annRows = source
     ? await db
         .select()
