@@ -11,3 +11,12 @@ export interface InlineAnnotationView {
   tags: string[];
   authorId: string;
 }
+
+/** A node (entity) annotation shaped for rendering + editing; anchored to a node, not a text span. */
+export interface NodeAnnotationView {
+  id: string;
+  nodeId: string;
+  note: string;
+  tags: string[];
+  authorId: string;
+}

@@ -86,3 +86,22 @@ export const inlineAnnotations = pgTable(
     tagsGin: index("inline_annotations_tags_gin").using("gin", t.tags),
   }),
 );
+
+export const nodeAnnotations = pgTable(
+  "node_annotations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    documentId: uuid("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+    nodeId: uuid("node_id").notNull().references(() => nodes.id, { onDelete: "cascade" }),
+    authorId: text("author_id").notNull().references(() => users.id),
+    note: text("note").notNull(),
+    tags: text("tags").array().notNull().default(sql`ARRAY[]::text[]`),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    nodeAuthorUnique: unique("node_annotations_node_author").on(t.nodeId, t.authorId),
+    byAuthor: index("node_annotations_doc_author").on(t.documentId, t.authorId),
+    tagsGin: index("node_annotations_tags_gin").using("gin", t.tags),
+  }),
+);
