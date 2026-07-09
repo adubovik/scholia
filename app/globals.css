@@ -206,11 +206,13 @@ body {
 
 /* restructure controls: a compact 2×2 pad in the left gutter, revealed on
    node hover. Anchored by its RIGHT edge so it can never overlap node content
-   (the collapse triangle) regardless of how many controls it holds. */
+   (the collapse triangle) regardless of how many controls it holds. Dropped
+   below the top of the gutter so it never overlaps the persistent
+   .node-note-dot, which owns the top-of-gutter slot. */
 .tree-controls {
   position: absolute;
   right: 100%;
-  top: -0.15rem;
+  top: 1.2rem;
   margin-right: 0.6rem;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
