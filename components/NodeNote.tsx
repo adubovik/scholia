@@ -30,7 +30,11 @@ export function NodeNote({
     setBusy(true);
     await upsertNodeAnnotation({ documentId, nodeId, note: note.trim(), tags });
     setBusy(false);
-    setEditing(false);
+    // On create there is no annotation prop yet, so view mode would render a stale
+    // "No note." until revalidation. Close instead — the revalidated tree repaints a
+    // solid dot, and reopening shows the note fresh. On edit, stay in view mode.
+    if (annotation) setEditing(false);
+    else onClose();
   }
   async function remove() {
     if (!annotation) {
