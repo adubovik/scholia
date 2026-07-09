@@ -6,6 +6,8 @@
  */
 export function firstSentence(text: string): string {
   const trimmed = text.trim();
-  const match = trimmed.match(/^.*?[.!?](?=\s|$)/s);
+  // `[\s\S]` (rather than `.` with the /s flag) matches across newlines while
+  // staying compatible with pre-es2018 TypeScript targets.
+  const match = trimmed.match(/^[\s\S]*?[.!?](?=\s|$)/);
   return match ? match[0] : trimmed;
 }
