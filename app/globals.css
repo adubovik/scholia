@@ -84,6 +84,8 @@ body {
   line-height: 1.72;
   margin: 0 0 1.4rem;
   color: var(--ink);
+  text-align: justify;
+  hyphens: auto;
   text-wrap: pretty;
   hanging-punctuation: first last;
 }
@@ -164,9 +166,12 @@ body {
 .hl { cursor: pointer; }
 
 /* ── Tree ────────────────────────────────────────────────── */
-.node { position: relative; margin-top: 1.6rem; display: flex; align-items: flex-start; gap: 0.35rem; }
+/* align-items: baseline keeps the toggle glyph on the first text line's
+   baseline regardless of whether that line is prose or mono head chrome —
+   a fixed padding only matches one line-height and drifts between node types. */
+.node { position: relative; margin-top: 1.6rem; display: flex; align-items: baseline; gap: 0.35rem; }
 .node:first-child { margin-top: 0; }
-.node-toggle-col { flex: 0 0 1.1rem; display: flex; justify-content: center; padding-top: 0.1rem; }
+.node-toggle-col { flex: 0 0 1.1rem; display: flex; justify-content: center; }
 .node-body { flex: 1 1 auto; min-width: 0; }
 .node-toggle {
   background: none;
@@ -180,21 +185,23 @@ body {
 }
 .node-toggle:hover,
 .node-toggle:focus-visible { color: var(--ink); }
+/* Collapsed preview reads as plain body prose — identical typography to
+   .reading-p so folding never changes font size or colour. */
 .node-preview {
   display: block;
   width: 100%;
-  text-align: left;
+  text-align: justify;
+  hyphens: auto;
   background: none;
   border: none;
   padding: 0;
   margin: 0;
-  font: inherit;
-  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 1.1875rem;
+  line-height: 1.72;
+  color: var(--ink);
   cursor: pointer;
-  transition: color 0.12s;
 }
-.node-preview:hover,
-.node-preview:focus-visible { color: var(--ink); }
 .node-head {
   display: flex;
   align-items: baseline;
