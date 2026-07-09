@@ -1,9 +1,9 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { documents, sources, paragraphs, nodes, nodeSourceRanges, inlineAnnotations } from "@/lib/db/schema";
+import { documents, sources, paragraphs, nodes, nodeSourceRanges, inlineAnnotations, nodeAnnotations } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
 import { buildTree } from "@/lib/tree/build";
-import type { Color, InlineAnnotationView } from "@/lib/annotations/types";
+import type { Color, InlineAnnotationView, NodeAnnotationView } from "@/lib/annotations/types";
 
 export async function listDocuments() {
   const user = await requireUser();
@@ -50,12 +50,24 @@ export async function getDocument(docId: string) {
     tags: a.tags,
     authorId: a.authorId,
   }));
+  const nodeAnnRows = await db
+    .select()
+    .from(nodeAnnotations)
+    .where(eq(nodeAnnotations.documentId, doc.id));
+  const nodeAnnViews: NodeAnnotationView[] = nodeAnnRows.map((a) => ({
+    id: a.id,
+    nodeId: a.nodeId,
+    note: a.note,
+    tags: a.tags,
+    authorId: a.authorId,
+  }));
   const tree = source
     ? buildTree(
         nodeRows,
         rangeRows.map((r) => ({ nodeId: r.nodeId, sourceId: r.sourceId, startOffset: r.startOffset, endOffset: r.endOffset })),
         source.text,
         annViews,
+        nodeAnnViews,
       )
     : [];
 

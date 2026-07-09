@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildTree, type NodeRow, type NodeRange } from "@/lib/tree/build";
-import type { InlineAnnotationView } from "@/lib/annotations/types";
+import type { InlineAnnotationView, NodeAnnotationView } from "@/lib/annotations/types";
 
 const SRC = "Root text. Child text.";
 
@@ -55,4 +55,21 @@ it("attaches only the annotations intersecting each node's range", () => {
   expect(tree[0].startOffset).toBe(0);
   expect(tree[0].sourceId).toBe("s1");
   expect(tree[1].annotations.map((a) => a.id)).toEqual(["y"]);
+});
+
+it("attaches each node's own note by nodeId, leaving others null", () => {
+  const nodes: NodeRow[] = [
+    { id: "a", parentId: null, position: 0, label: null, title: null },
+    { id: "b", parentId: null, position: 1, label: null, title: null },
+  ];
+  const ranges: NodeRange[] = [
+    { nodeId: "a", sourceId: "s1", startOffset: 0, endOffset: 10 },
+    { nodeId: "b", sourceId: "s1", startOffset: 11, endOffset: 22 },
+  ];
+  const nodeAnns: NodeAnnotationView[] = [
+    { id: "n1", nodeId: "a", note: "on a", tags: [], authorId: "u" },
+  ];
+  const tree = buildTree(nodes, ranges, "Root text. Child text.", [], nodeAnns);
+  expect(tree[0].nodeAnnotation?.note).toBe("on a");
+  expect(tree[1].nodeAnnotation).toBeNull();
 });
