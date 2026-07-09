@@ -37,7 +37,6 @@ describe("inline_annotations schema", () => {
   });
 
   it("cascades: deleting the document removes its annotations", async () => {
-    const uid2 = "clerk_" + crypto.randomUUID();
     const [doc2] = await db.insert(documents).values({ ownerId: uid, title: "DocCascadeTest" }).returning();
     const [src3] = await db.insert(sources).values({ documentId: doc2.id, position: 0, text: "Test cascade." }).returning();
     const [ann2] = await db.insert(inlineAnnotations).values({
