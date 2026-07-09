@@ -178,7 +178,8 @@ body {
   padding: 0;
   transition: color 0.12s;
 }
-.node-toggle:hover { color: var(--ink); }
+.node-toggle:hover,
+.node-toggle:focus-visible { color: var(--ink); }
 .node-preview {
   display: block;
   width: 100%;
@@ -192,7 +193,8 @@ body {
   cursor: pointer;
   transition: color 0.12s;
 }
-.node-preview:hover { color: var(--ink); }
+.node-preview:hover,
+.node-preview:focus-visible { color: var(--ink); }
 .node-head {
   display: flex;
   align-items: baseline;
@@ -255,7 +257,8 @@ body {
 }
 .node:hover > .tree-controls .note-pencil,
 .tree-controls:focus-within .note-pencil { opacity: 1; }
-.note-pencil:hover { color: var(--ink); }
+.note-pencil:hover,
+.note-pencil:focus-visible { color: var(--ink); }
 .note-pencil--set { color: var(--ink); opacity: 1; }
 .tree-controls-grid {
   display: grid;
