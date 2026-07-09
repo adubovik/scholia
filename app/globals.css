@@ -31,7 +31,7 @@ body {
 
 /* ── Layout ─────────────────────────────────────────────── */
 .page {
-  max-width: 36rem;
+  max-width: 44rem;
   margin: 0 auto;
   padding: 3rem 1.25rem;
 }
@@ -204,19 +204,33 @@ body {
   margin-top: 0.75rem;
 }
 
-/* restructure controls live in the left gutter, revealed on node hover */
+/* restructure controls: a compact 2×2 pad in the left gutter, revealed on
+   node hover. Anchored by its RIGHT edge so it can never overlap node content
+   (the collapse triangle) regardless of how many controls it holds. */
 .tree-controls {
   position: absolute;
-  left: -2.15rem;
-  top: 0.15rem;
-  display: inline-flex;
-  gap: 0.25rem;
+  right: 100%;
+  top: -0.15rem;
+  margin-right: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.1rem;
+  padding: 0.2rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
   opacity: 0;
   transition: opacity 0.12s;
 }
 .node:hover > .tree-controls,
 .tree-controls:focus-within { opacity: 1; }
-@media (max-width: 720px) { .tree-controls { display: none; } }
+.tree-controls .glyph {
+  font-size: 0.95rem;
+  color: var(--muted);
+  padding: 0.15rem 0.3rem;
+  min-width: 1.4rem;
+}
+.tree-controls .glyph:hover { color: var(--ink); }
+@media (max-width: 860px) { .tree-controls { display: none; } }
 
 /* ── Inline note (marginal apparatus) ────────────────────── */
 .inline-note {

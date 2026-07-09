@@ -27,7 +27,8 @@ overlay (selection popover) uses a 1px `--muted` border, not a shadow.
 
 Base unit **4px**. Reading rhythm: `1.6rem` between top-level nodes, `1.4rem`
 between paragraphs, `0.75rem` inside note editors. Padding symmetrical. Page:
-`max-width: 36rem`, `padding: 3rem 1.25rem`.
+`max-width: 44rem`, `padding: 3rem 1.25rem` (reading measure ≈ 70ch at 19px —
+wide enough to breathe, still readable).
 
 ## Color tokens (warm printed page)
 
@@ -74,9 +75,12 @@ imported boilerplate titles gracefully.
 - **Node header** (`.node-head`) — rendered ONLY when structural (has children,
   label, or title); leaf prose nodes have no header chrome. Collapse glyph
   `▾/▸` carries `aria-expanded`. Label: mono `0.72rem` tabular `--muted`.
-- **Restructure controls** (`.tree-controls`) — absolutely positioned in the
-  left gutter (`left: -2.15rem`), `opacity 0` → revealed on `.node:hover` /
-  `:focus-within`; hidden `<720px`. Never reserve inline space.
+- **Restructure controls** (`.tree-controls`) — a compact **2×2 pad** (bordered
+  paper chip, `0.95rem` glyphs) in the left gutter, anchored by its RIGHT edge
+  (`right: 100%; margin-right: 0.6rem`) so it can never overlap the collapse
+  triangle regardless of control count. `opacity 0` → revealed on `.node:hover`
+  / `:focus-within`; hidden `<860px` (tree editing is desktop-only). Never
+  reserve inline space. Grid order: row 1 = move ↑↓, row 2 = outdent/indent ⇤⇥.
 - **Inline note** (`.inline-note`) — SIGNATURE: the left rule (`2px`) takes the
   annotation's highlighter color (`borderLeftColor: var(--hl-<color>)` inline),
   tying the marginal note to its span. Mono `0.82rem/1.55`, no card/shadow.
