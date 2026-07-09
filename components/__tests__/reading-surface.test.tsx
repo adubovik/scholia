@@ -12,7 +12,7 @@ const tree: TreeNode[] = [
 
 describe("ReadingSurface", () => {
   it("renders the title, node labels, and nested prose", () => {
-    render(<ReadingSurface title="Tractatus" tree={tree} canEdit={false} />);
+    render(<ReadingSurface title="Tractatus" tree={tree} canEdit={false} documentId="d1" />);
     expect(screen.getByRole("heading", { name: "Tractatus" })).toBeDefined();
     expect(screen.getByText("Root prose.")).toBeDefined();
     expect(screen.getByText("Child prose.")).toBeDefined();

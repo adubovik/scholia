@@ -171,5 +171,6 @@ body { background: var(--paper); color: var(--ink); }
 button.tag { cursor: pointer; }
 .tag-input { border: none; border-bottom: 1px solid var(--rule); background: var(--paper); font-size: 0.75rem; outline: none; width: 5rem; }
 .swatch { width: 1rem; height: 1rem; border: 1px solid var(--rule); cursor: pointer; padding: 0; }
+.selection-popover { display: flex; gap: 0.35rem; background: var(--paper); border: 1px solid var(--rule); padding: 0.3rem; z-index: 20; }
 .note-picker { border-left: 2px solid var(--rule); margin: 0.4rem 0 0.5rem 0.5rem; padding: 0.3rem 0.6rem; display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start; }
 .note-textarea { min-height: 4rem; }
