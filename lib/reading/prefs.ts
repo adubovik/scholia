@@ -79,6 +79,6 @@ export function preloadScript(): string {
   }, {} as Record<string, { v: string; s: string[]; d: number }>);
   return `(function(){try{var C=${JSON.stringify(map)},K=${JSON.stringify(STORAGE_KEY)};` +
     `var raw=localStorage.getItem(K),p=raw?JSON.parse(raw):{},d=document.documentElement;` +
-    `for(var k in C){var c=C[k],i=p&&typeof p[k]==="number"&&p[k]>=0&&p[k]<c.s.length?p[k]:c.d;` +
+    `for(var k in C){var c=C[k],i=p&&typeof p[k]==="number"&&p[k]>=0&&p[k]<c.s.length&&Math.floor(p[k])===p[k]?p[k]:c.d;` +
     `d.style.setProperty(c.v,c.s[i]);}}catch(e){}})();`;
 }

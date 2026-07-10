@@ -60,4 +60,11 @@ describe("preloadScript", () => {
   it("references the storage key", () => {
     expect(preloadScript()).toContain(STORAGE_KEY);
   });
+  it("falls back to default for a non-integer stored index", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...DEFAULT_INDICES, size: 1.5 }));
+    // eslint-disable-next-line no-eval
+    eval(preloadScript());
+    // default size index 2 → "1.1875rem"; must not be "undefined"
+    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.1875rem");
+  });
 });
