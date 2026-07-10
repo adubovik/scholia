@@ -28,7 +28,7 @@ Requires Node 24 and pnpm (`corepack enable`). Secrets in `.env.local` (`DATABAS
 - **Reads** = React Server Components hitting Neon directly (no client data-fetching lib). The document read path is `app/d/[docId]/page.tsx` → `lib/data/documents.ts::getDocument` → `lib/tree/build.ts::buildTree`.
 - **Mutations** = Server Actions in `lib/actions/*` (`"use server"`), each gated by an auth check then `revalidatePath(\`/d/${documentId}\`)`.
 - **URL/HTML import** = Route Handler `app/api/import/route.ts` (server-side fetch + `@mozilla/readability`/`linkedom` cleanup in `lib/import/`), avoiding browser CORS.
-- **Auth** = `middleware.ts` (Clerk) protects everything except sign-in/up and webhooks.
+- **Auth** = `proxy.ts` (Clerk) protects everything except sign-in/up and webhooks. (Next 16 renamed the `middleware` file convention to `proxy`; `export default` + `export const config` are unchanged, and it now defaults to the Node.js runtime.)
 
 **The core invariant — immutable Sources + integer offsets.** A `source` row holds the full text and never changes. Everything layered on top (`nodes` → tree structure, `inline_annotations`, `node_annotations`) references it by `{startOffset, endOffset}` character positions, not by mutating prose. This is why there's no rich-text editor.
 
