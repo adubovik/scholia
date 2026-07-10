@@ -10,6 +10,7 @@ export function blocksToSource(blocks: Block[]): {
   text: string;
   headingLevels: (number | null)[];
 } {
+  // The real extraction pipeline (collectRawBlocks) already strips newlines; this is a safety net for synthetic Block[] (e.g., tests).
   const pieces = blocks.map((b) => b.text.replace(/\n[ \t]*\n+/g, "\n").trim());
   return {
     text: pieces.join("\n\n"),

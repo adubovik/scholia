@@ -45,4 +45,8 @@ describe("parseHeadingTree", () => {
       { paragraphIndex: 1, parentIndex: null, isHeading: true },
     ]);
   });
+
+  it("returns null when headingLevels length does not match paras", () => {
+    expect(parseHeadingTree(paras(3), [2, null])).toBeNull();
+  });
 });

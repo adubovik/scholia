@@ -14,6 +14,7 @@ export function parseHeadingTree(
   paras: { text: string }[],
   headingLevels: (number | null)[],
 ): HeadingRelation[] | null {
+  if (headingLevels.length !== paras.length) return null;
   if (!headingLevels.some((l) => l !== null)) return null;
 
   const stack: { index: number; level: number }[] = [];
