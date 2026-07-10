@@ -43,6 +43,22 @@ pnpm dev
 pnpm test
 ```
 
+## Local e2e with Docker
+
+Run the whole app locally — no Vercel, no Clerk account, no Neon cloud:
+
+    docker compose up --build
+
+- App: http://localhost:3000 (auth is bypassed via `SCHOLIA_AUTH=dev`; you are the fixed `Local Dev` user).
+- Postgres runs in-compose; the `neon-proxy` service lets the app's `neon-http`
+  driver talk to it. Schema is pushed and a Gutenberg book is seeded (imported
+  through the real Import-via-URL path) with a small demo tree and comments.
+- Re-running is idempotent (seed skips if the dev user already owns a document).
+- Reset everything: `docker compose down -v` (the `-v` drops the Postgres volume).
+
+The bypass is inert on Vercel (`isDevAuth()` requires `VERCEL` to be unset), so
+production behavior is unchanged.
+
 ## Deployment
 
 Deploys happen automatically via Vercel Git integration on push to `development`.
