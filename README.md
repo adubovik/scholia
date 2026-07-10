@@ -54,6 +54,8 @@ Run the whole app locally — no Vercel, no Clerk account, no Neon cloud:
   driver talk to it. Schema is pushed and a Gutenberg book is seeded (imported
   through the real Import-via-URL path) with a small demo tree and comments.
 - Re-running is idempotent (seed skips if the dev user already owns a document).
+- The seed fetches the book over the network; if gutenberg.org is unreachable the
+  `migrate-seed` step fails and the app won't start — re-run once it's reachable.
 - Reset everything: `docker compose down -v` (the `-v` drops the Postgres volume).
 
 The bypass is inert on Vercel (`isDevAuth()` requires `VERCEL` to be unset), so
