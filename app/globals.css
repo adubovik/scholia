@@ -236,23 +236,33 @@ body {
 }
 .node-children {
   border-left: 1px solid var(--rule);
-  padding-left: 1.15rem;
+  /* Drop the connector straight down from the toggle triangle: the triangle
+     centre sits (row gap 0.35rem + half the 1.1rem toggle column) = 0.9rem left
+     of .node-body's edge, where this border would otherwise start. Pull it left
+     by that amount and add it back to the padding so child text keeps its
+     indent (the widened gutter then houses each child's own pencil). */
+  margin-left: -0.9rem;
+  padding-left: 2.05rem; /* 1.15rem base indent + 0.9rem pulled back */
   margin-top: 0.75rem;
 }
 
 /* Gutter controls cluster: a persistent note pencil plus an editor-only 2×2
-   move/indent grid revealed on node hover. Anchored by its RIGHT edge in the
-   left margin so it never overlaps the node's toggle/text. The container stays
-   fully opaque so the pencil can show when a note exists (opacity compounds —
-   a persistent child cannot live inside an opacity:0 box). */
+   move/indent grid revealed on node hover. Kept IN FLOW as the first flex
+   child of .node so it inherits the row's `align-items: baseline` — that lands
+   the pencil on the toggle triangle's text line automatically (a fixed pixel
+   `top` can't, because the baseline offset differs between prose and head
+   chrome). Its 1.4rem width is claimed then cancelled by a negative margin so
+   the toggle/text keep their position, and the pencil hugs the right edge so it
+   sits just left of the triangle regardless of the hover grid's width. The
+   container stays fully opaque so the pencil can show when a note exists
+   (opacity compounds — a persistent child cannot live inside an opacity:0 box). */
 .tree-controls {
-  position: absolute;
-  right: 100%;
-  top: -0.1rem;
-  margin-right: 0.6rem;
+  position: relative; /* anchor for the absolute hover popover below */
+  flex: 0 0 1.4rem;
+  margin-left: -1.75rem; /* -(width + .node row gap) → toggle stays put */
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.25rem;
 }
 .note-pencil {
@@ -268,6 +278,11 @@ body {
 .note-pencil:focus-visible { color: var(--ink); }
 .note-pencil--set { color: var(--ink); opacity: 1; }
 .tree-controls-grid {
+  /* Absolute popover anchored under the pencil, so its width never widens the
+     in-flow pencil column (which would knock the pencil off the triangle). */
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.1rem;
