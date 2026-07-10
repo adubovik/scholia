@@ -27,7 +27,7 @@ interface RawBlock {
 
 /** Strip a trailing "| Project Gutenberg" / " - Site" suffix from a title. */
 function cleanTitle(raw: string): string {
-  return raw.split(/\s+[|–—-]\s+/)[0].trim();
+  return raw.split(/\s+[|–—\-]\s+/)[0].trim();
 }
 
 /** Walk h1–h6 + p in document order into raw blocks (h1 skipped: it is the title). */
@@ -74,10 +74,9 @@ function stripHeadingCruft(blocks: RawBlock[]): RawBlock[] {
 }
 
 /**
- * R2: drop link-dominated paragraph clusters (list/paragraph TOCs). A linkish
- * paragraph is dropped when it belongs to a run of >= 3 consecutive linkish
- * paragraphs, or on its own carries a heavy link load (>= 5 internal anchors
- * folded into one block). Isolated single links (footnote refs) are kept.
+ * R2: drop link-dominated paragraph clusters (list/paragraph TOCs). A run of
+ * 3+ consecutive link-dominated paragraphs is dropped as a table-of-contents
+ * block; shorter runs (a stray footnote/reference link) are kept.
  */
 function stripTocClusters(blocks: RawBlock[]): RawBlock[] {
   const drop = new Array(blocks.length).fill(false);

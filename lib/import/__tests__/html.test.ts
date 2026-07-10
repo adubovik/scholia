@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { htmlToParagraphs } from "@/lib/import/html";
-import { htmlToBlocks } from "@/lib/import/html";
+import { htmlToParagraphs, htmlToBlocks } from "@/lib/import/html";
 
 const ARTICLE = `<!doctype html><html><head><title>Site</title></head><body>
   <nav>Home · About · Donate</nav>
