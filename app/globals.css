@@ -600,3 +600,102 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   align-items: flex-start;
 }
 .note-textarea { min-height: 4.5rem; }
+
+/* ── Reading preferences (Aa display sheet) ──────────────── */
+/* Quiet trigger in the reading column's top-right corner, on the running-head. */
+.reading-aa {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: var(--faint);
+  padding: 0.1rem 0.3rem;
+  transition: color 0.12s;
+}
+.reading-aa:hover,
+.reading-aa:focus-visible { color: var(--ink); }
+
+/* Light paper scrim — deliberately not a heavy dim, so font-size and column
+   width changes stay visible in the prose behind the sheet as you drag. */
+.aa-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(246, 243, 236, 0.55);
+}
+.aa-sheet {
+  width: min(24rem, calc(100vw - 2rem));
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 10px 34px rgba(28, 26, 21, 0.14);
+  padding: 1.25rem 1.35rem 1rem;
+}
+.aa-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.aa-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.aa-row {
+  display: grid;
+  grid-template-columns: 3.2rem 1.4rem 1fr 1.6rem;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.7rem 0;
+}
+.aa-label {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.aa-cap {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--faint);
+  text-align: center;
+  line-height: 1;
+}
+.aa-row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: var(--rule);
+  cursor: pointer;
+}
+.aa-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--muted);
+  border: 1px solid var(--paper);
+}
+.aa-row input[type="range"]::-moz-range-thumb {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--muted);
+  border: 1px solid var(--paper);
+}
+.aa-row input[type="range"]:focus-visible { outline: 1.5px solid var(--muted); outline-offset: 3px; }
+.aa-sheet .link-btn { margin-top: 0.9rem; }
