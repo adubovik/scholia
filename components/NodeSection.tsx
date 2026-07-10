@@ -22,9 +22,14 @@ export function NodeSection({
   const [noteOpen, setNoteOpen] = useState(false);
   const hasChildren = node.children.length > 0;
   const hasText = Boolean(node.text);
-  // Collapse now governs the node's own text AND its children, so any node with
-  // text or children is collapsible — including top-level prose nodes.
-  const collapsible = hasChildren || hasText;
+  // A heading node's whole range IS its title (import stores the heading text as
+  // both): the title renders in the head, so rendering the passage too would
+  // duplicate it. Its prose lives in the children, not its own body — mirroring
+  // how a numbered node shows its label in the head and prose in the body.
+  const isHeading = node.title !== null && node.title.trim() === node.text.trim();
+  // Collapse governs the node's own body text AND its children. Headings carry
+  // no body of their own, so they're collapsible only when they have children.
+  const collapsible = hasChildren || (hasText && !isHeading);
   // Leaf prose nodes need no header chrome — the paragraph flows on its own.
   const showHead = hasChildren || Boolean(node.label) || Boolean(node.title);
 
@@ -62,7 +67,7 @@ export function NodeSection({
           </div>
         )}
 
-        {hasText &&
+        {hasText && !isHeading &&
           (collapsed ? (
             <button className="node-preview" onClick={() => setCollapsed(false)}>
               {preview}

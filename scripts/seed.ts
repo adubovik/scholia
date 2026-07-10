@@ -3,8 +3,7 @@ import { db } from "@/lib/db";
 import { documents, nodes, nodeSourceRanges, nodeAnnotations, inlineAnnotations } from "@/lib/db/schema";
 import { htmlToSource } from "@/lib/import/html";
 import { createDocument } from "@/lib/actions/documents";
-import { computeDemoNesting } from "./seed-tree";
-import { progress, withSpinner } from "./seed-progress";
+import { withSpinner } from "./seed-progress";
 
 const BOOK_URL = "https://www.gutenberg.org/files/5827/5827-h/5827-h.htm";
 const DEV_USER = "local-dev";
@@ -34,23 +33,25 @@ async function main() {
   );
   console.log(`Seed: created document ${docId}`);
 
-  // 2) Demo indent tree over the first three top-level nodes.
-  const top = await db
-    .select()
+  // 2) Import already nested the book (chapter headings -> prose children), so
+  //    there's no demo indent to apply. Demo comments go on the first chapter's
+  //    opening prose paragraphs — nodes that render a passage, so an inline
+  //    highlight is actually visible (a heading node renders as a head only).
+  const [firstHeading] = await db
+    .select({ id: nodes.id })
     .from(nodes)
     .where(and(eq(nodes.documentId, docId), isNull(nodes.parentId)))
-    .orderBy(nodes.position);
-  const updates = computeDemoNesting(top.map((n) => n.id));
-  const bar = progress("Seed: nesting blocks", updates.length);
-  for (const u of updates) {
-    await db.update(nodes).set({ parentId: u.parentId, position: u.position }).where(eq(nodes.id, u.id));
-    bar.tick();
-  }
-  bar.done();
-
-  // 3) Comments on the first two blocks (original reading order): a node
-  //    annotation on each, and one inline annotation inside each.
-  for (const n of top.slice(0, 2)) {
+    .orderBy(nodes.position)
+    .limit(1);
+  const prose = firstHeading
+    ? await db
+        .select()
+        .from(nodes)
+        .where(and(eq(nodes.documentId, docId), eq(nodes.parentId, firstHeading.id)))
+        .orderBy(nodes.position)
+        .limit(2)
+    : [];
+  for (const n of prose) {
     await db.insert(nodeAnnotations).values({
       documentId: docId,
       nodeId: n.id,
@@ -76,7 +77,7 @@ async function main() {
       }
     }
   }
-  console.log("Seed: added node + inline comments on the first two blocks");
+  console.log("Seed: added node + inline comments on the first chapter's opening paragraphs");
   console.log("Seed: done.");
 }
 
