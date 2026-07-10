@@ -37,34 +37,85 @@ body {
 }
 
 /* ── Home ────────────────────────────────────────────────── */
+/* The title page of a slim printed edition: a masthead (wordmark + serif
+   descriptor) over the catalog. The catalog is the focal tier — the New action
+   recedes to a quiet ghost control (see .btn--ghost), never a black slab. */
 .home-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 1.1rem;
+  margin-bottom: 2.75rem;
+}
+.home-brand { display: flex; flex-direction: column; gap: 0.4rem; }
+.home-head h1 {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.24em; /* generous tracking → printed masthead, not a UI label */
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1;
+}
+.home-tagline {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Catalog / table of contents. Each row: serif title (content) + a mono, tracked
+   "edited" date (apparatus). Hairline rules top and bottom frame it as a list. */
+.doc-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--rule); }
+.doc-list li { border-bottom: 1px solid var(--rule); }
+.doc-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: 0.85rem;
-  margin-bottom: 1.75rem;
+  gap: 1.25rem;
+  padding: 1rem 0.15rem;
+  text-decoration: none;
+  color: var(--ink);
+  transition: color 0.12s;
 }
-.home-head h1 {
+.doc-title {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+.doc-row:hover .doc-title { color: var(--muted); }
+.doc-meta {
+  flex-shrink: 0;
   font-family: var(--mono);
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.doc-list { list-style: none; padding: 0; margin: 0; }
-.doc-list li {
-  border-bottom: 1px solid var(--rule);
-  padding: 0.85rem 0;
-}
-.doc-list li a {
+/* Empty library: nothing competes, so the New action is allowed to lead here —
+   the one place a filled .btn is the focal element. */
+.home-empty { padding: 2.5rem 0; }
+.home-empty-line {
+  font-family: var(--serif);
+  font-size: 1.25rem;
   color: var(--ink);
-  text-decoration: none;
-  font-size: 1.05rem;
+  margin: 0 0 0.4rem;
 }
-.doc-list li a:hover { color: var(--muted); }
+.home-empty-hint {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--muted);
+  margin: 0 0 1.5rem;
+}
 
 /* ── Reading surface ─────────────────────────────────────── */
 .reading { padding-top: 0.5rem; }
@@ -152,6 +203,15 @@ body {
 .btn:hover { opacity: 0.82; }
 .btn:active { transform: translateY(0.5px); }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Ghost variant: borders-only, no ink fill — for secondary actions that must
+   recede (e.g. New on the home masthead, where the catalog is focal). */
+.btn--ghost {
+  background: none;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+}
+.btn--ghost:hover { opacity: 1; color: var(--ink); border-color: var(--muted); }
 
 /* ── Utility ─────────────────────────────────────────────── */
 .muted { color: var(--muted); font-size: 0.9rem; }

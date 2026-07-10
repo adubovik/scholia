@@ -75,12 +75,13 @@ imported boilerplate titles gracefully.
 - **Node header** (`.node-head`) — rendered ONLY when structural (has children,
   label, or title); leaf prose nodes have no header chrome. Collapse glyph
   `▾/▸` carries `aria-expanded`. Label: mono `0.72rem` tabular `--muted`.
-- **Restructure controls** (`.tree-controls`) — a compact **2×2 pad** (bordered
-  paper chip, `0.95rem` glyphs) in the left gutter, anchored by its RIGHT edge
-  (`right: 100%; margin-right: 0.6rem`) so it can never overlap the collapse
-  triangle regardless of control count. `opacity 0` → revealed on `.node:hover`
-  / `:focus-within`; hidden `<860px` (tree editing is desktop-only). Never
-  reserve inline space. Grid order: row 1 = move ↑↓, row 2 = outdent/indent ⇤⇥.
+- **Restructure controls** (`.tree-controls-grid`) — a **4×1 vertical column**
+  (bordered paper chip, `0.95rem` glyphs) absolutely anchored under the gutter
+  pencil (`top: 100%; right: 0`), so its width never widens the in-flow pencil
+  column. `opacity 0` → revealed on `.tree-controls:hover` / `:focus-within`
+  (NOT `.node:hover`, which bubbles to ancestor nodes and pops the parents'
+  controls too); `pointer-events` gated with opacity. Hidden `<860px` (tree
+  editing is desktop-only). Order top→bottom: move ↑↓, then outdent/indent ⇤⇥.
 - **Inline note** (`.inline-note`) — SIGNATURE: the left rule (`2px`) takes the
   annotation's highlighter color (`borderLeftColor: var(--hl-<color>)` inline),
   tying the marginal note to its span. Mono `0.82rem/1.55`, no card/shadow.
@@ -93,7 +94,16 @@ imported boilerplate titles gracefully.
 - **Selection popover** (`.selection-popover`) — 4 swatches, `--paper` fill,
   1px `--muted` border, no shadow.
 - **Buttons** (`.btn`) — mono `0.72rem` · uppercase · `0.08em` tracking · ink
-  fill · `translateY(0.5px)` on `:active`.
+  fill · `translateY(0.5px)` on `:active`. `.btn--ghost` variant: borders-only
+  (1px `--rule`, no fill, `--muted`→`--ink` on hover) for secondary actions that
+  must recede (e.g. New on the home masthead).
+- **Home / title page** (`app/page.tsx`) — the app's table of contents. Masthead
+  = mono wordmark (`1.05rem`, `0.24em` tracking, `--ink`) over a serif-italic
+  descriptor (`--muted`), hairline rule under. **The catalog is focal**, so New
+  is a `.btn--ghost`, never a black slab. Catalog rows (`.doc-row`): serif title
+  (`1.15rem`, content) left + mono `EDITED DD MON YYYY` (`0.68rem`, `--faint`,
+  tabular, `0.1em` tracking, apparatus) right, hairline rules top & between.
+  Empty state is the one place New leads — a filled `.btn` under a serif line.
 
 ## Motion
 
