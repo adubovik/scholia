@@ -44,3 +44,32 @@ describe("planNodes", () => {
     expect(byId["n1"].endOffset).toBe(input[1].end);
   });
 });
+
+describe("planNodes — heading structure", () => {
+  it("nests prose under heading nodes and titles the headings", () => {
+    const input = paras("CHAPTER I", "Opening prose.", "More prose.", "CHAPTER II", "Next chapter prose.");
+    const nodes = planNodes(input, counter(), [2, null, null, 2, null]);
+
+    expect(nodes.map((n) => n.parentId)).toEqual([null, "n0", "n0", null, "n3"]);
+    expect(nodes.map((n) => n.title)).toEqual(["CHAPTER I", null, null, "CHAPTER II", null]);
+    // sibling positions reset per parent, assigned in document order
+    expect(nodes.map((n) => n.position)).toEqual([0, 0, 1, 1, 0]);
+    // heading node range covers the whole heading paragraph
+    expect(nodes[0]).toMatchObject({ startOffset: input[0].start, endOffset: input[0].end });
+  });
+
+  it("prefers numbered structure over heading levels when both could apply", () => {
+    const input = paras("1 First.", "2 Second.");
+    const nodes = planNodes(input, counter(), [2, 2]);
+    // numbered mode strips the label from the range (proseStart > 0)
+    expect(nodes[0].startOffset).toBeGreaterThan(input[0].start);
+    expect(nodes.map((n) => n.title)).toEqual([null, null]);
+  });
+
+  it("falls back to flat when headingLevels are all null", () => {
+    const input = paras("First.", "Second.");
+    const nodes = planNodes(input, counter(), [null, null]);
+    expect(nodes.map((n) => n.parentId)).toEqual([null, null]);
+    expect(nodes.map((n) => n.title)).toEqual([null, null]);
+  });
+});
