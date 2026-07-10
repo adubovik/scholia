@@ -4,6 +4,7 @@ import { documents, nodes, nodeSourceRanges, nodeAnnotations, inlineAnnotations 
 import { htmlToParagraphs } from "@/lib/import/html";
 import { createDocument } from "@/lib/actions/documents";
 import { computeDemoNesting } from "./seed-tree";
+import { progress, withSpinner } from "./seed-progress";
 
 const BOOK_URL = "https://www.gutenberg.org/files/5827/5827-h/5827-h.htm";
 const DEV_USER = "local-dev";
@@ -20,14 +21,18 @@ async function main() {
   }
 
   // 1) Import the book through the REAL import path (fetch -> htmlToParagraphs -> createDocument).
-  console.log("Seed: fetching", BOOK_URL);
-  const res = await fetch(BOOK_URL, { headers: { "user-agent": "ScholiaBot/1.0" } });
-  if (!res.ok) throw new Error(`Seed fetch failed: ${res.status}`);
-  const html = await res.text();
+  const html = await withSpinner(`Seed: fetching ${BOOK_URL}`, async () => {
+    const res = await fetch(BOOK_URL, { headers: { "user-agent": "ScholiaBot/1.0" } });
+    if (!res.ok) throw new Error(`Seed fetch failed: ${res.status}`);
+    return res.text();
+  });
   const { title, paragraphs } = htmlToParagraphs(html);
   if (paragraphs.length === 0) throw new Error("Seed: no paragraphs extracted from book");
-  const docId = await createDocument({ title: title ?? "Seeded Book", text: paragraphs.join("\n\n") });
-  console.log(`Seed: created document ${docId} (${paragraphs.length} paragraphs)`);
+  const docId = await withSpinner(
+    `Seed: importing ${paragraphs.length} paragraphs`,
+    () => createDocument({ title: title ?? "Seeded Book", text: paragraphs.join("\n\n") }),
+  );
+  console.log(`Seed: created document ${docId}`);
 
   // 2) Demo indent tree over the first three top-level nodes.
   const top = await db
@@ -35,10 +40,13 @@ async function main() {
     .from(nodes)
     .where(and(eq(nodes.documentId, docId), isNull(nodes.parentId)))
     .orderBy(nodes.position);
-  for (const u of computeDemoNesting(top.map((n) => n.id))) {
+  const updates = computeDemoNesting(top.map((n) => n.id));
+  const bar = progress("Seed: nesting blocks", updates.length);
+  for (const u of updates) {
     await db.update(nodes).set({ parentId: u.parentId, position: u.position }).where(eq(nodes.id, u.id));
+    bar.tick();
   }
-  console.log("Seed: nested the first three blocks");
+  bar.done();
 
   // 3) Comments on the first two blocks (original reading order): a node
   //    annotation on each, and one inline annotation inside each.
