@@ -1,5 +1,6 @@
 import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
+import { blocksToSource } from "./blocks";
 
 // ── New structured-block extraction ──────────────────────────────────────────
 
@@ -111,8 +112,6 @@ export function htmlToBlocks(html: string): ExtractedDoc {
   const rawTitle = article?.title ?? firstH1;
   return { title: rawTitle ? cleanTitle(rawTitle) : undefined, blocks };
 }
-
-import { blocksToSource } from "./blocks";
 
 export interface ExtractedText {
   title?: string;

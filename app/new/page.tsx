@@ -43,6 +43,7 @@ export default function NewDocumentPage() {
         setText(extracted);
         setTitle((cur) => cur || t || base);
       } else {
+        structured.current = null;
         setText(await file.text());
         setTitle((cur) => cur || base);
       }
