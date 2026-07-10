@@ -8,7 +8,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ docId
   if (!data || !data.source) notFound();
   // M2: only the owner can read (getDocument gates on owner_id), so canEdit is true.
   return (
-    <main className="page">
+    <main className="page page--read">
       <ReadingSurface title={data.doc.title} tree={data.tree} canEdit documentId={data.doc.id} />
     </main>
   );

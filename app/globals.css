@@ -17,6 +17,12 @@
   /* type */
   --serif: var(--font-serif), Georgia, Cambria, "Times New Roman", serif;
   --mono:  var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  /* reading surface — live-tunable via the Aa display sheet */
+  --reading-font-size:    1.1875rem;
+  --reading-line-height:  1.72;
+  --reading-word-spacing: 0em;
+  --reading-block-gap:    1.15rem;  /* tightened from 1.6rem; uniform at all depths */
+  --reading-measure:      44rem;
 }
 
 * { box-sizing: border-box; }
@@ -35,6 +41,9 @@ body {
   margin: 0 auto;
   padding: 3rem 1.25rem;
 }
+
+/* Only the read view's width is user-tunable; Home and Import keep 44rem. */
+.page--read { max-width: var(--reading-measure, 44rem); }
 
 /* ── Home ────────────────────────────────────────────────── */
 /* The title page of a slim printed edition: a masthead (wordmark + serif
@@ -137,7 +146,7 @@ body {
 }
 
 /* ── Reading surface ─────────────────────────────────────── */
-.reading { padding-top: 0.5rem; }
+.reading { position: relative; padding-top: 0.5rem; }
 .reading-title {
   font-family: var(--mono);
   font-size: 0.7rem;
@@ -150,8 +159,9 @@ body {
   border-bottom: 1px solid var(--rule);
 }
 .reading-p {
-  font-size: 1.1875rem;
-  line-height: 1.72;
+  font-size: var(--reading-font-size);
+  line-height: var(--reading-line-height);
+  word-spacing: var(--reading-word-spacing);
   margin: 0 0 1.4rem;
   color: var(--ink);
   text-align: justify;
@@ -345,7 +355,7 @@ body {
 /* align-items: baseline keeps the toggle glyph on the first text line's
    baseline regardless of whether that line is prose or mono head chrome —
    a fixed padding only matches one line-height and drifts between node types. */
-.node { position: relative; margin-top: 1.6rem; display: flex; align-items: baseline; gap: 0.35rem; }
+.node { position: relative; margin-top: var(--reading-block-gap); display: flex; align-items: baseline; gap: 0.35rem; }
 .node:first-child { margin-top: 0; }
 .node-toggle-col { flex: 0 0 1.1rem; display: flex; justify-content: center; }
 .node-body { flex: 1 1 auto; min-width: 0; }
@@ -373,8 +383,9 @@ body {
   padding: 0;
   margin: 0;
   font-family: var(--serif);
-  font-size: 1.1875rem;
-  line-height: 1.72;
+  font-size: var(--reading-font-size);
+  line-height: var(--reading-line-height);
+  word-spacing: var(--reading-word-spacing);
   color: var(--ink);
   cursor: pointer;
 }
@@ -412,14 +423,12 @@ body {
 }
 .node-children {
   border-left: 1px solid var(--rule);
-  /* Drop the connector straight down from the toggle triangle: the triangle
-     centre sits (row gap 0.35rem + half the 1.1rem toggle column) = 0.9rem left
-     of .node-body's edge, where this border would otherwise start. Pull it left
-     by that amount and add it back to the padding so child text keeps its
-     indent (the widened gutter then houses each child's own pencil). */
+  /* Drop the connector straight down from the toggle triangle (see -0.9rem note
+     below). Base child indent tightened 1.15rem → 0.5rem to close the gap
+     between the connector line and each child's note pencil. */
   margin-left: -0.9rem;
-  padding-left: 2.05rem; /* 1.15rem base indent + 0.9rem pulled back */
-  margin-top: 0.75rem;
+  padding-left: 1.4rem; /* 0.5rem base indent + 0.9rem pulled back */
+  margin-top: var(--reading-block-gap); /* uniform block spacing at every depth */
 }
 
 /* Gutter controls cluster: a persistent note pencil plus an editor-only 4×1
