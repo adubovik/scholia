@@ -246,8 +246,9 @@ body {
   margin-top: 0.75rem;
 }
 
-/* Gutter controls cluster: a persistent note pencil plus an editor-only 2×2
-   move/indent grid revealed on node hover. Kept IN FLOW as the first flex
+/* Gutter controls cluster: a persistent note pencil plus an editor-only 4×1
+   move/indent column revealed when the pencil column itself is hovered (see the
+   grid rules below for why this isn't keyed off `.node:hover`). Kept IN FLOW as the first flex
    child of .node so it inherits the row's `align-items: baseline` — that lands
    the pencil on the toggle triangle's text line automatically (a fixed pixel
    `top` can't, because the baseline offset differs between prose and head
@@ -278,22 +279,30 @@ body {
 .note-pencil:focus-visible { color: var(--ink); }
 .note-pencil--set { color: var(--ink); opacity: 1; }
 .tree-controls-grid {
-  /* Absolute popover anchored under the pencil, so its width never widens the
-     in-flow pencil column (which would knock the pencil off the triangle). */
+  /* Absolute popover anchored directly under the pencil, so its width never
+     widens the in-flow pencil column (which would knock the pencil off the
+     triangle). `top: 100%` (no gap) keeps the pencil and popover one continuous
+     hover surface — with a gap the pointer crosses dead space when reaching for
+     the controls and the popover flickers shut. Single column → a 4×1 vertical
+     stack of move/indent controls. */
   position: absolute;
-  top: calc(100% + 0.25rem);
+  top: 100%;
   right: 0;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 0.1rem;
   padding: 0.2rem;
   background: var(--paper);
   border: 1px solid var(--rule);
   opacity: 0;
+  pointer-events: none; /* don't capture the pointer while hidden */
   transition: opacity 0.12s;
 }
-.node:hover > .tree-controls .tree-controls-grid,
-.tree-controls:focus-within .tree-controls-grid { opacity: 1; }
+/* Reveal only for the node whose pencil column is hovered — NOT on `.node:hover`,
+   which also matches every ancestor node (hover bubbles up the tree) and would
+   pop the parents' controls too. */
+.tree-controls:hover .tree-controls-grid,
+.tree-controls:focus-within .tree-controls-grid { opacity: 1; pointer-events: auto; }
 .tree-controls-grid .glyph {
   font-size: 0.95rem;
   color: var(--muted);
