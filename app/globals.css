@@ -160,31 +160,128 @@ body {
   hanging-punctuation: first last;
 }
 
-/* ── Import wizard ───────────────────────────────────────── */
-.tabs {
-  display: flex;
-  gap: 0;
+/* ── Import (accession a text) ───────────────────────────── */
+/* The /new screen as an accession slip for the printed library: a mono eyebrow
+   over a serif title, then apparatus-labelled fields. No tabs — the three
+   provenances (paste · file · URL) coexist on one slip, with the paste/drop
+   canvas as the focal intake and the URL demoted to a secondary line. */
+.import-head {
   border-bottom: 1px solid var(--rule);
-  margin-bottom: 1.25rem;
+  padding-bottom: 1.1rem;
+  margin-bottom: 2rem;
 }
-.tab {
+.import-eyebrow {
   font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 0.55rem;
+}
+.import-head h1 {
+  font-family: var(--serif);
+  font-size: 1.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--ink);
+  margin: 0;
+  text-wrap: balance;
+}
+
+/* Apparatus field label — mono, tracked, muted; the hand that names each slot. */
+.field-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 1.5rem 0 0.5rem;
+}
+.import-head + .field-label { margin-top: 0; }
+
+/* Focal intake: a paste canvas that doubles as a file drop target. The textarea
+   sits borderless inside the framed .source; a hairline-topped browse strip
+   opens the picker; the overlay only surfaces mid-drag. */
+.source {
+  position: relative;
+  background: var(--field);
+  border: 1px solid var(--rule);
+  transition: border-color 0.12s, background 0.12s;
+}
+.source:focus-within { border-color: var(--muted); }
+.source.is-dragging {
+  border-color: var(--muted);
+  border-style: dashed;
+  background: #f1ebdc; /* one faint step warmer than --field, still whisper-quiet */
+}
+.source .textarea {
+  border: none;
+  background: none;
+  margin: 0;
+  min-height: 12rem;
+}
+.source-browse {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  padding: 0.45rem 0.9rem;
+  border-top: 1px dashed var(--rule);
+  padding: 0.6rem;
   cursor: pointer;
-  color: var(--muted);
-  font-size: 0.78rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--faint);
+  transition: color 0.12s;
+}
+.source-browse:hover { color: var(--ink); }
+.source-browse-link {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.source-browse:hover .source-browse-link { color: var(--ink); }
+.source-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.74rem;
   letter-spacing: 0.08em;
-  margin-bottom: -1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: rgba(246, 243, 236, 0.86);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
 }
-.tab:hover { color: var(--ink); }
-.tab.active {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
+.source.is-dragging .source-overlay { opacity: 1; }
+
+/* Secondary intake: fetch from a URL — a quiet line, not a peer of the canvas. */
+.url-row { display: flex; gap: 0.5rem; align-items: stretch; }
+.url-row .input { margin-bottom: 0; }
+.url-row .btn { white-space: nowrap; }
+
+.import-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.75rem;
 }
+
+/* The accession form wants more room than the 44rem reading measure — a form is
+   not a prose column. Widen this page only, leaving the reading surface intact. */
+.page--import { max-width: 52rem; }
 
 .input,
 .textarea {
