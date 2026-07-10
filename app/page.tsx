@@ -36,7 +36,23 @@ export default async function Home() {
             <li key={d.id}>
               <Link href={`/d/${d.id}`} className="doc-row">
                 <span className="doc-title">{d.title}</span>
-                <span className="doc-meta">Edited {formatEdited(d.updatedAt)}</span>
+                <span className="doc-meta">
+                  <span className="doc-stats">
+                    <span className="stat" title={`${d.noteCount} ${d.noteCount === 1 ? "note" : "notes"}`}>
+                      <span className="stat-icon" aria-hidden>✎</span>
+                      {d.noteCount}
+                    </span>
+                    <span className="stat" title={`${d.highlightCount} ${d.highlightCount === 1 ? "highlight" : "highlights"}`}>
+                      <span className="stat-icon stat-hl" aria-hidden />
+                      {d.highlightCount}
+                    </span>
+                    <span className="stat" title={`${d.nodeCount} ${d.nodeCount === 1 ? "node" : "nodes"}`}>
+                      <span className="stat-icon" aria-hidden>¶</span>
+                      {d.nodeCount}
+                    </span>
+                  </span>
+                  <span className="doc-date">Edited {formatEdited(d.updatedAt)}</span>
+                </span>
               </Link>
             </li>
           ))}

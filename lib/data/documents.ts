@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { documents, sources, paragraphs, nodes, nodeSourceRanges, inlineAnnotations, nodeAnnotations } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
@@ -7,11 +7,40 @@ import type { Color, InlineAnnotationView, NodeAnnotationView } from "@/lib/anno
 
 export async function listDocuments() {
   const user = await requireUser();
-  return db
+  const docs = await db
     .select({ id: documents.id, title: documents.title, updatedAt: documents.updatedAt })
     .from(documents)
     .where(eq(documents.ownerId, user.id))
     .orderBy(desc(documents.updatedAt));
+  if (docs.length === 0) return [];
+
+  // Catalog stats per document. nodes / inline_annotations / node_annotations all
+  // carry documentId, so each is a single grouped count (no per-doc fan-out),
+  // scoped to this owner by joining documents. Run the three concurrently.
+  const owned = eq(documents.ownerId, user.id);
+  const [nodeRows, highlightRows, noteRows] = await Promise.all([
+    db.select({ documentId: nodes.documentId, n: count() })
+      .from(nodes).innerJoin(documents, eq(nodes.documentId, documents.id))
+      .where(owned).groupBy(nodes.documentId),
+    db.select({ documentId: inlineAnnotations.documentId, n: count() })
+      .from(inlineAnnotations).innerJoin(documents, eq(inlineAnnotations.documentId, documents.id))
+      .where(owned).groupBy(inlineAnnotations.documentId),
+    db.select({ documentId: nodeAnnotations.documentId, n: count() })
+      .from(nodeAnnotations).innerJoin(documents, eq(nodeAnnotations.documentId, documents.id))
+      .where(owned).groupBy(nodeAnnotations.documentId),
+  ]);
+  const toMap = (rows: { documentId: string; n: number }[]) =>
+    new Map(rows.map((r) => [r.documentId, r.n]));
+  const nodeCounts = toMap(nodeRows);
+  const highlightCounts = toMap(highlightRows);
+  const noteCounts = toMap(noteRows);
+
+  return docs.map((d) => ({
+    ...d,
+    nodeCount: nodeCounts.get(d.id) ?? 0,
+    highlightCount: highlightCounts.get(d.id) ?? 0,
+    noteCount: noteCounts.get(d.id) ?? 0,
+  }));
 }
 
 export async function getDocument(docId: string) {

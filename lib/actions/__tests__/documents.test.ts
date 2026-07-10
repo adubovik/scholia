@@ -29,7 +29,12 @@ describe("document actions", () => {
       .toEqual(["One.", "Two."]);
 
     const list = await listDocuments();
-    expect(list.some(d => d.id === docId)).toBe(true);
+    const mine = list.find(d => d.id === docId);
+    expect(mine).toBeDefined();
+    // Fresh doc: nodes exist (one per paragraph), no annotations yet.
+    expect(mine!.nodeCount).toBeGreaterThan(0);
+    expect(mine!.highlightCount).toBe(0);
+    expect(mine!.noteCount).toBe(0);
   });
 
   it("owner-gates getDocument (returns null for a non-existent id)", async () => {
