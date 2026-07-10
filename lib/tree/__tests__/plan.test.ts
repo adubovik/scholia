@@ -52,6 +52,7 @@ describe("planNodes — heading structure", () => {
 
     expect(nodes.map((n) => n.parentId)).toEqual([null, "n0", "n0", null, "n3"]);
     expect(nodes.map((n) => n.title)).toEqual(["CHAPTER I", null, null, "CHAPTER II", null]);
+    expect(nodes.map((n) => n.label)).toEqual([null, null, null, null, null]);
     // sibling positions reset per parent, assigned in document order
     expect(nodes.map((n) => n.position)).toEqual([0, 0, 1, 1, 0]);
     // heading node range covers the whole heading paragraph
@@ -64,6 +65,7 @@ describe("planNodes — heading structure", () => {
     // numbered mode strips the label from the range (proseStart > 0)
     expect(nodes[0].startOffset).toBeGreaterThan(input[0].start);
     expect(nodes.map((n) => n.title)).toEqual([null, null]);
+    expect(nodes.map((n) => n.label)).toEqual(["1", "2"]);
   });
 
   it("falls back to flat when headingLevels are all null", () => {
