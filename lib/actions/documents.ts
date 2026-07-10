@@ -11,6 +11,7 @@ export async function createDocument(input: {
   language?: string;
   label?: string;
   text: string;
+  headingLevels?: (number | null)[];
 }): Promise<string> {
   const user = await requireUser();
   const normalized = normalizeText(input.text);
@@ -38,6 +39,7 @@ export async function createDocument(input: {
     const planned = planNodes(
       paras.map((p) => ({ start: p.start, end: p.end, text: p.text })),
       () => crypto.randomUUID(),
+      input.headingLevels,
     );
     statements.push(
       db.insert(nodes).values(

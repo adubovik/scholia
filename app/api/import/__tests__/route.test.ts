@@ -19,13 +19,14 @@ describe("POST /api/import", () => {
     authState.userId = "u1";
   });
 
-  it("returns paragraphs for a fetched page", async () => {
+  it("returns text and headingLevels for a fetched page", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(HTML, { status: 200 })));
     const res = await POST(req({ url: "https://example.com/book" }));
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.paragraphs.length).toBeGreaterThanOrEqual(2);
-    expect(json.paragraphs[0]).toContain("paragraph one");
+    expect(typeof json.text).toBe("string");
+    expect(json.text).toContain("paragraph one");
+    expect(Array.isArray(json.headingLevels)).toBe(true);
   });
 
   it("rejects a non-http url", async () => {

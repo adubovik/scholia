@@ -16,6 +16,9 @@ export default function NewDocumentPage() {
   // dragenter/dragleave fire per child element; count depth so the overlay only
   // clears when the pointer truly leaves the canvas, not on inner boundaries.
   const dragDepth = useRef(0);
+  // headingLevels are valid only while `text` is exactly what extraction produced;
+  // once the user edits the textarea the paragraph count can drift, so we drop them.
+  const structured = useRef<{ text: string; headingLevels: (number | null)[] } | null>(null);
 
   // Keep a stray drop outside the canvas from navigating the browser to the file.
   useEffect(() => {
@@ -35,8 +38,9 @@ export default function NewDocumentPage() {
     try {
       if (/\.html?$/i.test(file.name)) {
         setBusy(true);
-        const { title: t, paragraphs } = await extractHtml(await file.text());
-        setText(paragraphs.join("\n\n"));
+        const { title: t, text: extracted, headingLevels } = await extractHtml(await file.text());
+        structured.current = { text: extracted, headingLevels };
+        setText(extracted);
         setTitle((cur) => cur || t || base);
       } else {
         setText(await file.text());
@@ -60,8 +64,9 @@ export default function NewDocumentPage() {
         body: JSON.stringify({ url }),
       });
       if (!res.ok) throw new Error((await res.json()).error ?? "Import failed");
-      const { title: t, paragraphs } = await res.json();
-      setText((paragraphs as string[]).join("\n\n"));
+      const { title: t, text: extracted, headingLevels } = await res.json();
+      structured.current = { text: extracted, headingLevels };
+      setText(extracted);
       setTitle((cur) => cur || t || "");
     } catch (e) {
       setError((e as Error).message);
@@ -74,7 +79,11 @@ export default function NewDocumentPage() {
     setBusy(true);
     setError(null);
     try {
-      const id = await createDocument({ title: title.trim() || "Untitled", text });
+      const headingLevels =
+        structured.current && structured.current.text === text
+          ? structured.current.headingLevels
+          : undefined;
+      const id = await createDocument({ title: title.trim() || "Untitled", text, headingLevels });
       router.push(`/d/${id}`);
     } catch (e) {
       setError((e as Error).message);

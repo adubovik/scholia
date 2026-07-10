@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { documents, nodes, nodeSourceRanges, nodeAnnotations, inlineAnnotations } from "@/lib/db/schema";
-import { htmlToParagraphs } from "@/lib/import/html";
+import { htmlToSource } from "@/lib/import/html";
 import { createDocument } from "@/lib/actions/documents";
 import { computeDemoNesting } from "./seed-tree";
 import { progress, withSpinner } from "./seed-progress";
@@ -20,17 +20,17 @@ async function main() {
     return;
   }
 
-  // 1) Import the book through the REAL import path (fetch -> htmlToParagraphs -> createDocument).
+  // 1) Import the book through the REAL import path (fetch -> htmlToSource -> createDocument).
   const html = await withSpinner(`Seed: fetching ${BOOK_URL}`, async () => {
     const res = await fetch(BOOK_URL, { headers: { "user-agent": "ScholiaBot/1.0" } });
     if (!res.ok) throw new Error(`Seed fetch failed: ${res.status}`);
     return res.text();
   });
-  const { title, paragraphs } = htmlToParagraphs(html);
-  if (paragraphs.length === 0) throw new Error("Seed: no paragraphs extracted from book");
+  const { title, text, headingLevels } = htmlToSource(html);
+  if (text.length === 0) throw new Error("Seed: no text extracted from book");
   const docId = await withSpinner(
-    `Seed: importing ${paragraphs.length} paragraphs`,
-    () => createDocument({ title: title ?? "Seeded Book", text: paragraphs.join("\n\n") }),
+    `Seed: importing document`,
+    () => createDocument({ title: title ?? "Seeded Book", text, headingLevels }),
   );
   console.log(`Seed: created document ${docId}`);
 

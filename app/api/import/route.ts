@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth/current-user";
-import { htmlToParagraphs } from "@/lib/import/html";
+import { htmlToSource } from "@/lib/import/html";
 
 export async function POST(request: Request) {
   const userId = await getUserId();
@@ -25,5 +25,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Fetch error" }, { status: 502 });
   }
 
-  return NextResponse.json(htmlToParagraphs(html));
+  return NextResponse.json(htmlToSource(html));
 }
