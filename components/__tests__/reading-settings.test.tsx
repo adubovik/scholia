@@ -9,8 +9,9 @@ beforeEach(() => {
 });
 
 function openSheet() {
-  render(<ReadingSettings />);
+  const view = render(<ReadingSettings />);
   fireEvent.click(screen.getByRole("button", { name: "Display settings" }));
+  return view;
 }
 
 describe("ReadingSettings", () => {
@@ -20,11 +21,18 @@ describe("ReadingSettings", () => {
     expect(screen.getAllByRole("slider")).toHaveLength(5);
   });
 
+  it("renders eight tick marks per slider", () => {
+    const { container } = openSheet();
+    // 5 controls × 8 steps
+    expect(container.querySelectorAll(".aa-tick")).toHaveLength(40);
+    expect(screen.getByRole("slider", { name: "Size" })).toHaveProperty("max", "7");
+  });
+
   it("applies a slider change to the CSS var and persists it", () => {
     openSheet();
-    fireEvent.change(screen.getByRole("slider", { name: "Size" }), { target: { value: "4" } });
-    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.4rem");
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).size).toBe(4);
+    fireEvent.change(screen.getByRole("slider", { name: "Size" }), { target: { value: "7" } });
+    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.4375rem");
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).size).toBe(7);
   });
 
   it("resets to defaults and clears storage", () => {

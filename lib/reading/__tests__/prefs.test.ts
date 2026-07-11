@@ -20,8 +20,8 @@ describe("stepsToVars", () => {
       "--reading-measure": "44rem",
     });
   });
-  it("maps a raised size index to the larger step", () => {
-    expect(stepsToVars({ ...DEFAULT_INDICES, size: 4 })["--reading-font-size"]).toBe("1.4rem");
+  it("maps the top size index to the largest step", () => {
+    expect(stepsToVars({ ...DEFAULT_INDICES, size: 7 })["--reading-font-size"]).toBe("1.4375rem");
   });
 });
 
@@ -52,10 +52,10 @@ describe("storage round-trip", () => {
 
 describe("preloadScript", () => {
   it("applies stored vars to documentElement", () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...DEFAULT_INDICES, size: 4 }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...DEFAULT_INDICES, size: 7 }));
     // eslint-disable-next-line no-eval
     eval(preloadScript());
-    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.4rem");
+    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.4375rem");
   });
   it("references the storage key", () => {
     expect(preloadScript()).toContain(STORAGE_KEY);
@@ -64,7 +64,7 @@ describe("preloadScript", () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...DEFAULT_INDICES, size: 1.5 }));
     // eslint-disable-next-line no-eval
     eval(preloadScript());
-    // default size index 2 → "1.1875rem"; must not be "undefined"
+    // default size index 3 → "1.1875rem"; must not be "undefined"
     expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.1875rem");
   });
 });

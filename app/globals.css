@@ -673,7 +673,25 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   text-align: center;
   line-height: 1;
 }
+/* Slider column: the range input over a row of tick marks, one per step. The
+   ticks are inset by half the thumb (0.85rem) so the first/last align with the
+   thumb-centre travel; space-between then lands the rest on each step stop. */
+.aa-slider { position: relative; display: block; width: 100%; }
+.aa-ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0.425rem;
+  pointer-events: none;
+}
+.aa-tick { width: 1px; height: 7px; background: var(--faint); }
 .aa-row input[type="range"] {
+  position: relative; /* thumb rides above the ticks */
+  z-index: 1;
   -webkit-appearance: none;
   appearance: none;
   width: 100%;

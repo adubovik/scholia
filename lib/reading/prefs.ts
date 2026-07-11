@@ -7,13 +7,14 @@ export const STORAGE_KEY = "scholia:reading-prefs";
 export type PrefKey = "size" | "line" | "word" | "block" | "width";
 
 // steps are pre-formatted CSS values (line-height is unitless) so mapping is a
-// plain lookup. Index `default` reproduces today's look (except block, tightened).
+// plain lookup. 8 steps per control (a tick per step in the UI). Index `default`
+// reproduces today's look (except block, tightened).
 export const CONTROLS: Record<PrefKey, { cssVar: string; steps: string[]; default: number }> = {
-  size:  { cssVar: "--reading-font-size",    steps: ["1rem", "1.09rem", "1.1875rem", "1.28rem", "1.4rem"], default: 2 },
-  line:  { cssVar: "--reading-line-height",  steps: ["1.4", "1.56", "1.72", "1.9", "2.1"], default: 2 },
-  word:  { cssVar: "--reading-word-spacing", steps: ["0em", "0.05em", "0.1em", "0.16em", "0.24em"], default: 0 },
-  block: { cssVar: "--reading-block-gap",    steps: ["0.7rem", "0.9rem", "1.15rem", "1.5rem", "1.9rem"], default: 2 },
-  width: { cssVar: "--reading-measure",      steps: ["32rem", "38rem", "44rem", "52rem", "62rem"], default: 2 },
+  size:  { cssVar: "--reading-font-size",    steps: ["1rem", "1.0625rem", "1.125rem", "1.1875rem", "1.25rem", "1.3125rem", "1.375rem", "1.4375rem"], default: 3 },
+  line:  { cssVar: "--reading-line-height",  steps: ["1.4", "1.5", "1.6", "1.72", "1.85", "1.95", "2.05", "2.15"], default: 3 },
+  word:  { cssVar: "--reading-word-spacing", steps: ["0em", "0.02em", "0.04em", "0.06em", "0.09em", "0.12em", "0.16em", "0.2em"], default: 0 },
+  block: { cssVar: "--reading-block-gap",    steps: ["0.5rem", "0.8rem", "1.15rem", "1.5rem", "1.9rem", "2.3rem", "2.7rem", "3.1rem"], default: 2 },
+  width: { cssVar: "--reading-measure",      steps: ["30rem", "36rem", "40rem", "44rem", "50rem", "56rem", "62rem", "70rem"], default: 3 },
 };
 
 const KEYS = Object.keys(CONTROLS) as PrefKey[];

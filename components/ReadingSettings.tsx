@@ -119,22 +119,33 @@ export function ReadingSettings() {
               <button className="glyph" aria-label="Close" onClick={close}>✕</button>
             </div>
 
-            {ROWS.map(({ key, label, lo, hi }) => (
-              <label key={key} className="aa-row">
-                <span className="aa-label">{label}</span>
-                <span className="aa-cap" aria-hidden="true">{lo}</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={CONTROLS[key].steps.length - 1}
-                  step={1}
-                  value={indices[key]}
-                  aria-label={label}
-                  onChange={(e) => setOne(key, Number(e.target.value))}
-                />
-                <span className="aa-cap" aria-hidden="true">{hi}</span>
-              </label>
-            ))}
+            {ROWS.map(({ key, label, lo, hi }) => {
+              const count = CONTROLS[key].steps.length;
+              return (
+                <label key={key} className="aa-row">
+                  <span className="aa-label">{label}</span>
+                  <span className="aa-cap" aria-hidden="true">{lo}</span>
+                  <span className="aa-slider">
+                    {/* One tick per step, aligned to the thumb's stops. */}
+                    <span className="aa-ticks" aria-hidden="true">
+                      {Array.from({ length: count }, (_, i) => (
+                        <span key={i} className="aa-tick" />
+                      ))}
+                    </span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={count - 1}
+                      step={1}
+                      value={indices[key]}
+                      aria-label={label}
+                      onChange={(e) => setOne(key, Number(e.target.value))}
+                    />
+                  </span>
+                  <span className="aa-cap" aria-hidden="true">{hi}</span>
+                </label>
+              );
+            })}
 
             <button className="link-btn" onClick={reset}>Reset to defaults</button>
           </div>
