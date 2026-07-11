@@ -688,7 +688,7 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   padding: 0 0.425rem;
   pointer-events: none;
 }
-.aa-tick { width: 1px; height: 7px; background: var(--faint); }
+.aa-tick { width: 1px; height: 3.5px; background: var(--faint); }
 .aa-row input[type="range"] {
   position: relative; /* thumb rides above the ticks */
   z-index: 1;
