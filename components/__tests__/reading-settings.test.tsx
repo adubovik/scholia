@@ -40,4 +40,15 @@ describe("ReadingSettings", () => {
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
   });
+
+  it("moves focus into the sheet (the Close button) when opened", () => {
+    openSheet();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Close" }));
+  });
+
+  it("returns focus to the trigger when closed with Escape", () => {
+    openSheet();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Display settings" }));
+  });
 });

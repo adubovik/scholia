@@ -28,6 +28,7 @@ export function ReadingSettings() {
   const [open, setOpen] = useState(false);
   const [indices, setIndices] = useState<PrefIndices>(DEFAULT_INDICES);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   // The pre-paint script already applied stored prefs to the CSS vars; on mount
   // we only mirror them into slider positions.
@@ -55,8 +56,37 @@ export function ReadingSettings() {
 
   useEffect(() => {
     if (!open) return;
+    const sheet = sheetRef.current;
+    const getFocusable = () =>
+      sheet
+        ? Array.from(
+            sheet.querySelectorAll<HTMLElement>(
+              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            )
+          ).filter((el) => !el.hasAttribute("disabled"))
+        : [];
+
+    // Move focus into the sheet on open (first focusable — the Close button).
+    getFocusable()[0]?.focus();
+
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") {
+        close();
+        return;
+      }
+      if (e.key === "Tab") {
+        const items = getFocusable();
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -77,6 +107,7 @@ export function ReadingSettings() {
       {open && (
         <div className="aa-backdrop" onClick={close}>
           <div
+            ref={sheetRef}
             className="aa-sheet"
             role="dialog"
             aria-modal="true"
