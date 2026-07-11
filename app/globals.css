@@ -162,7 +162,7 @@ body {
   font-size: var(--reading-font-size);
   line-height: var(--reading-line-height);
   word-spacing: var(--reading-word-spacing);
-  margin: 0 0 1.4rem;
+  margin: 0 0 0;
   color: var(--ink);
   text-align: justify;
   hyphens: auto;

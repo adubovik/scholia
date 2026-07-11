@@ -13,7 +13,7 @@ export const CONTROLS: Record<PrefKey, { cssVar: string; steps: string[]; defaul
   size:  { cssVar: "--reading-font-size",    steps: ["1rem", "1.0625rem", "1.125rem", "1.1875rem", "1.25rem", "1.3125rem", "1.375rem", "1.4375rem"], default: 3 },
   line:  { cssVar: "--reading-line-height",  steps: ["1.4", "1.5", "1.6", "1.72", "1.85", "1.95", "2.05", "2.15"], default: 3 },
   word:  { cssVar: "--reading-word-spacing", steps: ["0em", "0.02em", "0.04em", "0.06em", "0.09em", "0.12em", "0.16em", "0.2em"], default: 0 },
-  block: { cssVar: "--reading-block-gap",    steps: ["0.5rem", "0.8rem", "1.15rem", "1.5rem", "1.9rem", "2.3rem", "2.7rem", "3.1rem"], default: 2 },
+  block: { cssVar: "--reading-block-gap",    steps: ["0rem", "0.2rem", "0.5rem", "0.8rem", "1.15rem", "1.5rem", "1.9rem", "2.3rem"], default: 2 },
   width: { cssVar: "--reading-measure",      steps: ["30rem", "36rem", "40rem", "44rem", "50rem", "56rem", "62rem", "70rem"], default: 3 },
 };
 
