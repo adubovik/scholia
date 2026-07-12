@@ -33,6 +33,7 @@ export default function RootLayout({
   const tree = (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${serif.variable} ${mono.variable} h-full antialiased`}
     >
       <head>
