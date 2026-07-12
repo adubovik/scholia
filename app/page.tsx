@@ -39,7 +39,7 @@ export default async function Home() {
                 <span className="doc-meta">
                   <span className="doc-stats">
                     <span className="stat" title={`${d.noteCount} ${d.noteCount === 1 ? "note" : "notes"}`}>
-                      <span className="stat-icon" aria-hidden>✎</span>
+                      <span className="stat-icon" aria-hidden>¶</span>
                       {d.noteCount}
                     </span>
                     <span className="stat" title={`${d.highlightCount} ${d.highlightCount === 1 ? "highlight" : "highlights"}`}>
@@ -47,7 +47,7 @@ export default async function Home() {
                       {d.highlightCount}
                     </span>
                     <span className="stat" title={`${d.nodeCount} ${d.nodeCount === 1 ? "node" : "nodes"}`}>
-                      <span className="stat-icon" aria-hidden>¶</span>
+                      <span className="stat-icon" aria-hidden>§</span>
                       {d.nodeCount}
                     </span>
                   </span>

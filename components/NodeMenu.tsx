@@ -1,0 +1,171 @@
+"use client";
+
+import type { ReactNode } from "react";
+import * as ContextMenu from "@radix-ui/react-context-menu";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { indentNode, outdentNode, moveNodeUp, moveNodeDown } from "@/lib/actions/tree";
+import { useCollapse } from "./CollapseContext";
+
+// The five node actions, shared verbatim by the right-click ContextMenu (row) and
+// the ⋯ DropdownMenu (hint). Radix's ContextMenu.* and DropdownMenu.* item parts
+// have the same API but aren't interchangeable inside each other's Content, so the
+// concrete Item/Separator components are passed in by each host.
+type MenuProps = {
+  nodeId: string;
+  canEdit: boolean;
+  hasNote: boolean;
+  hasChildren: boolean;
+  onOpenNote: () => void;
+  onCollapseChildren: () => void;
+  onExpandChildren: () => void;
+};
+
+type ItemParts = {
+  Item: typeof ContextMenu.Item | typeof DropdownMenu.Item;
+  Separator: typeof ContextMenu.Separator | typeof DropdownMenu.Separator;
+};
+
+// Shortcut hint: visual only (aria-hidden so it doesn't pollute the item's
+// accessible name), paired with aria-keyshortcuts on the item for AT.
+function Key({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="node-menu-key" aria-hidden>
+      {children}
+    </kbd>
+  );
+}
+
+export function MenuItems({
+  nodeId, canEdit, hasNote, hasChildren,
+  onOpenNote, onCollapseChildren, onExpandChildren,
+  Item, Separator,
+}: MenuProps & ItemParts) {
+  return (
+    <>
+      {canEdit && (
+        <>
+          <Item className="node-menu-item" aria-keyshortcuts="Alt+ArrowUp" onSelect={() => moveNodeUp(nodeId)}>
+            <span className="node-menu-label">Move up</span><Key>⌥↑</Key>
+          </Item>
+          <Item className="node-menu-item" aria-keyshortcuts="Alt+ArrowDown" onSelect={() => moveNodeDown(nodeId)}>
+            <span className="node-menu-label">Move down</span><Key>⌥↓</Key>
+          </Item>
+          <Item className="node-menu-item" aria-keyshortcuts="Alt+[" onSelect={() => outdentNode(nodeId)}>
+            <span className="node-menu-label">Outdent</span><Key>⌥[</Key>
+          </Item>
+          <Item className="node-menu-item" aria-keyshortcuts="Alt+]" onSelect={() => indentNode(nodeId)}>
+            <span className="node-menu-label">Indent</span><Key>⌥]</Key>
+          </Item>
+        </>
+      )}
+      {hasChildren && (
+        <>
+          {canEdit && <Separator className="node-menu-sep" />}
+          <Item className="node-menu-item" onSelect={onCollapseChildren}>
+            <span className="node-menu-label">Collapse children</span>
+          </Item>
+          <Item className="node-menu-item" onSelect={onExpandChildren}>
+            <span className="node-menu-label">Expand children</span>
+          </Item>
+        </>
+      )}
+      {canEdit && (
+        <>
+          <Separator className="node-menu-sep" />
+          <Item className="node-menu-item" onSelect={onOpenNote}>
+            <span className="node-menu-label">{hasNote ? "Edit note" : "Add note"}</span>
+          </Item>
+        </>
+      )}
+    </>
+  );
+}
+
+// Right-click / long-press anywhere on the wrapped node content opens the menu.
+// Wraps only the node's OWN head+passage (not its children) so nested triggers
+// never fight over one contextmenu event.
+export function NodeContextMenu({
+  children,
+  onOpenChange,
+  ...menu
+}: MenuProps & { children: ReactNode; onOpenChange?: (open: boolean) => void }) {
+  return (
+    <ContextMenu.Root onOpenChange={onOpenChange}>
+      {/* stopPropagation so a right-click on the node opens THIS menu, not the
+          document-level RootMenu that wraps the whole reading canvas. */}
+      <ContextMenu.Trigger asChild onContextMenu={(e) => e.stopPropagation()}>
+        {children}
+      </ContextMenu.Trigger>
+      <ContextMenu.Portal>
+        <ContextMenu.Content className="node-menu" collisionPadding={8}>
+          <MenuItems {...menu} Item={ContextMenu.Item} Separator={ContextMenu.Separator} />
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
+  );
+}
+
+// Editor keyboard shortcuts, active while the ⋯ hint is focused ("engaged"), so
+// normal Tab traversal is untouched everywhere else. Bindings are chosen to avoid
+// browser conflicts: Alt+↑/↓ move (VS Code's move-line), Alt+[ / Alt+] out/indent
+// (mnemonic, no browser nav binding). Brackets keyed off e.code so macOS Option
+// special-chars ("“ / ‘") don't mask them. preventDefault also stops Radix's own
+// Arrow-to-open (its composed handler skips when defaultPrevented).
+function onHintKeyDown(nodeId: string, canEdit: boolean) {
+  return (e: React.KeyboardEvent) => {
+    if (!canEdit || !e.altKey) return; // editor-only; let Radix handle plain keys
+    let action: (() => void) | null = null;
+    if (e.key === "ArrowUp") action = () => moveNodeUp(nodeId);
+    else if (e.key === "ArrowDown") action = () => moveNodeDown(nodeId);
+    else if (e.code === "BracketRight") action = () => indentNode(nodeId);
+    else if (e.code === "BracketLeft") action = () => outdentNode(nodeId);
+    if (action) {
+      e.preventDefault();
+      action();
+    }
+  };
+}
+
+// The visible ⋮ door for pointer users who don't try right-click.
+export function NodeMenuHint({
+  onOpenChange,
+  ...menu
+}: MenuProps & { onOpenChange?: (open: boolean) => void }) {
+  return (
+    <DropdownMenu.Root onOpenChange={onOpenChange}>
+      <DropdownMenu.Trigger asChild>
+        <button className="glyph node-hint" aria-label="Node actions" onKeyDown={onHintKeyDown(menu.nodeId, menu.canEdit)}>⋮</button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content className="node-menu" align="end" sideOffset={4} collisionPadding={8}>
+          <MenuItems {...menu} Item={DropdownMenu.Item} Separator={DropdownMenu.Separator} />
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
+// Right-click on empty reading space (outside any node) targets the invisible
+// top-level: Collapse/Expand children folds or unfolds the entire document.
+// `allIds` is every node id in the tree; node triggers stopPropagation so a
+// right-click on a node opens its own menu instead of this one.
+export function RootMenu({ allIds, children }: { allIds: string[]; children: ReactNode }) {
+  const { setMany } = useCollapse();
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger asChild>
+        <div className="reading-canvas">{children}</div>
+      </ContextMenu.Trigger>
+      <ContextMenu.Portal>
+        <ContextMenu.Content className="node-menu" collisionPadding={8}>
+          <ContextMenu.Item className="node-menu-item" onSelect={() => setMany(allIds, true)}>
+            <span className="node-menu-label">Collapse children</span>
+          </ContextMenu.Item>
+          <ContextMenu.Item className="node-menu-item" onSelect={() => setMany(allIds, false)}>
+            <span className="node-menu-label">Expand children</span>
+          </ContextMenu.Item>
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
+  );
+}

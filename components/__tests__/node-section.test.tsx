@@ -1,7 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NodeSection } from "@/components/NodeSection";
+import { CollapseProvider } from "@/components/CollapseContext";
 import type { TreeNode } from "@/lib/tree/build";
+
+// Collapse state now lives in a provider; NodeSection reads it via useCollapse.
+const renderNode = (n: TreeNode) =>
+  render(
+    <CollapseProvider>
+      <NodeSection node={n} depth={0} canEdit={false} documentId="d1" />
+    </CollapseProvider>,
+  );
 
 const node: TreeNode = {
   id: "a", label: "1", title: null, text: "Parent prose.", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
@@ -23,14 +32,14 @@ const heading: TreeNode = {
 
 describe("NodeSection", () => {
   it("renders a heading node's text once (as its head, no duplicate passage)", () => {
-    render(<NodeSection node={heading} depth={0} canEdit={false} documentId="d1" />);
+    renderNode(heading);
     // The heading appears exactly once, and its child prose still renders.
     expect(screen.getAllByText("CHAPTER I")).toHaveLength(1);
     expect(screen.getByText("Chapter one prose.")).toBeDefined();
   });
 
   it("toggles child visibility when the parent collapse glyph is clicked", () => {
-    render(<NodeSection node={node} depth={0} canEdit={false} documentId="d1" />);
+    renderNode(node);
     expect(screen.getByText("Child prose.")).toBeDefined();
 
     // Parent is first in the DOM; the child now has its own toggle too.
@@ -42,7 +51,7 @@ describe("NodeSection", () => {
   });
 
   it("collapses a text-only top-level node to its first sentence", () => {
-    render(<NodeSection node={leaf} depth={0} canEdit={false} documentId="d1" />);
+    renderNode(leaf);
     expect(screen.getByText(/Second two\./)).toBeDefined();
 
     fireEvent.click(screen.getByRole("button", { name: "Collapse" }));
@@ -51,7 +60,7 @@ describe("NodeSection", () => {
   });
 
   it("expands again when the collapsed preview is clicked", () => {
-    render(<NodeSection node={leaf} depth={0} canEdit={false} documentId="d1" />);
+    renderNode(leaf);
     fireEvent.click(screen.getByRole("button", { name: "Collapse" }));
     fireEvent.click(screen.getByText(/First one\./));
     expect(screen.getByText(/Second two\./)).toBeDefined();

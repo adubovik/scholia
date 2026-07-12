@@ -431,72 +431,103 @@ body {
   margin-top: var(--reading-block-gap); /* uniform block spacing at every depth */
 }
 
-/* Gutter controls cluster: a persistent note pencil plus an editor-only 4×1
-   move/indent column revealed when the pencil column itself is hovered (see the
-   grid rules below for why this isn't keyed off `.node:hover`). Kept IN FLOW as the first flex
-   child of .node so it inherits the row's `align-items: baseline` — that lands
-   the pencil on the toggle triangle's text line automatically (a fixed pixel
-   `top` can't, because the baseline offset differs between prose and head
-   chrome). Its 1.4rem width is claimed then cancelled by a negative margin so
-   the toggle/text keep their position, and the pencil hugs the right edge so it
-   sits just left of the triangle regardless of the hover grid's width. The
-   container stays fully opaque so the pencil can show when a note exists
-   (opacity compounds — a persistent child cannot live inside an opacity:0 box). */
-.tree-controls {
-  position: relative; /* anchor for the absolute hover popover below */
-  flex: 0 0 1.4rem;
-  margin-left: -1.75rem; /* -(width + .node row gap) → toggle stays put */
+/* Margin gutter: a persistent ¶ marker when the node carries a note (indicator +
+   click-to-read) and an editor-only ⋯ hint that opens the node menu. Kept IN FLOW
+   as the first flex child of .node so it inherits the row's `align-items: baseline`
+   and lands on the toggle triangle's text line automatically. Its width is claimed
+   then cancelled by a negative margin so the toggle/text keep their position; the
+   glyphs hug the right edge, sitting just left of the triangle. */
+.node-gutter {
+  flex: 0 0 1rem;
+  margin-left: -1.35rem; /* -(width + .node row gap) → toggle stays put */
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.25rem;
+  gap: 0.1rem;
 }
-.note-pencil {
-  font-size: 0.95rem;
-  color: var(--muted);
-  opacity: 0.45;
-  padding: 0 0.2rem;
+.node-marker {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--muted); /* --muted, not a full-height --rule line — distinct from
+                          the .node-children connector */
+  transition: color 0.12s;
+}
+.node-marker:hover,
+.node-marker:focus-visible { color: var(--ink); }
+/* The ⋯ hint only materialises on row hover (or when its menu is focused/open),
+   so un-annotated nodes read as pure prose until the reader reaches for them. */
+.node-hint {
+  font-size: 0.9rem;
+  padding: 0 0.15rem;
+  opacity: 0;
   transition: opacity 0.12s, color 0.12s;
 }
-.node:hover > .tree-controls .note-pencil,
-.tree-controls:focus-within .note-pencil { opacity: 1; }
-.note-pencil:hover,
-.note-pencil:focus-visible { color: var(--ink); }
-.note-pencil--set { color: var(--ink); opacity: 1; }
-.tree-controls-grid {
-  /* Absolute popover anchored directly under the pencil, so its width never
-     widens the in-flow pencil column (which would knock the pencil off the
-     triangle). `top: 100%` (no gap) keeps the pencil and popover one continuous
-     hover surface — with a gap the pointer crosses dead space when reaching for
-     the controls and the popover flickers shut. Single column → a 4×1 vertical
-     stack of move/indent controls. */
-  position: absolute;
-  top: 100%;
-  right: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.1rem;
-  padding: 0.2rem;
+.node:hover > .node-gutter .node-hint,
+.node-hint:focus-visible,
+.node-hint[data-state="open"] { opacity: 1; }
+@media (max-width: 860px) { .node-hint { display: none; } }
+
+/* Node menu (Radix ContextMenu + DropdownMenu), styled to the Display sheet
+   (.aa-sheet): parchment surface, hairline rule, soft shadow, square corners,
+   mono uppercase items that go --muted → --ink on hover/keyboard highlight. */
+.node-menu {
+  min-width: 11rem;
   background: var(--paper);
   border: 1px solid var(--rule);
-  opacity: 0;
-  pointer-events: none; /* don't capture the pointer while hidden */
-  transition: opacity 0.12s;
+  box-shadow: 0 10px 34px rgba(28, 26, 21, 0.14);
+  padding: 0.3rem;
+  z-index: 50;
 }
-/* Reveal only for the node whose pencil column is hovered — NOT on `.node:hover`,
-   which also matches every ancestor node (hover bubbles up the tree) and would
-   pop the parents' controls too. */
-.tree-controls:hover .tree-controls-grid,
-.tree-controls:focus-within .tree-controls-grid { opacity: 1; pointer-events: auto; }
-.tree-controls-grid .glyph {
-  font-size: 0.95rem;
+.node-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted);
-  padding: 0.15rem 0.3rem;
-  min-width: 1.4rem;
+  padding: 0.3rem 0.45rem;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
 }
-.tree-controls-grid .glyph:hover { color: var(--ink); }
-/* Keep the note pencil reachable on mobile; only hide the move/indent grid. */
-@media (max-width: 860px) { .tree-controls-grid { display: none; } }
+.node-menu-item[data-highlighted] { color: var(--ink); }
+/* Label takes the row; the shortcut is pushed hard right (label grows, key is
+   fixed). This is what separates them regardless of menu width. */
+.node-menu-label { flex: 1 1 auto; }
+.node-menu-key {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  color: var(--faint);
+}
+.node-menu-item[data-highlighted] .node-menu-key { color: var(--muted); }
+/* Fills the reading column so right-clicking empty space (below/around the tree)
+   still hits the document-level RootMenu. */
+.reading-canvas { display: block; min-height: 60vh; }
+
+/* While a node's menu is open, mark WHICH node it acts on: a lighter wash + a
+   dashed border. box-shadow (padded wash) and outline (dashed edge) add no
+   layout, so opening the menu never nudges the prose. */
+.node-self { border-radius: 3px; transition: background-color 0.12s, box-shadow 0.12s; }
+.node-self--active {
+  background-color: var(--field);
+  box-shadow: 0 0 0 0.3rem var(--field);
+  outline: 1px dashed var(--muted);
+  outline-offset: 0.3rem;
+}
+.node-menu-sep {
+  height: 1px;
+  background: var(--rule);
+  margin: 0.3rem 0.1rem;
+}
 
 /* ── Inline note (marginal apparatus) ────────────────────── */
 .inline-note {
