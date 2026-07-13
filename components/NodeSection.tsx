@@ -6,7 +6,7 @@ import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
 import { NodeContextMenu, NodeMenuHint } from "./NodeMenu";
 import { NodeNote } from "./NodeNote";
-import { useCollapse } from "./CollapseContext";
+import { useCollapse, useCollapsed } from "./CollapseContext";
 
 // Every id beneath this node (not the node itself) — the target of Collapse/Expand
 // children.
@@ -24,8 +24,8 @@ export function NodeSection({
   canEdit: boolean;
   documentId: string;
 }) {
-  const { isCollapsed, toggle, setMany } = useCollapse();
-  const collapsed = isCollapsed(node.id);
+  const { toggle, setMany } = useCollapse();
+  const collapsed = useCollapsed(node.id);
   const [noteOpen, setNoteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const hasChildren = node.children.length > 0;

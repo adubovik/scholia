@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 const userId = "clerk_" + crypto.randomUUID();
 vi.mock("@/lib/auth/current-user", () => ({
   requireUser: async () => ({ id: userId, displayName: "T" }),
+  getUserId: async () => userId,
 }));
 
 import { createDocument } from "@/lib/actions/documents";

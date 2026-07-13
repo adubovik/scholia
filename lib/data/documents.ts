@@ -1,7 +1,7 @@
 import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { documents, sources, paragraphs, nodes, nodeSourceRanges, inlineAnnotations, nodeAnnotations } from "@/lib/db/schema";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireUser, getUserId } from "@/lib/auth/current-user";
 import { buildTree } from "@/lib/tree/build";
 import type { Color, InlineAnnotationView, NodeAnnotationView } from "@/lib/annotations/types";
 
@@ -44,32 +44,40 @@ export async function listDocuments() {
 }
 
 export async function getDocument(docId: string) {
-  const user = await requireUser();
+  // Read path: only need the id to scope the query. Skip requireUser's
+  // upsert-on-every-call write — the owner's row already exists, and reads
+  // shouldn't pay a DB write round-trip. (Mutations still upsert; see requireUser.)
+  const userId = await getUserId();
+  if (!userId) return null;
   const [doc] = await db
     .select()
     .from(documents)
-    .where(and(eq(documents.id, docId), eq(documents.ownerId, user.id)));
+    .where(and(eq(documents.id, docId), eq(documents.ownerId, userId)));
   if (!doc) return null;
 
-  const src = await db
-    .select().from(sources).where(eq(sources.documentId, doc.id)).orderBy(sources.position);
+  // These four depend only on doc.id, so fire them concurrently. neon-http issues
+  // one HTTP round-trip per query; awaited one-at-a-time this was the bulk of a
+  // ~950ms flat render cost (re-paid on every revalidatePath). Fan out instead.
+  const [src, nodeRows, nodeAnnRows] = await Promise.all([
+    db.select().from(sources).where(eq(sources.documentId, doc.id)).orderBy(sources.position),
+    db.select().from(nodes).where(eq(nodes.documentId, doc.id)).orderBy(nodes.position),
+    db.select().from(nodeAnnotations).where(eq(nodeAnnotations.documentId, doc.id)),
+  ]);
   const source = src[0] ?? null;
-  const paras = source
-    ? await db.select().from(paragraphs).where(eq(paragraphs.sourceId, source.id)).orderBy(paragraphs.position)
-    : [];
 
-  const nodeRows = await db.select().from(nodes).where(eq(nodes.documentId, doc.id)).orderBy(nodes.position);
-  const rangeRows = source
-    ? await db.select().from(nodeSourceRanges).where(eq(nodeSourceRanges.sourceId, source.id))
-    : [];
+  // These three need source.id, so they form a second concurrent wave.
   // M3: annotations are scoped to the primary source only; M4 must query all of the document's sources.
-  const annRows = source
-    ? await db
-        .select()
-        .from(inlineAnnotations)
-        .where(eq(inlineAnnotations.sourceId, source.id))
-        .orderBy(inlineAnnotations.createdAt) // oldest→newest: newest is the "top" underline
-    : [];
+  const [paras, rangeRows, annRows] = source
+    ? await Promise.all([
+        db.select().from(paragraphs).where(eq(paragraphs.sourceId, source.id)).orderBy(paragraphs.position),
+        db.select().from(nodeSourceRanges).where(eq(nodeSourceRanges.sourceId, source.id)),
+        db
+          .select()
+          .from(inlineAnnotations)
+          .where(eq(inlineAnnotations.sourceId, source.id))
+          .orderBy(inlineAnnotations.createdAt), // oldest→newest: newest is the "top" underline
+      ])
+    : [[], [], []];
   const annViews: InlineAnnotationView[] = annRows.map((a) => ({
     id: a.id,
     startOffset: a.startOffset,
@@ -79,10 +87,6 @@ export async function getDocument(docId: string) {
     tags: a.tags,
     authorId: a.authorId,
   }));
-  const nodeAnnRows = await db
-    .select()
-    .from(nodeAnnotations)
-    .where(eq(nodeAnnotations.documentId, doc.id));
   const nodeAnnViews: NodeAnnotationView[] = nodeAnnRows.map((a) => ({
     id: a.id,
     nodeId: a.nodeId,
