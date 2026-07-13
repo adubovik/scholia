@@ -58,6 +58,7 @@ export async function outdentNode(nodeId: string): Promise<void> {
   if (!parent) throw new Error("Not found");
   const grandSiblings = await siblingsOf(node.documentId, parent.parentId);
   const oldSiblings = await siblingsOf(node.documentId, node.parentId);
+  const nodeChildren = await siblingsOf(node.documentId, node.id);
 
   const parentIdx = grandSiblings.findIndex((s) => s.id === parent.id);
   const newOrder = [
@@ -65,11 +66,20 @@ export async function outdentNode(nodeId: string): Promise<void> {
     node,
     ...grandSiblings.slice(parentIdx + 1),
   ];
-  const remaining = oldSiblings.filter((s) => s.id !== node.id);
 
-  // The two renumbered groups have distinct parentIds, so they are disjoint — no position collision.
+  // To keep in-order intact, the siblings that followed node must move with it as
+  // its children (appended after its existing children) — otherwise they'd stay
+  // trapped under the old parent and render before node.
+  const idx = oldSiblings.findIndex((s) => s.id === node.id);
+  const following = oldSiblings.slice(idx + 1);
+  const remaining = oldSiblings.slice(0, idx); // node left this group; followers moved out too
+
+  // Each renumbered group has a distinct parentId, so they are disjoint — no position collision.
   await db.batch([
     db.update(nodes).set({ parentId: parent.parentId }).where(eq(nodes.id, node.id)),
+    ...following.map((s, i) =>
+      db.update(nodes).set({ parentId: node.id, position: nodeChildren.length + i }).where(eq(nodes.id, s.id)),
+    ),
     ...renumber(newOrder),  // includes node at its new slot
     ...renumber(remaining), // compact the group it left
     touchDoc(node.documentId),

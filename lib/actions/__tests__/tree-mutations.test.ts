@@ -76,6 +76,29 @@ describe("tree mutations", () => {
     expect(after!.tree[1].children).toEqual([]);
   });
 
+  it("outdent takes following siblings along as children (preserves in-order)", async () => {
+    const id = await createDocument({ title: "R3b", text: "N1.\n\nN2.\n\nN3.\n\nN4." });
+    created.push(id);
+
+    // Nest N2, N3, N4 under N1: top-level N1[N2, N3, N4]
+    let doc = await getDocument(id);
+    await indentNode(doc!.tree[1].id); // N2 under N1
+    doc = await getDocument(id);
+    await indentNode(doc!.tree[1].id); // N3 under N1
+    doc = await getDocument(id);
+    await indentNode(doc!.tree[1].id); // N4 under N1
+
+    // Outdent the middle child N3 — N4 must follow it as a child
+    doc = await getDocument(id);
+    const n3 = doc!.tree[0].children[1]; // N3
+    await outdentNode(n3.id);
+
+    const after = await getDocument(id);
+    expect(after!.tree.map((n) => n.text)).toEqual(["N1.", "N3."]);
+    expect(after!.tree[0].children.map((n) => n.text)).toEqual(["N2."]);
+    expect(after!.tree[1].children.map((n) => n.text)).toEqual(["N4."]);
+  }, 20000);
+
   it("move up swaps with the previous sibling", async () => {
     const id = await createDocument({ title: "R4", text: "A.\n\nB.\n\nC." });
     created.push(id);
