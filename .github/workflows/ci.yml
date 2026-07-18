@@ -24,10 +24,10 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      # strict-dep-builds=false: pnpm 11 exits non-zero when a dep's build
-      # script is unapproved (esbuild/sharp/unrs-resolver). We don't need those
-      # builds for lint/test, so downgrade the gate to a warning here.
-      - run: pnpm install --frozen-lockfile --config.strict-dep-builds=false
+      # Ignored build scripts (esbuild/sharp/unrs-resolver) are made non-fatal
+      # via .npmrc's strict-dep-builds=false — needed globally because pnpm 11
+      # runs an implicit install before every `pnpm run`, not just this step.
+      - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test
 
