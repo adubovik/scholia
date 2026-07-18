@@ -15,6 +15,12 @@ jobs:
   ci:
     name: lint + test
     runs-on: ubuntu-latest
+    # pnpm 11 runs an implicit `install` before every `pnpm run` to verify deps
+    # are in sync; on a cold CI store it re-evaluates the ignored build scripts
+    # (esbuild/sharp/unrs-resolver) and fails hard. Disable that pre-run check so
+    # lint/test don't reinstall — the explicit install step below already did.
+    env:
+      pnpm_config_verify_deps_before_run: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -24,10 +30,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      # Ignored build scripts (esbuild/sharp/unrs-resolver) are made non-fatal
-      # via .npmrc's strict-dep-builds=false — needed globally because pnpm 11
-      # runs an implicit install before every `pnpm run`, not just this step.
-      - run: pnpm install --frozen-lockfile
+      # strict-dep-builds=false: those build scripts aren't needed for lint/test,
+      # so make their being ignored a warning instead of a hard error.
+      - run: pnpm install --frozen-lockfile --config.strict-dep-builds=false
       - run: pnpm lint
       - run: pnpm test
 
