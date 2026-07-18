@@ -8,18 +8,25 @@ import type { InviteView } from "@/lib/data/invites";
 // Radix handles focus-trap / Esc / portal; the existing .aa-* classes give the
 // parchment sheet look, consistent with ReadingSettings.
 export function InviteSettings({ invites }: { invites: InviteView[] }) {
+  // Controlled open state: createInvite's revalidatePath refreshes the route,
+  // which would reset an uncontrolled Radix dialog and close it mid-action.
+  const [open, setOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null); // last generated
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const urlFor = (t: string) => `${window.location.origin}/invite/${t}`;
 
   async function generate() {
     setBusy(true);
+    setError(null);
     try {
       const res = await createInvite();
       setToken(res.token);
       setCopied(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create invite");
     } finally {
       setBusy(false);
     }
@@ -40,13 +47,13 @@ export function InviteSettings({ invites }: { invites: InviteView[] }) {
   }
 
   return (
-    <Dialog.Root>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <button className="btn btn--ghost" aria-label="Invite people">⚙</button>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="aa-backdrop" />
-        <Dialog.Content className="aa-sheet" aria-describedby={undefined}>
+        <Dialog.Content className="aa-sheet invite-dialog" aria-describedby={undefined}>
           <div className="aa-head">
             <Dialog.Title className="aa-eyebrow">Invite people</Dialog.Title>
             <Dialog.Close className="glyph" aria-label="Close">✕</Dialog.Close>
@@ -55,6 +62,8 @@ export function InviteSettings({ invites }: { invites: InviteView[] }) {
           <button className="btn" onClick={generate} disabled={busy}>
             Generate invite link
           </button>
+
+          {error && <p className="invite-error">{error}</p>}
 
           {token && (
             <div className="invite-new">
