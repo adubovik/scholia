@@ -61,11 +61,10 @@ jobs:
         with:
           node-version: 24
       - run: npm install --global vercel@latest
-      # vercel build/deploy run their own install using the Vercel project
-      # settings, and pull env vars from Vercel — no secrets duplicated here.
-      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      # Remote build: upload source and let Vercel build in its own environment
+      # (the same pipeline that already builds this app on every push). Avoids
+      # reproducing Vercel's toolchain — pnpm, env, node — on the runner.
+      - run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
