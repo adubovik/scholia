@@ -1,0 +1,12 @@
+# CI-only port publishing. The base compose file deliberately leaves db and
+# neon-proxy unpublished (so they don't clash with a local Postgres). In CI the
+# schema push and the test run execute on the runner host, not inside the
+# compose network, so expose the two ports they reach: Postgres for drizzle-kit
+# push, and the neon-http proxy (4444) for the app's neon() driver.
+services:
+  db:
+    ports:
+      - "5432:5432"
+  neon-proxy:
+    ports:
+      - "4444:4444"

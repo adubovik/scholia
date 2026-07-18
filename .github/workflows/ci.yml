@@ -34,7 +34,21 @@ jobs:
       # so make their being ignored a warning instead of a hard error.
       - run: pnpm install --frozen-lockfile --config.strict-dep-builds=false
       - run: pnpm lint
-      - run: pnpm test
+      # Integration tests hit a real Postgres via the neon-http proxy — the same
+      # ephemeral stack docker-compose runs locally. Start it, create the schema
+      # directly on Postgres (drizzle-kit speaks pg, bypassing the proxy), then
+      # run the suite against the proxy.
+      - name: Start Postgres + neon-http proxy
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait db neon-proxy
+      - name: Push schema
+        run: pnpm drizzle-kit push --force
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/scholia
+      - name: Test
+        run: pnpm test
+        env:
+          SCHOLIA_LOCAL_DB: "1"
+          DATABASE_URL: postgres://postgres:postgres@localhost:4444/scholia
 
   deploy:
     name: deploy (production)
