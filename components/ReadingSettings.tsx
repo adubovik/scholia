@@ -31,8 +31,10 @@ export function ReadingSettings() {
   const sheetRef = useRef<HTMLDivElement>(null);
 
   // The pre-paint script already applied stored prefs to the CSS vars; on mount
-  // we only mirror them into slider positions.
+  // we only mirror them into slider positions. Reading localStorage during
+  // render would break SSR, so the one-shot mount effect is the intended path.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration mirror, see above
     setIndices(readStoredIndices());
   }, []);
 

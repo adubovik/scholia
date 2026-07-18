@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import type { BatchItem } from "drizzle-orm/batch";
 import { documents, sources, paragraphs, nodes, nodeSourceRanges } from "@/lib/db/schema";
 import { requireMember } from "@/lib/auth/access";
 import { normalizeText, paragraphize } from "@/lib/import/paragraphs";
@@ -21,7 +22,7 @@ export async function createDocument(input: {
   const srcId = crypto.randomUUID();
   const paraIds = paras.map(() => crypto.randomUUID());
 
-  const statements: any[] = [
+  const statements: BatchItem<"pg">[] = [
     db.insert(documents).values({ id: docId, ownerId: user.id, title: input.title }),
     db.insert(sources).values({
       id: srcId, documentId: docId, language: input.language ?? null,
@@ -58,6 +59,6 @@ export async function createDocument(input: {
   }
 
   // neon-http has no interactive transactions; batch is a single atomic round-trip.
-  await db.batch(statements as [any, ...any[]]);
+  await db.batch(statements as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   return docId;
 }

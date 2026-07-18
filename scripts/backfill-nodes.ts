@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { db } from "../lib/db";
 import { documents, sources, paragraphs, nodes, nodeSourceRanges } from "../lib/db/schema";
 import { planNodes } from "../lib/tree/plan";
@@ -31,7 +32,7 @@ async function main() {
           endParagraphId: paras[n.paragraphIndex].id, endOffset: n.endOffset,
         })),
       ),
-    ] as [any, ...any[]]);
+    ] as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
     console.log(`backfilled ${planned.length} nodes for "${doc.title}" (${doc.id})`);
   }
   console.log("backfill complete");

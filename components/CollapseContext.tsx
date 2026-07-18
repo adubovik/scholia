@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from "react";
 
 // Collapse state lives in an external store (a mutable Set + listeners) rather
 // than React state, so the context value's identity never changes. That's the
@@ -45,9 +45,8 @@ function createStore(): CollapseStore {
 }
 
 export function CollapseProvider({ children }: { children: ReactNode }) {
-  const store = useRef<CollapseStore | null>(null);
-  if (!store.current) store.current = createStore();
-  return <Ctx.Provider value={store.current}>{children}</Ctx.Provider>;
+  const [store] = useState(createStore);
+  return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
 
 function useStore() {

@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development, main]
+
+# One run per branch; a newer push cancels the older, still-running one.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: lint + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      # strict-dep-builds=false: pnpm 11 exits non-zero when a dep's build
+      # script is unapproved (esbuild/sharp/unrs-resolver). We don't need those
+      # builds for lint/test, so downgrade the gate to a warning here.
+      - run: pnpm install --frozen-lockfile --config.strict-dep-builds=false
+      - run: pnpm lint
+      - run: pnpm test
+
+  deploy:
+    name: deploy (production)
+    needs: ci # gate: no deploy unless lint + test are green
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --global vercel@latest
+      # vercel build/deploy run their own install using the Vercel project
+      # settings, and pull env vars from Vercel — no secrets duplicated here.
+      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

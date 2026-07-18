@@ -12,6 +12,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Untracked throwaway probes (gitignored); never lint them.
+    "scratch/**",
+    // Agent-generated design-sync tooling: separate sub-packages with their
+    // own toolchains, not part of the app's lint scope.
+    ".design-sync/**",
+    ".ds-sync/**",
+    "ds-bundle/**",
   ]),
 ]);
 

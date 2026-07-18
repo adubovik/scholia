@@ -3,6 +3,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import type { BatchItem } from "drizzle-orm/batch";
 import { documents, nodes } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
 import { authorize } from "@/lib/auth/authorize";
@@ -46,7 +47,7 @@ export async function indentNode(nodeId: string): Promise<void> {
     db.update(nodes).set({ parentId: prev.id, position: prevChildren.length }).where(eq(nodes.id, node.id)),
     ...renumber(remaining),
     touchDoc(node.documentId),
-  ] as [any, ...any[]]);
+  ] as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   revalidatePath(`/d/${node.documentId}`);
 }
 
@@ -83,7 +84,7 @@ export async function outdentNode(nodeId: string): Promise<void> {
     ...renumber(newOrder),  // includes node at its new slot
     ...renumber(remaining), // compact the group it left
     touchDoc(node.documentId),
-  ] as [any, ...any[]]);
+  ] as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   revalidatePath(`/d/${node.documentId}`);
 }
 
@@ -99,7 +100,7 @@ async function swap(nodeId: string, dir: -1 | 1): Promise<void> {
     db.update(nodes).set({ position: other.position }).where(eq(nodes.id, node.id)),
     db.update(nodes).set({ position: node.position }).where(eq(nodes.id, other.id)),
     touchDoc(node.documentId),
-  ] as [any, ...any[]]);
+  ] as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   revalidatePath(`/d/${node.documentId}`);
 }
 
