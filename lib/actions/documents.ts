@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { documents, sources, paragraphs, nodes, nodeSourceRanges } from "@/lib/db/schema";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireMember } from "@/lib/auth/access";
 import { normalizeText, paragraphize } from "@/lib/import/paragraphs";
 import { planNodes } from "@/lib/tree/plan";
 
@@ -13,7 +13,7 @@ export async function createDocument(input: {
   text: string;
   headingLevels?: (number | null)[];
 }): Promise<string> {
-  const user = await requireUser();
+  const user = await requireMember();
   const normalized = normalizeText(input.text);
   const paras = paragraphize(normalized);
 

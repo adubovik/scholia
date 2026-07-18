@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 const mockAuth = vi.hoisted(() => ({ id: "clerk_" + Math.random().toString(36).slice(2) }));
 vi.mock("@/lib/auth/current-user", () => ({
-  requireUser: async () => ({ id: mockAuth.id, displayName: "T" }),
+  requireUser: async () => ({ id: mockAuth.id, displayName: "T", isAdmin: true, status: "active", canInvite: false }),
   getUserId: async () => mockAuth.id,
 }));
 

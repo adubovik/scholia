@@ -4,7 +4,7 @@ import { users, documents, sources, inlineAnnotations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 const userId = "clerk_" + crypto.randomUUID();
-vi.mock("@/lib/auth/current-user", () => ({ requireUser: async () => ({ id: userId, displayName: "T" }) }));
+vi.mock("@/lib/auth/current-user", () => ({ requireUser: async () => ({ id: userId, displayName: "T", isAdmin: true, status: "active", canInvite: false }) }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
 import { createInlineAnnotation, updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/annotations";

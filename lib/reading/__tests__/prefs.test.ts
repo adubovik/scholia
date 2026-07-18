@@ -16,7 +16,7 @@ describe("stepsToVars", () => {
       "--reading-font-size": "1.1875rem",
       "--reading-line-height": "1.72",
       "--reading-word-spacing": "0em",
-      "--reading-block-gap": "1.15rem",
+      "--reading-block-gap": "0.5rem",
       "--reading-measure": "44rem",
     });
   });

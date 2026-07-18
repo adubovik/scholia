@@ -748,3 +748,48 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 }
 .aa-row input[type="range"]:focus-visible { outline: 1.5px solid var(--muted); outline-offset: 3px; }
 .aa-sheet .link-btn { margin-top: 0.9rem; }
+
+/* Home header actions cluster (gear + New). */
+.home-actions { display: flex; align-items: center; gap: 0.6rem; }
+
+/* Invite dialog: generated link row + outstanding-invite list. */
+.invite-new {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+.invite-url {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.invite-list { list-style: none; margin: 1rem 0 0; padding: 0; }
+.invite-empty {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--faint);
+}
+.invite-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+}
+.invite-status {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  min-width: 4.2rem;
+}
+.invite-status[data-status="accepted"] { color: var(--ink); }
+.invite-status[data-status="revoked"] { color: var(--faint); }
+.invite-label { flex: 1; min-width: 0; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **PII: this is a public GitHub repo.** Never write personal data — real email addresses, names, phone numbers, tokens — into any committed file (code, docs, OpenSpec artifacts, comments). Refer to the owner as "the admin"/"the owner" and use placeholders (`admin@example.com`) in examples.
+
 ## What this is
 
 Scholia — a tree-structured, multi-translation close-reading and annotation web app. Next.js 16 (App Router) + Neon Postgres + Drizzle + Clerk, deployed on Vercel Hobby. Product/design docs live in `docs/` (`docs/00-product-spec.md`, `docs/design/00-architecture.md`); milestone plans in `docs/design/`.

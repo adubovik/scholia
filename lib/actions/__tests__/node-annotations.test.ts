@@ -4,7 +4,7 @@ import { users, documents, nodes, nodeAnnotations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 const userId = "clerk_" + crypto.randomUUID();
-vi.mock("@/lib/auth/current-user", () => ({ requireUser: async () => ({ id: userId, displayName: "T" }) }));
+vi.mock("@/lib/auth/current-user", () => ({ requireUser: async () => ({ id: userId, displayName: "T", isAdmin: true, status: "active", canInvite: false }) }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";

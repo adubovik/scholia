@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth/current-user";
+import { requireMember, canCreateInvites } from "@/lib/auth/access";
 import { listDocuments } from "@/lib/data/documents";
+import { listMyInvites } from "@/lib/data/invites";
+import { InviteSettings } from "@/components/InviteSettings";
 
 // Printed-catalog date: "10 JUL 2026" — mono, tracked, tabular. Formatted on the
 // server (this is a Server Component) so there's no locale/hydration drift.
@@ -12,8 +14,12 @@ const editedFmt = new Intl.DateTimeFormat("en-GB", {
 const formatEdited = (d: Date) => editedFmt.format(new Date(d)).toUpperCase();
 
 export default async function Home() {
-  await requireUser();
-  const docs = await listDocuments();
+  const user = await requireMember();
+  const canInvite = canCreateInvites(user);
+  const [docs, myInvites] = await Promise.all([
+    listDocuments(),
+    canInvite ? listMyInvites(user.id) : Promise.resolve([]),
+  ]);
   return (
     <main className="page">
       <header className="home-head">
@@ -21,7 +27,10 @@ export default async function Home() {
           <h1>Scholia</h1>
           <p className="home-tagline">Close reading &amp; marginal annotation.</p>
         </div>
-        <Link href="/new" className="btn btn--ghost">＋ New</Link>
+        <div className="home-actions">
+          {canInvite && <InviteSettings invites={myInvites} />}
+          <Link href="/new" className="btn btn--ghost">＋ New</Link>
+        </div>
       </header>
 
       {docs.length === 0 ? (

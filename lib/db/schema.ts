@@ -5,6 +5,24 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(),            // Clerk user id
   email: text("email").notNull(),
   displayName: text("display_name").notNull(),
+  // App access: 'pending' until an invite is redeemed, then 'active'. Admin
+  // (Clerk publicMetadata.role) bypasses this — see lib/auth/access.ts.
+  status: text("status").notNull().default("pending"), // 'pending' | 'active'
+  // Delegation seam: admin can grant a member the right to create invites.
+  // Not surfaced in UI yet; canCreateInvites() already honors it.
+  canInvite: boolean("can_invite").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const invites = pgTable("invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  token: text("token").notNull().unique(),  // URL-safe random, single-use
+  createdBy: text("created_by").notNull().references(() => users.id),
+  email: text("email"),                      // optional recipient label
+  status: text("status").notNull().default("pending"), // 'pending' | 'accepted' | 'revoked'
+  redeemedBy: text("redeemed_by").references(() => users.id),
+  redeemedAt: timestamp("redeemed_at"),
+  expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

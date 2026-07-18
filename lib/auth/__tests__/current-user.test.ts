@@ -14,4 +14,13 @@ describe("upsertUser", () => {
     const [row] = await db.select().from(users).where(eq(users.id, id));
     expect(row.displayName).toBe("Second");
   });
+
+  it("re-login does not reset access (status/canInvite survive upsert)", async () => {
+    await upsertUser({ id, email: "x@y.z", displayName: "First" });
+    // Simulate the user having redeemed an invite + been granted delegation.
+    await db.update(users).set({ status: "active", canInvite: true }).where(eq(users.id, id));
+    const row = await upsertUser({ id, email: "x@y.z", displayName: "Again" });
+    expect(row.status).toBe("active");
+    expect(row.canInvite).toBe(true);
+  });
 });

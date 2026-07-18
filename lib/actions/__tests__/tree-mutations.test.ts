@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 const userId = "clerk_" + crypto.randomUUID();
 vi.mock("@/lib/auth/current-user", () => ({
-  requireUser: async () => ({ id: userId, displayName: "T" }),
+  requireUser: async () => ({ id: userId, displayName: "T", isAdmin: true, status: "active", canInvite: false }),
   getUserId: async () => userId,
 }));
 // next/cache revalidatePath is a no-op outside a request scope.

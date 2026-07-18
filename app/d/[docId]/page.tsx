@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { getDocument } from "@/lib/data/documents";
+import { requireMember } from "@/lib/auth/access";
 import { ReadingSurface } from "@/components/ReadingSurface";
 
 export default async function DocumentPage({ params }: { params: Promise<{ docId: string }> }) {
+  await requireMember(); // invite-only gate; getDocument still scopes to owner
   const { docId } = await params;
   const data = await getDocument(docId);
   if (!data || !data.source) notFound();
