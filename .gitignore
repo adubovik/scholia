@@ -51,3 +51,5 @@ ds-bundle/
 .design-sync/learnings/
 .design-sync/node_modules/
 .design-sync/package/dist/
+
+annotations-panel-design

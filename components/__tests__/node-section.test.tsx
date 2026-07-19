@@ -2,14 +2,18 @@ import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NodeSection } from "@/components/NodeSection";
 import { CollapseProvider } from "@/components/CollapseContext";
+import { NotesProvider } from "@/components/NotesContext";
 import type { TreeNode } from "@/lib/tree/build";
 
-// Collapse state now lives in a provider; NodeSection reads it via useCollapse.
+// NodeSection reads collapse + notes actions from providers, and its SourcePassage
+// reads notes actions too — both wrappers are required.
 const renderNode = (n: TreeNode) =>
   render(
-    <CollapseProvider>
-      <NodeSection node={n} depth={0} canEdit={false} documentId="d1" />
-    </CollapseProvider>,
+    <NotesProvider entries={[]}>
+      <CollapseProvider>
+        <NodeSection node={n} depth={0} canEdit={false} documentId="d1" />
+      </CollapseProvider>
+    </NotesProvider>,
   );
 
 const node: TreeNode = {

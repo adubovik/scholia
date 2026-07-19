@@ -24,7 +24,7 @@ function applyVars(indices: PrefIndices) {
   }
 }
 
-export function ReadingSettings() {
+export function ReadingSettings({ triggerClassName = "reading-aa" }: { triggerClassName?: string } = {}) {
   const [open, setOpen] = useState(false);
   const [indices, setIndices] = useState<PrefIndices>(DEFAULT_INDICES);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -98,7 +98,7 @@ export function ReadingSettings() {
     <>
       <button
         ref={triggerRef}
-        className="reading-aa"
+        className={triggerClassName}
         aria-label="Display settings"
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}

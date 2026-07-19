@@ -10,6 +10,7 @@ export interface InlineAnnotationView {
   note: string | null;
   tags: string[];
   authorId: string;
+  createdAt: string; // ISO — drives the drawer's relative timestamp
 }
 
 /** A node (entity) annotation shaped for rendering + editing; anchored to a node, not a text span. */
@@ -19,4 +20,5 @@ export interface NodeAnnotationView {
   note: string;
   tags: string[];
   authorId: string;
+  createdAt: string; // ISO — drives the drawer's relative timestamp
 }

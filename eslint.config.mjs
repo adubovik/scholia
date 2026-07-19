@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Untracked throwaway probes (gitignored); never lint them.
     "scratch/**",
+    // Claude Design handoff bundle (gitignored); a prototype, not app source.
+    "annotations-panel-design/**",
     // Agent-generated design-sync tooling: separate sub-packages with their
     // own toolchains, not part of the app's lint scope.
     ".design-sync/**",

@@ -1,5 +1,8 @@
 "use server";
 
+import { and, eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import type { BatchItem } from "drizzle-orm/batch";
 import { documents, sources, paragraphs, nodes, nodeSourceRanges } from "@/lib/db/schema";
@@ -61,4 +64,18 @@ export async function createDocument(input: {
   // neon-http has no interactive transactions; batch is a single atomic round-trip.
   await db.batch(statements as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   return docId;
+}
+
+/** Owner-only delete. Sources, nodes, ranges, and annotations all FK-cascade off
+ * documents, so removing the one row removes the whole document. Redirects home. */
+export async function deleteDocument(documentId: string): Promise<void> {
+  const user = await requireMember();
+  const [doc] = await db
+    .select({ id: documents.id })
+    .from(documents)
+    .where(and(eq(documents.id, documentId), eq(documents.ownerId, user.id)));
+  if (!doc) throw new Error("Not found");
+  await db.delete(documents).where(eq(documents.id, documentId));
+  revalidatePath("/");
+  redirect("/");
 }

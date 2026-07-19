@@ -19,6 +19,8 @@ vi.mock("@/lib/actions/nodeAnnotations", () => ({
 import { MenuItems, NodeMenuHint, RootMenu } from "@/components/NodeMenu";
 import { NodeSection } from "@/components/NodeSection";
 import { CollapseProvider } from "@/components/CollapseContext";
+import { NotesProvider } from "@/components/NotesContext";
+import { NotesDrawer } from "@/components/NotesDrawer";
 
 // Stub Radix's Item/Separator so we can exercise item logic without opening a
 // portal-based menu in jsdom.
@@ -132,13 +134,16 @@ function node(over: Partial<TreeNode> = {}): TreeNode {
     children: [], ...over,
   };
 }
-const ann = { id: "a1", nodeId: "n1", note: "hi", tags: [], authorId: "u1" };
+const ann = { id: "a1", nodeId: "n1", note: "hi", tags: [], authorId: "u1", createdAt: new Date().toISOString() };
 
-function renderNode(node: TreeNode, canEdit: boolean) {
+function renderNode(node: TreeNode, canEdit: boolean, withDrawer = false) {
   return render(
-    <CollapseProvider>
-      <NodeSection node={node} depth={0} canEdit={canEdit} documentId="d1" />
-    </CollapseProvider>,
+    <NotesProvider entries={[]}>
+      <CollapseProvider>
+        <NodeSection node={node} depth={0} canEdit={canEdit} documentId="d1" />
+      </CollapseProvider>
+      {withDrawer && <NotesDrawer documentId="d1" />}
+    </NotesProvider>,
   );
 }
 
@@ -149,12 +154,13 @@ describe("NodeSection gutter", () => {
     expect(screen.queryByRole("button", { name: "Node actions" })).toBeNull();
   });
 
-  it("shows the ¶ marker when a note exists and toggles the note open", () => {
-    renderNode(node({ nodeAnnotation: ann }), false);
+  it("shows the ¶ marker when a note exists and opens the drawer on click", () => {
+    renderNode(node({ nodeAnnotation: ann }), false, true);
     const marker = screen.getByRole("button", { name: "Show note" });
     expect(marker.textContent).toBe("¶");
+    expect(document.querySelector('.notes-drawer[data-open="true"]')).toBeNull();
     fireEvent.click(marker);
-    expect(screen.getByRole("button", { name: "Hide note" })).toBeDefined();
+    expect(document.querySelector('.notes-drawer[data-open="true"]')).not.toBeNull();
   });
 
   it("gives editors the ⋮ hint", () => {

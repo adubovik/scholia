@@ -5,8 +5,8 @@ import type { TreeNode } from "@/lib/tree/build";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
 import { NodeContextMenu, NodeMenuHint } from "./NodeMenu";
-import { NodeNote } from "./NodeNote";
 import { useCollapse, useCollapsed } from "./CollapseContext";
+import { useNotesActions } from "./NotesContext";
 
 // Every id beneath this node (not the node itself) — the target of Collapse/Expand
 // children.
@@ -25,8 +25,8 @@ export function NodeSection({
   documentId: string;
 }) {
   const { toggle, setMany } = useCollapse();
+  const { openAnnotation, composeNode } = useNotesActions();
   const collapsed = useCollapsed(node.id);
-  const [noteOpen, setNoteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const hasChildren = node.children.length > 0;
   const hasText = Boolean(node.text);
@@ -45,7 +45,11 @@ export function NodeSection({
   const preview = hasText ? firstSentence(node.text) : "";
   const truncated = preview.length < node.text.trim().length || hasChildren;
 
-  const hasNote = node.nodeAnnotation !== null;
+  const nodeAnn = node.nodeAnnotation;
+  const hasNote = nodeAnn !== null;
+  // Node notes live in the drawer now: opening an existing one scrolls to its
+  // card; "add note" on a fresh node opens the drawer's composer for this node.
+  const openNote = () => (nodeAnn ? openAnnotation(nodeAnn.id) : composeNode(node.id));
   // The menu carries editor actions (canEdit) and/or the view-only Collapse/Expand
   // children (any reader, when there's a subtree to fold), so it shows whenever
   // either applies.
@@ -55,7 +59,7 @@ export function NodeSection({
     canEdit,
     hasNote,
     hasChildren,
-    onOpenNote: () => setNoteOpen((o) => !o),
+    onOpenNote: openNote,
     onCollapseChildren: () => setMany(descendantIds(node), true),
     onExpandChildren: () => setMany(descendantIds(node), false),
   };
@@ -68,7 +72,14 @@ export function NodeSection({
     <div className={menuOpen ? "node-self node-self--active" : "node-self"}>
       {showHead && (
         <div className="node-head">
-          {node.label && <span className="node-label">{node.label}</span>}
+          {node.label &&
+            (hasNote ? (
+              <button className="node-label node-label--note" onClick={openNote}>
+                {node.label}
+              </button>
+            ) : (
+              <span className="node-label">{node.label}</span>
+            ))}
           {node.title && <span className="node-title">{node.title}</span>}
         </div>
       )}
@@ -96,12 +107,7 @@ export function NodeSection({
       {(hasNote || showMenu) && (
         <div className="node-gutter">
           {hasNote && (
-            <button
-              className="node-marker"
-              aria-label={noteOpen ? "Hide note" : "Show note"}
-              aria-expanded={noteOpen}
-              onClick={() => setNoteOpen((o) => !o)}
-            >
+            <button className="node-marker" aria-label="Show note" onClick={openNote}>
               ¶
             </button>
           )}
@@ -129,16 +135,6 @@ export function NodeSection({
           </NodeContextMenu>
         ) : (
           self
-        )}
-
-        {noteOpen && (
-          <NodeNote
-            documentId={documentId}
-            nodeId={node.id}
-            annotation={node.nodeAnnotation}
-            canEdit={canEdit}
-            onClose={() => setNoteOpen(false)}
-          />
         )}
 
         {!collapsed && hasChildren && (

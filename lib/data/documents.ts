@@ -86,6 +86,7 @@ export async function getDocument(docId: string) {
     note: a.note,
     tags: a.tags,
     authorId: a.authorId,
+    createdAt: a.createdAt.toISOString(),
   }));
   const nodeAnnViews: NodeAnnotationView[] = nodeAnnRows.map((a) => ({
     id: a.id,
@@ -93,6 +94,7 @@ export async function getDocument(docId: string) {
     note: a.note,
     tags: a.tags,
     authorId: a.authorId,
+    createdAt: a.createdAt.toISOString(),
   }));
   const tree = source
     ? buildTree(
