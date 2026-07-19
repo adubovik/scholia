@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { InviteSettings } from "./InviteSettings";
+import { NewDocModal } from "./NewDocModal";
 import { useNotesActions, useNotesState } from "./NotesContext";
 import type { InviteView } from "@/lib/data/invites";
 
@@ -28,9 +30,12 @@ export function LibraryDrawer({
 }) {
   const { leftOpen } = useNotesState();
   const { toggleLeft, closeLeft } = useNotesActions();
+  const [newOpen, setNewOpen] = useState(false);
 
   return (
     <>
+      {newOpen && <NewDocModal onClose={() => setNewOpen(false)} />}
+
       {leftOpen && <div className="notes-backdrop notes-backdrop--left" onClick={closeLeft} />}
 
       <button
@@ -53,7 +58,7 @@ export function LibraryDrawer({
           </div>
           <div className="library-actions">
             {canInvite && <InviteSettings invites={invites} />}
-            <Link href="/new" className="btn btn--ghost library-new">＋ New</Link>
+            <button type="button" className="btn btn--ghost library-new" onClick={() => setNewOpen(true)}>＋ New</button>
           </div>
         </div>
 

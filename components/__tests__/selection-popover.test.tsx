@@ -1,9 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { SelectionPopover } from "@/components/SelectionPopover";
+import { NotesProvider } from "@/components/NotesContext";
 
 const create = vi.fn(async () => "new-id");
 vi.mock("@/lib/actions/annotations", () => ({ createInlineAnnotation: (...a: unknown[]) => create(...a) }));
+
+// SelectionPopover opens the drawer on the new highlight, so it needs the provider.
+const renderPopover = () =>
+  render(
+    <NotesProvider entries={[]} sections={{}}>
+      <SelectionPopover documentId="d1" rootId="reading-root" />
+    </NotesProvider>,
+  );
 
 // A reading root with a single-node source run.
 function mountRoot(): HTMLElement {
@@ -22,13 +31,13 @@ describe("SelectionPopover", () => {
 
   it("renders nothing without a selection", () => {
     mountRoot();
-    const { container } = render(<SelectionPopover documentId="d1" rootId="reading-root" />);
+    const { container } = renderPopover();
     expect(container.querySelector(".selection-popover")).toBeNull();
   });
 
   it("shows swatches on a valid selection and creates on click", () => {
     const root = mountRoot();
-    render(<SelectionPopover documentId="d1" rootId="reading-root" />);
+    renderPopover();
 
     const textNode = root.querySelector('[data-char-start="0"]')!.firstChild!;
     const range = document.createRange();

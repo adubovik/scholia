@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { COLORS, type Color } from "@/lib/annotations/types";
 import { rangeToOffsets, type SourceRange } from "@/lib/annotations/offsets";
 import { createInlineAnnotation } from "@/lib/actions/annotations";
+import { useNotesActions } from "./NotesContext";
 
 export function SelectionPopover({ documentId, rootId }: { documentId: string; rootId: string }) {
+  const { openAnnotation } = useNotesActions();
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  const pending = useRef<SourceRange | null>(null);
+  const pending = useRef<(SourceRange & { nodeId: string | null }) | null>(null);
 
   useEffect(() => {
     function onMouseUp() {
@@ -24,8 +26,12 @@ export function SelectionPopover({ documentId, rootId }: { documentId: string; r
         pending.current = null;
         return;
       }
+      // The node the selection lives in — so the new highlight can emboss its block.
+      const anchor = range.commonAncestorContainer;
+      const el = anchor.nodeType === 1 ? (anchor as Element) : anchor.parentElement;
+      const nodeId = el?.closest("[data-node-id]")?.getAttribute("data-node-id") ?? null;
       const rect = range.getBoundingClientRect?.() ?? { left: 0, top: 0, width: 0 };
-      pending.current = mapped;
+      pending.current = { ...mapped, nodeId };
       setPos({ x: rect.left + rect.width / 2, y: rect.top - 8 });
     }
     document.addEventListener("mouseup", onMouseUp);
@@ -34,10 +40,14 @@ export function SelectionPopover({ documentId, rootId }: { documentId: string; r
 
   async function pick(color: Color) {
     if (!pending.current) return;
-    await createInlineAnnotation({ documentId, ...pending.current, color });
+    const { nodeId, ...range } = pending.current;
+    const id = await createInlineAnnotation({ documentId, ...range, color });
     window.getSelection()?.removeAllRanges();
     pending.current = null;
     setPos(null);
+    // Open the drawer on the new highlight + mark it (and its block) active, so the
+    // just-created annotation is visibly selected — matching the node-note flow.
+    openAnnotation(id, nodeId);
   }
 
   if (!pos) return null;

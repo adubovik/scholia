@@ -21,8 +21,9 @@ import type { NoteEntry } from "@/lib/annotations/entries";
 //    annotation/node is active at a time; it persists until the next selection.
 
 export interface NotesActions {
-  /** In-text highlight / node identifier → open the drawer on that card + mark active. */
-  openAnnotation: (annId: string, nodeId: string) => void;
+  /** In-text highlight / node identifier / freshly-saved note → open the drawer on
+   * that card + mark it (and its block) active. nodeId null = highlight only, no block. */
+  openAnnotation: (annId: string, nodeId: string | null) => void;
   /** Node menu "add note" → open the drawer with a fresh node-note composer. */
   composeNode: (nodeId: string) => void;
   /** Drawer card → scroll the prose to the annotation, mark active. */

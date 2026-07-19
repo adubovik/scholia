@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { documents, sources, paragraphs, nodes, nodeSourceRanges, inlineAnnotations, nodeAnnotations, users } from "@/lib/db/schema";
 import { requireUser, getUserId } from "@/lib/auth/current-user";
@@ -8,7 +8,13 @@ import type { Color, InlineAnnotationView, NodeAnnotationView } from "@/lib/anno
 export async function listDocuments() {
   const user = await requireUser();
   const docs = await db
-    .select({ id: documents.id, title: documents.title, updatedAt: documents.updatedAt, author: users.displayName })
+    .select({
+      id: documents.id,
+      title: documents.title,
+      updatedAt: documents.updatedAt,
+      // The work's author; legacy rows without one fall back to the owner's name.
+      author: sql<string>`coalesce(${documents.author}, ${users.displayName})`,
+    })
     .from(documents)
     .innerJoin(users, eq(documents.ownerId, users.id))
     .where(eq(documents.ownerId, user.id))

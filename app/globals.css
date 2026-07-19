@@ -202,6 +202,38 @@ body {
   text-wrap: balance;
 }
 
+/* "Add to the library" modal — full-screen backdrop above the drawers (z 80),
+   top-aligned + scrollable so a tall form is reachable on short viewports. */
+.newdoc-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 4rem 1rem;
+  background: rgba(246, 243, 236, 0.72);
+}
+.newdoc-sheet {
+  width: min(34rem, 100%);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 24px 60px rgba(28, 26, 21, 0.12);
+  padding: 2rem 2.1rem 2.2rem;
+}
+.newdoc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.newdoc-title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 2rem;
+  color: var(--ink);
+  margin: 0.4rem 0 0;
+  line-height: 1.1;
+}
+.newdoc-rule { border-top: 1px solid var(--rule); margin: 1.1rem 0 1.5rem; }
+.field-req { color: var(--error); }
+
 /* Apparatus field label — mono, tracked, muted; the hand that names each slot. */
 .field-label {
   display: block;
@@ -629,6 +661,16 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   align-items: center;
   justify-content: center;
   background: rgba(246, 243, 236, 0.55);
+}
+/* Center the sheet within the READING PANEL, not the whole viewport: inset the
+   backdrop by whichever drawers are open (vars inherit from .reading-main, the
+   backdrop's ancestor) so it never sits behind a drawer. Desktop only — on mobile
+   the drawers are full-screen sheets and the modal centers on the viewport. */
+@media (min-width: 861px) {
+  .aa-backdrop {
+    left: var(--shift-left, 0px);
+    right: var(--shift-right, 0px);
+  }
 }
 .aa-sheet {
   width: min(24rem, calc(100vw - 2rem));

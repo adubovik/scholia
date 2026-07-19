@@ -29,7 +29,7 @@ async function main() {
   if (text.length === 0) throw new Error("Seed: no text extracted from book");
   const docId = await withSpinner(
     `Seed: importing document`,
-    () => createDocument({ title: title ?? "Seeded Book", text, headingLevels }),
+    () => createDocument({ title: title ?? "Seeded Book", author: "Bertrand Russell", text, headingLevels }),
   );
   console.log(`Seed: created document ${docId}`);
 

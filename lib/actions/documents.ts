@@ -12,6 +12,7 @@ import { planNodes } from "@/lib/tree/plan";
 
 export async function createDocument(input: {
   title: string;
+  author?: string;
   language?: string;
   label?: string;
   text: string;
@@ -26,7 +27,7 @@ export async function createDocument(input: {
   const paraIds = paras.map(() => crypto.randomUUID());
 
   const statements: BatchItem<"pg">[] = [
-    db.insert(documents).values({ id: docId, ownerId: user.id, title: input.title }),
+    db.insert(documents).values({ id: docId, ownerId: user.id, title: input.title, author: input.author?.trim() || null }),
     db.insert(sources).values({
       id: srcId, documentId: docId, language: input.language ?? null,
       label: input.label ?? null, isPrimary: true, position: 0, text: normalized,

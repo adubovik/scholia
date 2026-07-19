@@ -30,6 +30,7 @@ export const documents = pgTable("documents", {
   id: uuid("id").primaryKey().defaultRandom(),
   ownerId: text("owner_id").notNull().references(() => users.id),
   title: text("title").notNull(),
+  author: text("author"), // the work's author (required at create time, nullable for legacy rows)
   clonedFrom: uuid("cloned_from"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

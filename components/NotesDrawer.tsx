@@ -165,7 +165,7 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
 
 /** A fresh node-note composer, shown at the top of the list when the menu asks for one. */
 function ComposeCard({ documentId, nodeId }: { documentId: string; nodeId: string }) {
-  const { closeDrawer } = useNotesActions();
+  const { closeDrawer, openAnnotation } = useNotesActions();
   const { sections } = useNotesState();
   const number = Object.keys(sections).find((k) => sections[k] === nodeId);
   const [note, setNote] = useState("");
@@ -175,9 +175,10 @@ function ComposeCard({ documentId, nodeId }: { documentId: string; nodeId: strin
   async function save() {
     if (!note.trim()) return;
     setBusy(true);
-    await upsertNodeAnnotation({ documentId, nodeId, note: note.trim(), tags });
-    // Revalidation repaints the tree + drawer with the real card; close the composer.
-    closeDrawer();
+    const id = await upsertNodeAnnotation({ documentId, nodeId, note: note.trim(), tags });
+    // Keep the drawer open and select the new note: revalidation repaints the real
+    // card, which then renders active (highlighted) with its block embossed.
+    openAnnotation(id, nodeId);
   }
 
   return (
