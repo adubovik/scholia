@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import * as ContextMenu from "@radix-ui/react-context-menu";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { indentNode, outdentNode, moveNodeUp, moveNodeDown } from "@/lib/actions/tree";
 import { useCollapse } from "./CollapseContext";
 
@@ -21,8 +20,8 @@ type MenuProps = {
 };
 
 type ItemParts = {
-  Item: typeof ContextMenu.Item | typeof DropdownMenu.Item;
-  Separator: typeof ContextMenu.Separator | typeof DropdownMenu.Separator;
+  Item: typeof ContextMenu.Item;
+  Separator: typeof ContextMenu.Separator;
 };
 
 // Shortcut hint: visual only (aria-hidden so it doesn't pollute the item's
@@ -126,39 +125,36 @@ function onHintKeyDown(nodeId: string, canEdit: boolean) {
   };
 }
 
-// The section identifier IS the menu door (replacing the old ⋮ hint): clicking the
-// blue/red number opens the node menu. `annotated` flips it red; `runIn` styles it
-// as an inline paragraph prefix rather than a head label.
-export function NodeNumberMenu({
+// The section identifier. Left-click highlights the node's note (if it has one);
+// the node menu now lives on right-click only (NodeContextMenu wraps this). Editor
+// keyboard shortcuts stay bound here so a focused number can still move/indent.
+// `annotated` flips it red; `runIn` styles it as an inline paragraph prefix.
+export function NodeNumber({
   number,
   annotated,
   runIn,
-  onOpenChange,
-  ...menu
-}: MenuProps & {
+  nodeId,
+  canEdit,
+  onHighlightNote,
+}: {
   number: string;
   annotated: boolean;
   runIn?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  nodeId: string;
+  canEdit: boolean;
+  onHighlightNote?: () => void; // present only when the node has a note
 }) {
   return (
-    <DropdownMenu.Root onOpenChange={onOpenChange}>
-      <DropdownMenu.Trigger asChild>
-        <button
-          className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}
-          data-annotated={annotated || undefined}
-          aria-label="Section actions"
-          onKeyDown={onHintKeyDown(menu.nodeId, menu.canEdit)}
-        >
-          {number}
-        </button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className="node-menu" align="start" sideOffset={4} collisionPadding={8}>
-          <MenuItems {...menu} Item={DropdownMenu.Item} Separator={DropdownMenu.Separator} />
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    <button
+      type="button"
+      className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}
+      data-annotated={annotated || undefined}
+      aria-label={onHighlightNote ? "Highlight note" : "Section actions"}
+      onClick={onHighlightNote}
+      onKeyDown={onHintKeyDown(nodeId, canEdit)}
+    >
+      {number}
+    </button>
   );
 }
 

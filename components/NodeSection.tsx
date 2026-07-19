@@ -4,7 +4,7 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
 import type { TreeNode } from "@/lib/tree/build";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
-import { NodeContextMenu, NodeNumberMenu } from "./NodeMenu";
+import { NodeContextMenu, NodeNumber } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, useActiveNode } from "./NotesContext";
 
@@ -82,20 +82,23 @@ export function NodeSection({
     onExpandChildren: () => setMany(descendantIds(node), false),
   };
 
-  // The section identifier: blue (red when annotated) number. When there's a menu
-  // it IS the menu trigger (item 4); otherwise a plain span. A non-interactive plain
-  // span is used inside the collapsed preview button (no button-in-button).
+  // The section identifier: blue (red when annotated) number. Left-click highlights
+  // the node's note when it has one; right-click opens the node menu (NodeContextMenu).
+  // A button when interactive (menu/editor keys or note), else a plain span — which is
+  // also what the collapsed preview uses (no button-in-button).
   const numberEl =
     num &&
-    (showMenu ? (
-      <NodeNumberMenu {...menuProps} number={num} annotated={hasNote} runIn={runIn} />
+    (showMenu || hasNote ? (
+      <NodeNumber
+        number={num}
+        annotated={hasNote}
+        runIn={runIn}
+        nodeId={node.id}
+        canEdit={canEdit}
+        onHighlightNote={nodeAnn ? () => openAnnotation(nodeAnn.id, node.id) : undefined}
+      />
     ) : (
-      <span
-        className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}
-        data-annotated={hasNote || undefined}
-      >
-        {num}
-      </span>
+      <span className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}>{num}</span>
     ));
   const plainNumberEl = num && (
     <span className="node-num-id node-num-id--runin" data-annotated={hasNote || undefined}>

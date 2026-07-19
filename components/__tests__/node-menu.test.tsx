@@ -16,7 +16,7 @@ vi.mock("@/lib/actions/nodeAnnotations", () => ({
   deleteNodeAnnotation: vi.fn(),
 }));
 
-import { MenuItems, NodeNumberMenu, RootMenu } from "@/components/NodeMenu";
+import { MenuItems, NodeNumber, RootMenu } from "@/components/NodeMenu";
 import { NodeSection } from "@/components/NodeSection";
 import { CollapseProvider } from "@/components/CollapseContext";
 import { NotesProvider } from "@/components/NotesContext";
@@ -103,34 +103,45 @@ describe("MenuItems", () => {
   });
 });
 
-// The section number IS the menu trigger now (the old ⋮ hint is gone).
-const numberMenu = (over: Partial<React.ComponentProps<typeof NodeNumberMenu>> = {}) => (
-  <NodeNumberMenu nodeId="n1" number="2.1" annotated={false} canEdit hasNote={false} hasChildren={false} onOpenNote={() => {}} onCollapseChildren={() => {}} onExpandChildren={() => {}} {...over} />
+// The section number: left-click highlights the note (if any); the menu is right-
+// click only. Editor keyboard shortcuts stay bound to the focused number.
+const numberButton = (over: Partial<React.ComponentProps<typeof NodeNumber>> = {}) => (
+  <NodeNumber nodeId="n1" number="2.1" annotated={false} canEdit {...over} />
 );
 
-describe("NodeNumberMenu", () => {
-  it("renders the section number as a labelled trigger", () => {
-    render(numberMenu());
-    const trigger = screen.getByRole("button", { name: "Section actions" });
-    expect(trigger.textContent).toBe("2.1");
+describe("NodeNumber", () => {
+  it("renders the section number as a labelled button", () => {
+    render(numberButton());
+    const btn = screen.getByRole("button", { name: "Section actions" });
+    expect(btn.textContent).toBe("2.1");
   });
 
-  it("marks the number annotated (red) when the node carries a note", () => {
-    render(numberMenu({ annotated: true }));
-    expect(screen.getByRole("button", { name: "Section actions" }).getAttribute("data-annotated")).toBe("true");
+  it("left-click highlights the note (and labels it so) when the node has one", () => {
+    const onHighlightNote = vi.fn();
+    render(numberButton({ annotated: true, onHighlightNote }));
+    const btn = screen.getByRole("button", { name: "Highlight note" });
+    expect(btn.getAttribute("data-annotated")).toBe("true");
+    fireEvent.click(btn);
+    expect(onHighlightNote).toHaveBeenCalledOnce();
+  });
+
+  it("does nothing on left-click when the node has no note", () => {
+    render(numberButton());
+    // No onHighlightNote wired → click is a no-op (the menu is right-click only).
+    expect(() => fireEvent.click(screen.getByRole("button", { name: "Section actions" }))).not.toThrow();
   });
 
   it("runs non-clashing keyboard shortcuts when focused (Alt+↓ move, Alt+] indent)", () => {
-    render(numberMenu());
-    const trigger = screen.getByRole("button", { name: "Section actions" });
-    fireEvent.keyDown(trigger, { key: "ArrowDown", altKey: true });
+    render(numberButton());
+    const btn = screen.getByRole("button", { name: "Section actions" });
+    fireEvent.keyDown(btn, { key: "ArrowDown", altKey: true });
     expect(moveDown).toHaveBeenCalledWith("n1");
-    fireEvent.keyDown(trigger, { key: "]", code: "BracketRight", altKey: true });
+    fireEvent.keyDown(btn, { key: "]", code: "BracketRight", altKey: true });
     expect(indent).toHaveBeenCalledWith("n1");
   });
 
-  it("ignores the same keys without Alt (leaves them to Radix / the browser)", () => {
-    render(numberMenu());
+  it("ignores the same keys without Alt (leaves them to the browser)", () => {
+    render(numberButton());
     fireEvent.keyDown(screen.getByRole("button", { name: "Section actions" }), { key: "ArrowDown" });
     expect(moveDown).not.toHaveBeenCalled();
   });
