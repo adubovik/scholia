@@ -16,7 +16,7 @@ vi.mock("@/lib/actions/nodeAnnotations", () => ({
   deleteNodeAnnotation: vi.fn(),
 }));
 
-import { MenuItems, NodeMenuHint, RootMenu } from "@/components/NodeMenu";
+import { MenuItems, NodeNumberMenu, RootMenu } from "@/components/NodeMenu";
 import { NodeSection } from "@/components/NodeSection";
 import { CollapseProvider } from "@/components/CollapseContext";
 import { NotesProvider } from "@/components/NotesContext";
@@ -103,25 +103,35 @@ describe("MenuItems", () => {
   });
 });
 
-describe("NodeMenuHint", () => {
-  it("renders a labelled ⋯ trigger", () => {
-    render(<NodeMenuHint nodeId="n1" canEdit hasNote={false} onOpenNote={() => {}} />);
-    expect(screen.getByRole("button", { name: "Node actions" })).toBeDefined();
+// The section number IS the menu trigger now (the old ⋮ hint is gone).
+const numberMenu = (over: Partial<React.ComponentProps<typeof NodeNumberMenu>> = {}) => (
+  <NodeNumberMenu nodeId="n1" number="2.1" annotated={false} canEdit hasNote={false} hasChildren={false} onOpenNote={() => {}} onCollapseChildren={() => {}} onExpandChildren={() => {}} {...over} />
+);
+
+describe("NodeNumberMenu", () => {
+  it("renders the section number as a labelled trigger", () => {
+    render(numberMenu());
+    const trigger = screen.getByRole("button", { name: "Section actions" });
+    expect(trigger.textContent).toBe("2.1");
+  });
+
+  it("marks the number annotated (red) when the node carries a note", () => {
+    render(numberMenu({ annotated: true }));
+    expect(screen.getByRole("button", { name: "Section actions" }).getAttribute("data-annotated")).toBe("true");
   });
 
   it("runs non-clashing keyboard shortcuts when focused (Alt+↓ move, Alt+] indent)", () => {
-    render(<NodeMenuHint nodeId="n1" canEdit hasNote={false} onOpenNote={() => {}} />);
-    const hint = screen.getByRole("button", { name: "Node actions" });
-    fireEvent.keyDown(hint, { key: "ArrowDown", altKey: true });
+    render(numberMenu());
+    const trigger = screen.getByRole("button", { name: "Section actions" });
+    fireEvent.keyDown(trigger, { key: "ArrowDown", altKey: true });
     expect(moveDown).toHaveBeenCalledWith("n1");
-    fireEvent.keyDown(hint, { key: "]", code: "BracketRight", altKey: true });
+    fireEvent.keyDown(trigger, { key: "]", code: "BracketRight", altKey: true });
     expect(indent).toHaveBeenCalledWith("n1");
   });
 
   it("ignores the same keys without Alt (leaves them to Radix / the browser)", () => {
-    render(<NodeMenuHint nodeId="n1" canEdit hasNote={false} onOpenNote={() => {}} />);
-    const hint = screen.getByRole("button", { name: "Node actions" });
-    fireEvent.keyDown(hint, { key: "ArrowDown" });
+    render(numberMenu());
+    fireEvent.keyDown(screen.getByRole("button", { name: "Section actions" }), { key: "ArrowDown" });
     expect(moveDown).not.toHaveBeenCalled();
   });
 });
@@ -136,41 +146,41 @@ function node(over: Partial<TreeNode> = {}): TreeNode {
 }
 const ann = { id: "a1", nodeId: "n1", note: "hi", tags: [], authorId: "u1", createdAt: new Date().toISOString() };
 
+const NUMS = new Map([["n1", "2"], ["c1", "2.1"]]);
 function renderNode(node: TreeNode, canEdit: boolean, withDrawer = false) {
   return render(
-    <NotesProvider entries={[]}>
+    <NotesProvider entries={[]} sections={{}}>
       <CollapseProvider>
-        <NodeSection node={node} depth={0} canEdit={canEdit} documentId="d1" />
+        <NodeSection node={node} depth={0} canEdit={canEdit} documentId="d1" numbers={NUMS} />
       </CollapseProvider>
       {withDrawer && <NotesDrawer documentId="d1" />}
     </NotesProvider>,
   );
 }
 
-describe("NodeSection gutter", () => {
-  it("shows no marker or hint for a viewer on a childless, un-annotated node", () => {
+// The section number (blue/red) replaces the old ¶ marker + ⋮ hint: it's the menu
+// door when there's a menu to open, a plain identifier otherwise.
+describe("NodeSection identifier", () => {
+  it("shows a plain number (no menu) for a viewer on a childless, un-annotated node", () => {
     renderNode(node(), false);
-    expect(screen.queryByRole("button", { name: /note/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Node actions" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Section actions" })).toBeNull();
+    // The heading node still shows its number "2".
+    expect(screen.getByText("2")).toBeDefined();
   });
 
-  it("shows the ¶ marker when a note exists and opens the drawer on click", () => {
-    renderNode(node({ nodeAnnotation: ann }), false, true);
-    const marker = screen.getByRole("button", { name: "Show note" });
-    expect(marker.textContent).toBe("¶");
-    expect(document.querySelector('.notes-drawer[data-open="true"]')).toBeNull();
-    fireEvent.click(marker);
-    expect(document.querySelector('.notes-drawer[data-open="true"]')).not.toBeNull();
+  it("turns the number red (data-annotated) when the node carries a note", () => {
+    renderNode(node({ nodeAnnotation: ann }), false);
+    expect(screen.getByText("2").getAttribute("data-annotated")).toBe("true");
   });
 
-  it("gives editors the ⋮ hint", () => {
+  it("makes the number a menu trigger for editors", () => {
     renderNode(node(), true);
-    expect(screen.getByRole("button", { name: "Node actions" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Section actions" })).toBeDefined();
   });
 
-  it("gives viewers the ⋮ hint when the node has children (for Collapse/Expand)", () => {
+  it("makes the number a menu trigger for viewers when the node has children (Collapse/Expand)", () => {
     renderNode(node({ children: [node({ id: "c1" })] }), false);
-    expect(screen.getByRole("button", { name: "Node actions" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Section actions" })).toBeDefined();
   });
 });
 

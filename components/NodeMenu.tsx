@@ -126,18 +126,35 @@ function onHintKeyDown(nodeId: string, canEdit: boolean) {
   };
 }
 
-// The visible ⋮ door for pointer users who don't try right-click.
-export function NodeMenuHint({
+// The section identifier IS the menu door (replacing the old ⋮ hint): clicking the
+// blue/red number opens the node menu. `annotated` flips it red; `runIn` styles it
+// as an inline paragraph prefix rather than a head label.
+export function NodeNumberMenu({
+  number,
+  annotated,
+  runIn,
   onOpenChange,
   ...menu
-}: MenuProps & { onOpenChange?: (open: boolean) => void }) {
+}: MenuProps & {
+  number: string;
+  annotated: boolean;
+  runIn?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   return (
     <DropdownMenu.Root onOpenChange={onOpenChange}>
       <DropdownMenu.Trigger asChild>
-        <button className="glyph node-hint" aria-label="Node actions" onKeyDown={onHintKeyDown(menu.nodeId, menu.canEdit)}>⋮</button>
+        <button
+          className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}
+          data-annotated={annotated || undefined}
+          aria-label="Section actions"
+          onKeyDown={onHintKeyDown(menu.nodeId, menu.canEdit)}
+        >
+          {number}
+        </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="node-menu" align="end" sideOffset={4} collisionPadding={8}>
+        <DropdownMenu.Content className="node-menu" align="start" sideOffset={4} collisionPadding={8}>
           <MenuItems {...menu} Item={DropdownMenu.Item} Separator={DropdownMenu.Separator} />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

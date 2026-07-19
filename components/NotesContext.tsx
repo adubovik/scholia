@@ -1,21 +1,34 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import type { NoteEntry } from "@/lib/annotations/entries";
 
-// Two contexts on purpose. The reading tree (SourcePassage / NodeSection) only
-// ever needs the ACTIONS — a value that never changes — so opening the drawer or
-// flipping a filter never re-renders the (book-sized) prose. Only the drawer,
-// header, and main-margin wrapper subscribe to the reactive STATE. Same rationale
-// as CollapseContext: keep the hot tree out of the re-render path.
+// Three contexts, split by re-render cost.
+//  • ActionsCtx — a value that never changes; the prose tree consumes only this,
+//    so opening the drawer / filtering never re-renders the (book-sized) tree.
+//  • StateCtx   — reactive drawer/chrome state (open, width, filter); only the
+//    drawer + chrome subscribe.
+//  • the active-selection STORE — an external store (mutable + listeners, like
+//    CollapseContext) so a highlight span or node block subscribes to just "am I
+//    the active one?" and re-renders alone when the selection moves. Exactly one
+//    annotation/node is active at a time; it persists until the next selection.
 
 export interface NotesActions {
-  /** In-text highlight / node marker → open the drawer on that card. */
-  openAnnotation: (id: string) => void;
+  /** In-text highlight / node identifier → open the drawer on that card + mark active. */
+  openAnnotation: (annId: string, nodeId: string) => void;
   /** Node menu "add note" → open the drawer with a fresh node-note composer. */
   composeNode: (nodeId: string) => void;
-  /** Drawer card → scroll the prose to the annotation and flash it. */
+  /** Drawer card → scroll the prose to the annotation, mark active. */
   locate: (entry: NoteEntry) => void;
+  /** §cross-reference → scroll the prose to a section by its number. */
+  scrollToSection: (num: string) => void;
   toggleDrawer: () => void;
   closeDrawer: () => void;
   toggleLeft: () => void;
@@ -26,64 +39,95 @@ export interface NotesActions {
 
 export interface NotesState {
   entries: NoteEntry[];
+  sections: Record<string, string>; // section number → node id (for §link validation)
   drawerOpen: boolean;
   leftOpen: boolean;
-  activeId: string | null;
   composeNodeId: string | null;
   panelWidth: number;
   filterTag: string | null;
 }
 
+interface ActiveStore {
+  subscribe: (cb: () => void) => () => void;
+  getAnn: () => string | null;
+  getNode: () => string | null;
+  set: (annId: string | null, nodeId: string | null) => void;
+}
+
 const ActionsCtx = createContext<NotesActions | null>(null);
 const StateCtx = createContext<NotesState | null>(null);
+const ActiveCtx = createContext<ActiveStore | null>(null);
 
-// Scroll a target into view and flash it. Pure DOM so the tree never re-renders
-// on locate — a class is added, then removed after the animation window.
-function flash(el: HTMLElement) {
+function createActiveStore(): ActiveStore {
+  let annId: string | null = null;
+  let nodeId: string | null = null;
+  const listeners = new Set<() => void>();
+  return {
+    subscribe(cb) {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    getAnn: () => annId,
+    getNode: () => nodeId,
+    set(a, n) {
+      annId = a;
+      nodeId = n;
+      listeners.forEach((l) => l());
+    },
+  };
+}
+
+function scrollProseTo(el: HTMLElement) {
   el.scrollIntoView({ behavior: "smooth", block: "center" });
-  el.classList.add("note-flash");
-  window.setTimeout(() => el.classList.remove("note-flash"), 900);
 }
 
 export function NotesProvider({
   entries,
+  sections,
   children,
 }: {
   entries: NoteEntry[];
+  sections: Record<string, string>; // section number → node id, for §links
   children: ReactNode;
 }) {
-  const [state, setState] = useState<Omit<NotesState, "entries">>({
+  const [state, setState] = useState<Omit<NotesState, "entries" | "sections">>({
     drawerOpen: false,
     leftOpen: false,
-    activeId: null,
     composeNodeId: null,
     panelWidth: 480,
     filterTag: null,
   });
+  const [active] = useState(createActiveStore);
 
-  // Default the panel to half the viewport once we're on the client. Reading
-  // window during render would break SSR, so the one-shot mount effect is the path.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- post-mount viewport read
     setState((s) => ({ ...s, panelWidth: Math.round(window.innerWidth / 2) }));
   }, []);
 
-  // Actions close over the stable setState, so the object is built exactly once
-  // (lazy initializer) and its identity never changes — the whole point of the
-  // split: the prose tree consumes only this and never re-renders on state.
   const [actions] = useState<NotesActions>(() => ({
-    openAnnotation: (id) =>
-      setState((s) => ({ ...s, drawerOpen: true, activeId: id, composeNodeId: null })),
-    composeNode: (nodeId) =>
-      setState((s) => ({ ...s, drawerOpen: true, composeNodeId: nodeId, activeId: null })),
+    openAnnotation: (annId, nodeId) => {
+      active.set(annId, nodeId);
+      setState((s) => ({ ...s, drawerOpen: true, composeNodeId: null }));
+    },
+    composeNode: (nodeId) => {
+      active.set(null, nodeId);
+      setState((s) => ({ ...s, drawerOpen: true, composeNodeId: nodeId }));
+    },
     locate: (entry) => {
+      active.set(entry.id, entry.nodeId);
       const sel =
         entry.kind === "inline"
           ? `[data-ann-id~="${entry.id}"]` // spans carry a space-joined id list
           : `[data-node-id="${entry.nodeId}"]`;
       const el = document.querySelector<HTMLElement>(sel);
-      if (el) flash(el);
-      setState((s) => ({ ...s, activeId: entry.id }));
+      if (el) scrollProseTo(el);
+    },
+    scrollToSection: (num) => {
+      const nodeId = sections[num];
+      if (!nodeId) return;
+      active.set(null, nodeId);
+      const el = document.querySelector<HTMLElement>(`[data-node-id="${nodeId}"]`);
+      if (el) scrollProseTo(el);
     },
     toggleDrawer: () => setState((s) => ({ ...s, drawerOpen: !s.drawerOpen })),
     closeDrawer: () => setState((s) => ({ ...s, drawerOpen: false })),
@@ -95,7 +139,9 @@ export function NotesProvider({
 
   return (
     <ActionsCtx.Provider value={actions}>
-      <StateCtx.Provider value={{ ...state, entries }}>{children}</StateCtx.Provider>
+      <ActiveCtx.Provider value={active}>
+        <StateCtx.Provider value={{ ...state, entries, sections }}>{children}</StateCtx.Provider>
+      </ActiveCtx.Provider>
     </ActionsCtx.Provider>
   );
 }
@@ -110,4 +156,45 @@ export function useNotesState(): NotesState {
   const ctx = useContext(StateCtx);
   if (!ctx) throw new Error("useNotesState must be used within a NotesProvider");
   return ctx;
+}
+
+function useActiveStore(): ActiveStore {
+  const ctx = useContext(ActiveCtx);
+  if (!ctx) throw new Error("active hooks must be used within a NotesProvider");
+  return ctx;
+}
+
+/** Is this inline annotation the active (filled/selected) one? Subscribes per-id. */
+export function useActiveAnn(id: string): boolean {
+  const store = useActiveStore();
+  return useSyncExternalStore(store.subscribe, () => store.getAnn() === id, () => false);
+}
+
+/** The active annotation id IF it covers this segment, else null. A segment fills
+ * with the active highlight's colour when this returns its id; returning null for
+ * every non-covered segment means selection changes only re-render the (≤2) segments
+ * whose membership actually flips. Multi-segment highlights fill across every segment. */
+export function useActiveAnnInSet(ids: string[]): string | null {
+  const store = useActiveStore();
+  const key = ids.join(" ");
+  return useSyncExternalStore(
+    store.subscribe,
+    () => {
+      const a = store.getAnn();
+      return a !== null && key.split(" ").includes(a) ? a : null;
+    },
+    () => null,
+  );
+}
+
+/** Is this node block the active (embossed) one? Subscribes per-node. */
+export function useActiveNode(id: string): boolean {
+  const store = useActiveStore();
+  return useSyncExternalStore(store.subscribe, () => store.getNode() === id, () => false);
+}
+
+/** The current active annotation id (for the drawer's scroll-to-card effect). */
+export function useActiveAnnId(): string | null {
+  const store = useActiveStore();
+  return useSyncExternalStore(store.subscribe, store.getAnn, () => null);
 }

@@ -7,11 +7,12 @@ import type { TreeNode } from "@/lib/tree/build";
 
 // NodeSection reads collapse + notes actions from providers, and its SourcePassage
 // reads notes actions too — both wrappers are required.
+const NUMS = new Map([["a", "1"], ["b", "1.1"], ["x", "1"], ["h", "1"], ["p", "1.1"]]);
 const renderNode = (n: TreeNode) =>
   render(
-    <NotesProvider entries={[]}>
+    <NotesProvider entries={[]} sections={{}}>
       <CollapseProvider>
-        <NodeSection node={n} depth={0} canEdit={false} documentId="d1" />
+        <NodeSection node={n} depth={0} canEdit={false} documentId="d1" numbers={NUMS} />
       </CollapseProvider>
     </NotesProvider>,
   );

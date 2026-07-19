@@ -27,8 +27,12 @@ export function ReadingChrome({
     "--shift-right": drawerOpen ? `${panelWidth}px` : "0px",
   } as CSSProperties;
 
+  // Right drawer expands the column to fill the freed space; the left library just
+  // nudges the same-width column to stay centred in what's left (item 1).
+  const mode = drawerOpen ? "right" : leftOpen ? "left" : "default";
+
   return (
-    <main className="page page--read reading-main" data-shift={leftOpen || drawerOpen ? "1" : "0"} style={style}>
+    <main className="page page--read reading-main" data-mode={mode} style={style}>
       <div className="reading-head">
         <h1 className="reading-title">{title}</h1>
         <div className="reading-head-actions">

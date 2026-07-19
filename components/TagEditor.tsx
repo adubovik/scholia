@@ -29,6 +29,9 @@ export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags:
             addTag();
           }
         }}
+        // Commit a half-typed tag when focus leaves (e.g. clicking Save) — otherwise
+        // a tag typed but not Enter'd is silently dropped and never renders/filters.
+        onBlur={addTag}
         placeholder="tag"
       />
     </div>

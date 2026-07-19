@@ -1,45 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
 import type { TreeNode } from "@/lib/tree/build";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
-import { NodeContextMenu, NodeMenuHint } from "./NodeMenu";
+import { NodeContextMenu, NodeNumberMenu } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
-import { useNotesActions } from "./NotesContext";
+import { useNotesActions, useActiveNode } from "./NotesContext";
 
 // Every id beneath this node (not the node itself) — the target of Collapse/Expand
 // children.
 const descendantIds = (n: TreeNode): string[] =>
   n.children.flatMap((c) => [c.id, ...descendantIds(c)]);
 
+// Isolated emboss wrapper: subscribes to the active-selection store on its own, so
+// selecting a node (item 5/6) repaints only this thin div — the node's content is
+// passed through as a stable child element and never re-renders. forwardRef so
+// Radix's ContextMenu.Trigger `asChild` can attach its ref + right-click handler.
+const NodeSelf = forwardRef<HTMLDivElement, { nodeId: string } & HTMLAttributes<HTMLDivElement>>(
+  function NodeSelf({ nodeId, children, ...rest }, ref) {
+    const active = useActiveNode(nodeId);
+    return (
+      <div ref={ref} className={active ? "node-self node-self--active" : "node-self"} {...rest}>
+        {children}
+      </div>
+    );
+  },
+);
+
 export function NodeSection({
   node,
   depth,
   canEdit,
   documentId,
+  numbers,
 }: {
   node: TreeNode;
   depth: number;
   canEdit: boolean;
   documentId: string;
+  numbers: Map<string, string>;
 }) {
   const { toggle, setMany } = useCollapse();
   const { openAnnotation, composeNode } = useNotesActions();
   const collapsed = useCollapsed(node.id);
-  const [menuOpen, setMenuOpen] = useState(false);
   const hasChildren = node.children.length > 0;
   const hasText = Boolean(node.text);
   // A heading node's whole range IS its title (import stores the heading text as
   // both): the title renders in the head, so rendering the passage too would
-  // duplicate it. Its prose lives in the children, not its own body — mirroring
-  // how a numbered node shows its label in the head and prose in the body.
+  // duplicate it. Its prose lives in the children, not its own body.
   const isHeading = node.title !== null && node.title.trim() === node.text.trim();
-  // Collapse governs the node's own body text AND its children. Headings carry
-  // no body of their own, so they're collapsible only when they have children.
+  // Collapse governs the node's own body text AND its children. Headings carry no
+  // body of their own, so they're collapsible only when they have children.
   const collapsible = hasChildren || (hasText && !isHeading);
-  // Leaf prose nodes need no header chrome — the paragraph flows on its own.
-  const showHead = hasChildren || Boolean(node.label) || Boolean(node.title);
+
+  // Hierarchical section number (1, 2.1, 3.1.1) derived from tree position. A body
+  // paragraph shows it as a run-in prefix; a heading/container shows it in a head.
+  const num = numbers.get(node.id) ?? "";
+  const runIn = hasText && !isHeading;
+  const showHead = !runIn; // heading or bodyless container → number (+ title) on its own line
 
   // Collapsed preview: first sentence + "…" when content is actually hidden.
   const preview = hasText ? firstSentence(node.text) : "";
@@ -47,12 +66,11 @@ export function NodeSection({
 
   const nodeAnn = node.nodeAnnotation;
   const hasNote = nodeAnn !== null;
-  // Node notes live in the drawer now: opening an existing one scrolls to its
-  // card; "add note" on a fresh node opens the drawer's composer for this node.
-  const openNote = () => (nodeAnn ? openAnnotation(nodeAnn.id) : composeNode(node.id));
+  // Node notes live in the drawer: opening an existing one scrolls to its card +
+  // marks it active; "add note" on a fresh node opens the drawer's composer.
+  const openNote = () => (nodeAnn ? openAnnotation(nodeAnn.id, node.id) : composeNode(node.id));
   // The menu carries editor actions (canEdit) and/or the view-only Collapse/Expand
-  // children (any reader, when there's a subtree to fold), so it shows whenever
-  // either applies.
+  // children (any reader, when there's a subtree to fold).
   const showMenu = canEdit || hasChildren;
   const menuProps = {
     nodeId: node.id,
@@ -64,22 +82,32 @@ export function NodeSection({
     onExpandChildren: () => setMany(descendantIds(node), false),
   };
 
-  // The node's OWN head + passage — the right-click surface. Kept separate from
-  // .node-children so nested context-menu triggers never fight over one event,
-  // and off the SourcePassage's text-selection gesture only via right-click
-  // (left-click drag selection is untouched by Radix's contextmenu trigger).
-  const self = (
-    <div className={menuOpen ? "node-self node-self--active" : "node-self"}>
-      {showHead && (
+  // The section identifier: blue (red when annotated) number. When there's a menu
+  // it IS the menu trigger (item 4); otherwise a plain span. A non-interactive plain
+  // span is used inside the collapsed preview button (no button-in-button).
+  const numberEl =
+    num &&
+    (showMenu ? (
+      <NodeNumberMenu {...menuProps} number={num} annotated={hasNote} runIn={runIn} />
+    ) : (
+      <span
+        className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}
+        data-annotated={hasNote || undefined}
+      >
+        {num}
+      </span>
+    ));
+  const plainNumberEl = num && (
+    <span className="node-num-id node-num-id--runin" data-annotated={hasNote || undefined}>
+      {num}
+    </span>
+  );
+
+  const self: ReactNode = (
+    <>
+      {showHead && (num || node.title) && (
         <div className="node-head">
-          {node.label &&
-            (hasNote ? (
-              <button className="node-label node-label--note" onClick={openNote}>
-                {node.label}
-              </button>
-            ) : (
-              <span className="node-label">{node.label}</span>
-            ))}
+          {numberEl}
           {node.title && <span className="node-title">{node.title}</span>}
         </div>
       )}
@@ -87,6 +115,7 @@ export function NodeSection({
       {hasText && !isHeading &&
         (collapsed ? (
           <button className="node-preview" onClick={() => setMany([node.id], false)}>
+            {plainNumberEl}
             {preview}
             {truncated ? " …" : ""}
           </button>
@@ -94,27 +123,18 @@ export function NodeSection({
           <SourcePassage
             text={node.text}
             sourceId={node.sourceId}
+            nodeId={node.id}
             startOffset={node.startOffset}
             annotations={node.annotations}
             canEdit={canEdit}
+            prefix={runIn ? numberEl : undefined}
           />
         ))}
-    </div>
+    </>
   );
 
   return (
     <section className="node" style={{ marginLeft: depth ? "1.25rem" : undefined }} data-node-id={node.id}>
-      {(hasNote || showMenu) && (
-        <div className="node-gutter">
-          {hasNote && (
-            <button className="node-marker" aria-label="Show note" onClick={openNote}>
-              ¶
-            </button>
-          )}
-          {showMenu && <NodeMenuHint {...menuProps} onOpenChange={setMenuOpen} />}
-        </div>
-      )}
-
       <div className="node-toggle-col">
         {collapsible && (
           <button
@@ -130,17 +150,24 @@ export function NodeSection({
 
       <div className="node-body">
         {showMenu ? (
-          <NodeContextMenu {...menuProps} onOpenChange={setMenuOpen}>
-            {self}
+          <NodeContextMenu {...menuProps}>
+            <NodeSelf nodeId={node.id}>{self}</NodeSelf>
           </NodeContextMenu>
         ) : (
-          self
+          <NodeSelf nodeId={node.id}>{self}</NodeSelf>
         )}
 
         {!collapsed && hasChildren && (
           <div className="node-children">
             {node.children.map((child) => (
-              <NodeSection key={child.id} node={child} depth={depth + 1} canEdit={canEdit} documentId={documentId} />
+              <NodeSection
+                key={child.id}
+                node={child}
+                depth={depth + 1}
+                canEdit={canEdit}
+                documentId={documentId}
+                numbers={numbers}
+              />
             ))}
           </div>
         )}

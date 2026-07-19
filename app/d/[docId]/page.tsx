@@ -28,7 +28,13 @@ export default async function DocumentPage({ params }: { params: Promise<{ docId
       currentId={data.doc.id}
       createdAt={data.doc.createdAt.toISOString()}
       updatedAt={data.doc.updatedAt.toISOString()}
-      docs={docs.map((d) => ({ id: d.id, title: d.title }))}
+      docs={docs.map((d) => ({
+        id: d.id,
+        title: d.title,
+        author: d.author,
+        paragraphs: d.nodeCount,
+        notes: d.highlightCount + d.noteCount,
+      }))}
       canInvite={canInvite}
       invites={invites}
     />

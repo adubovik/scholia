@@ -8,6 +8,9 @@ import type { InviteView } from "@/lib/data/invites";
 export interface LibraryDoc {
   id: string;
   title: string;
+  author: string;
+  paragraphs: number;
+  notes: number;
 }
 
 /** Left slide-in library: brand, new/invite actions, and the catalog. Toggled by
@@ -61,7 +64,11 @@ export function LibraryDrawer({
               href={`/d/${d.id}`}
               className={d.id === currentId ? "library-row library-row--current" : "library-row"}
             >
-              {d.title}
+              <span className="library-row-title">{d.title}</span>
+              <span className="library-row-author">{d.author}</span>
+              <span className="library-row-stats">
+                {d.paragraphs} ¶ · {d.notes} {d.notes === 1 ? "note" : "notes"}
+              </span>
             </Link>
           ))}
         </nav>

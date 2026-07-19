@@ -16,8 +16,8 @@ const ann = (id: string, s: number, e: number, color: InlineAnnotationView["colo
 
 function renderPassage(anns: InlineAnnotationView[], text = "abcdef") {
   return render(
-    <NotesProvider entries={[]}>
-      <SourcePassage text={text} sourceId="s1" startOffset={0} annotations={anns} />
+    <NotesProvider entries={[]} sections={{}}>
+      <SourcePassage text={text} sourceId="s1" nodeId="n1" startOffset={0} annotations={anns} />
       <NotesDrawer documentId="d1" />
     </NotesProvider>,
   );
@@ -52,5 +52,13 @@ describe("SourcePassage", () => {
     expect(document.querySelector('.notes-drawer[data-open="true"]')).toBeNull();
     fireEvent.click(screen.getByText("abcd"));
     expect(document.querySelector('.notes-drawer[data-open="true"]')).not.toBeNull();
+  });
+
+  it("fills the highlight background once it becomes the active selection (item 9)", () => {
+    renderPassage([ann("a", 0, 4, "green")]);
+    const hl = screen.getByText("abcd") as HTMLElement;
+    expect(hl.style.background).toBe(""); // resting: underline only
+    fireEvent.click(hl); // selects it
+    expect(hl.style.background).toBe("var(--hl-green)");
   });
 });

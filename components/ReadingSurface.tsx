@@ -7,6 +7,7 @@ import { NotesDrawer } from "./NotesDrawer";
 import { LibraryDrawer, type LibraryDoc } from "./LibraryDrawer";
 import { ReadingChrome } from "./ReadingChrome";
 import { flattenEntries } from "@/lib/annotations/entries";
+import { numberSections } from "@/lib/tree/number";
 import type { InviteView } from "@/lib/data/invites";
 import type { TreeNode } from "@/lib/tree/build";
 
@@ -40,7 +41,9 @@ export function ReadingSurface({
   canInvite: boolean;
   invites: InviteView[];
 }) {
-  const entries = flattenEntries(tree);
+  const { byId: numbers, byNumber } = numberSections(tree);
+  const sections = Object.fromEntries(byNumber); // section number → node id, for §links
+  const entries = flattenEntries(tree, numbers);
   const meta = {
     documentId,
     title,
@@ -52,7 +55,7 @@ export function ReadingSurface({
   };
 
   return (
-    <NotesProvider entries={entries}>
+    <NotesProvider entries={entries} sections={sections}>
       <LibraryDrawer docs={docs} currentId={currentId} canInvite={canInvite} invites={invites} />
 
       <ReadingChrome title={title} meta={meta}>
@@ -60,7 +63,7 @@ export function ReadingSurface({
           <CollapseProvider>
             <RootMenu allIds={allNodeIds(tree)}>
               {tree.map((node) => (
-                <NodeSection key={node.id} node={node} depth={0} canEdit={canEdit} documentId={documentId} />
+                <NodeSection key={node.id} node={node} depth={0} canEdit={canEdit} documentId={documentId} numbers={numbers} />
               ))}
             </RootMenu>
           </CollapseProvider>

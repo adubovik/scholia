@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentPropsWithoutRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { COLORS } from "@/lib/annotations/types";
@@ -8,9 +8,37 @@ import type { NoteEntry } from "@/lib/annotations/entries";
 import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/annotations";
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
 import { TagEditor } from "./TagEditor";
-import { useNotesActions, useNotesState } from "./NotesContext";
+import { useNotesActions, useNotesState, useActiveAnnId } from "./NotesContext";
 
 const MIN_W = 320;
+
+// Rewrite "§2.2" tokens into markdown links (#section-2.2) so ReactMarkdown handles
+// them, but only when the number resolves to a real node — unknown refs stay plain
+// text. SectionLink then intercepts those hrefs (item 8).
+function linkifySections(md: string, sections: Record<string, string>): string {
+  return md.replace(/§\s*(\d+(?:\.\d+)*)/g, (m, num) => (sections[num] ? `[§${num}](#section-${num})` : m));
+}
+
+/** ReactMarkdown link override: a #section-N href becomes a blue in-app §link that
+ * scrolls the prose to that node; everything else is a normal external link. */
+function SectionLink({ href, children, ...rest }: ComponentPropsWithoutRef<"a">) {
+  const { scrollToSection } = useNotesActions();
+  if (href?.startsWith("#section-")) {
+    const num = href.slice("#section-".length);
+    return (
+      <span
+        className="xref"
+        role="link"
+        tabIndex={0}
+        onClick={(e) => { e.stopPropagation(); scrollToSection(num); }}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); scrollToSection(num); } }}
+      >
+        {children}
+      </span>
+    );
+  }
+  return <a href={href} target="_blank" rel="noreferrer" {...rest}>{children}</a>;
+}
 
 function timeAgo(iso: string): string {
   const then = new Date(iso).getTime();
@@ -29,7 +57,8 @@ function timeAgo(iso: string): string {
 /** A saved annotation: view mode + inline editor, mutating via the existing server actions. */
 function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string }) {
   const { locate, setFilterTag } = useNotesActions();
-  const { activeId } = useNotesState();
+  const { sections } = useNotesState();
+  const activeId = useActiveAnnId();
   const [editing, setEditing] = useState(false);
   const [note, setNote] = useState(entry.note ?? "");
   const [tags, setTags] = useState<string[]>(entry.tags);
@@ -62,7 +91,7 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
     >
       <button className="note-cardhead" onClick={() => locate(entry)}>
         <span className={entry.kind === "inline" ? "note-num note-num--inline" : "note-num note-num--node"}>
-          {entry.nodeLabel ?? "¶"}
+          {entry.nodeLabel ?? ""}
         </span>
         {entry.kind === "inline" ? (
           <span className="note-snippet" style={{ background: `var(--hl-${entry.color})` }}>
@@ -104,7 +133,9 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
         <>
           <div className="note-cardbody">
             {entry.note ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{entry.note}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: SectionLink }}>
+                {linkifySections(entry.note, sections)}
+              </ReactMarkdown>
             ) : (
               <span className="muted">No note.</span>
             )}
@@ -135,6 +166,8 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
 /** A fresh node-note composer, shown at the top of the list when the menu asks for one. */
 function ComposeCard({ documentId, nodeId }: { documentId: string; nodeId: string }) {
   const { closeDrawer } = useNotesActions();
+  const { sections } = useNotesState();
+  const number = Object.keys(sections).find((k) => sections[k] === nodeId);
   const [note, setNote] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -150,7 +183,7 @@ function ComposeCard({ documentId, nodeId }: { documentId: string; nodeId: strin
   return (
     <div className="note-card note-card--active">
       <div className="note-cardhead note-cardhead--compose">
-        <span className="note-num note-num--node">¶</span>
+        <span className="note-num note-num--node">{number ?? ""}</span>
         <span className="note-nodetitle">New note</span>
       </div>
       <textarea
@@ -170,23 +203,23 @@ function ComposeCard({ documentId, nodeId }: { documentId: string; nodeId: strin
 }
 
 export function NotesDrawer({ documentId }: { documentId: string }) {
-  const { entries, drawerOpen, activeId, composeNodeId, panelWidth, filterTag } = useNotesState();
+  const { entries, drawerOpen, composeNodeId, panelWidth, filterTag } = useNotesState();
   const { closeDrawer, toggleDrawer, setPanelWidth, setFilterTag } = useNotesActions();
+  const activeId = useActiveAnnId();
   const listRef = useRef<HTMLDivElement>(null);
 
   const tags = [...new Set(entries.flatMap((e) => e.tags))];
   const shown = filterTag ? entries.filter((e) => e.tags.includes(filterTag)) : entries;
 
-  // Scroll the active card into view + flash it when a highlight opens the drawer.
+  // Scroll the active card into view when the selection moves (item 6). The card's
+  // highlight is persistent (note-card--active), not a transient flash — the last
+  // selected annotation stays marked until the next selection.
   useEffect(() => {
     if (!drawerOpen || !activeId) return;
     const list = listRef.current;
     const card = list?.querySelector<HTMLElement>(`[data-card-id="${activeId}"]`);
     if (!list || !card) return;
     list.scrollTo({ top: card.offsetTop - list.offsetTop - 12, behavior: "smooth" });
-    card.classList.add("note-flash");
-    const t = window.setTimeout(() => card.classList.remove("note-flash"), 900);
-    return () => window.clearTimeout(t);
   }, [drawerOpen, activeId]);
 
   // Edge handle: click (when closed) toggles; drag (when open) resizes.

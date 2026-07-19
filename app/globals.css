@@ -351,10 +351,9 @@ body {
 }
 
 /* ── Inline highlight ────────────────────────────────────── */
-.hl { cursor: pointer; }
-/* Flash when a drawer card "locates" its highlight / node in the prose. */
-.hl.note-flash { outline: 1px dashed var(--ink); outline-offset: 2px; border-radius: 2px; }
-.node.note-flash > .node-body { outline: 1px dashed var(--rule); outline-offset: 3px; border-radius: 3px; }
+/* The selected highlight fills its background (inline style, item 9); the underline
+   is the resting state. Transition both so selection eases in. */
+.hl { cursor: pointer; transition: background 0.4s; }
 
 /* ── Tree ────────────────────────────────────────────────── */
 /* align-items: baseline keeps the toggle glyph on the first text line's
@@ -436,47 +435,6 @@ body {
   margin-top: var(--reading-block-gap); /* uniform block spacing at every depth */
 }
 
-/* Margin gutter: a persistent ¶ marker when the node carries a note (indicator +
-   click-to-read) and an editor-only ⋯ hint that opens the node menu. Kept IN FLOW
-   as the first flex child of .node so it inherits the row's `align-items: baseline`
-   and lands on the toggle triangle's text line automatically. Its width is claimed
-   then cancelled by a negative margin so the toggle/text keep their position; the
-   glyphs hug the right edge, sitting just left of the triangle. */
-.node-gutter {
-  flex: 0 0 1rem;
-  margin-left: -1.35rem; /* -(width + .node row gap) → toggle stays put */
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.1rem;
-}
-.node-marker {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0 0.15rem;
-  font-family: var(--mono);
-  font-size: 0.9rem;
-  line-height: 1;
-  color: var(--muted); /* --muted, not a full-height --rule line — distinct from
-                          the .node-children connector */
-  transition: color 0.12s;
-}
-.node-marker:hover,
-.node-marker:focus-visible { color: var(--ink); }
-/* The ⋯ hint only materialises on row hover (or when its menu is focused/open),
-   so un-annotated nodes read as pure prose until the reader reaches for them. */
-.node-hint {
-  font-size: 0.9rem;
-  padding: 0 0.15rem;
-  opacity: 0;
-  transition: opacity 0.12s, color 0.12s;
-}
-.node:hover > .node-gutter .node-hint,
-.node-hint:focus-visible,
-.node-hint[data-state="open"] { opacity: 1; }
-@media (max-width: 860px) { .node-hint { display: none; } }
-
 /* Node menu (Radix ContextMenu + DropdownMenu), styled to the Display sheet
    (.aa-sheet): parchment surface, hairline rule, soft shadow, square corners,
    mono uppercase items that go --muted → --ink on hover/keyboard highlight. */
@@ -518,15 +476,20 @@ body {
    still hits the document-level RootMenu. */
 .reading-canvas { display: block; min-height: 60vh; }
 
-/* While a node's menu is open, mark WHICH node it acts on: a lighter wash + a
-   dashed border. box-shadow (padded wash) and outline (dashed edge) add no
-   layout, so opening the menu never nudges the prose. */
-.node-self { border-radius: 3px; transition: background-color 0.12s, box-shadow 0.12s; }
+/* The selected node (last clicked highlight / §link / card) gets a soft embossed
+   wash — a light --field fill with an inset top-shadow + bottom highlight, so it
+   reads as gently pressed in. Padding + negative margin bleed the wash past the text
+   without shifting layout; box-shadow adds none. Exactly one node carries this at a
+   time (the active-selection store), and it persists until the next selection. */
+.node-self {
+  border-radius: 5px;
+  padding: 0.2rem 0.45rem;
+  margin: -0.2rem -0.45rem;
+  transition: background 0.4s, box-shadow 0.4s;
+}
 .node-self--active {
-  background-color: var(--field);
-  box-shadow: 0 0 0 0.3rem var(--field);
-  outline: 1px dashed var(--muted);
-  outline-offset: 0.3rem;
+  background: var(--field);
+  box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
 }
 .node-menu-sep {
   height: 1px;
@@ -869,12 +832,18 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 
 /* The reading column slides aside for whichever drawer is open (desktop only —
    on mobile the drawers are sheets, so the column stays centred). */
-.reading-main { transition: margin 0.22s ease; }
+.reading-main { transition: margin 0.22s ease, transform 0.22s ease; }
 @media (min-width: 861px) {
-  .reading-main[data-shift="1"] {
+  /* Right drawer: column expands to fill the space between the two edges. */
+  .reading-main[data-mode="right"] {
     max-width: none;
     margin-left: var(--shift-left);
     margin-right: var(--shift-right);
+  }
+  /* Left library: same-width column, just nudged right to stay centred in what's
+     left of the viewport (half the drawer width). */
+  .reading-main[data-mode="left"] {
+    transform: translateX(calc(var(--shift-left) / 2));
   }
 }
 
@@ -890,6 +859,34 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   letter-spacing: 0.05em;
   font-variant-numeric: tabular-nums;
 }
+
+/* Section identifier: the hierarchical number (1, 2.1, 3.1.1) that replaces the old
+   ¶ marker. Blue by default, red when the node carries a note. It's the node-menu
+   trigger (a reset <button>), or a plain <span> where there's no menu. The run-in
+   variant sits inline at the head of a body paragraph. */
+.node-num-id {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: var(--reading-font-size, 1rem);
+  font-variant-numeric: tabular-nums;
+  color: #2a6fdb;
+  line-height: inherit;
+}
+.node-num-id[data-annotated] { color: #e23b2e; }
+.node-num-id--runin { margin-right: 0.5em; }
+.node-num-id:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
+
+/* In-note cross-reference (§2.2): blue, tabular, behaves as a link to the section. */
+.xref {
+  color: #2a6fdb;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.xref:hover { text-decoration: underline; }
+.xref:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
 
 /* ══ Drawers (shared) ════════════════════════════════════════ */
 .notes-backdrop {
@@ -992,8 +989,7 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   border-bottom: 1px solid var(--rule);
   transition: background 0.3s, box-shadow 0.3s;
 }
-.note-card--active,
-.note-card.note-flash {
+.note-card--active {
   border-radius: 6px;
   background: var(--field);
   box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
@@ -1094,19 +1090,38 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 .library-new { flex: 1 1 auto; text-align: center; text-decoration: none; }
 .library-list { flex: 1 1 auto; overflow-y: auto; padding: 0.5rem 0.9rem 1.5rem; }
 .library-row {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 5px;
+  padding: 0.45rem 0.6rem;
+  margin-bottom: 0.02rem;
+  transition: background 0.12s;
+}
+.library-row:hover { background: var(--field); }
+.library-row-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--serif);
   font-size: 0.95rem;
   color: var(--ink);
-  text-decoration: none;
-  border-radius: 5px;
-  padding: 0.4rem 0.6rem;
-  transition: background 0.12s;
 }
-.library-row:hover { background: var(--field); }
+.library-row-author {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.library-row-stats {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
 .library-row--current {
   background: var(--field);
   box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
