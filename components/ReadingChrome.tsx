@@ -15,8 +15,8 @@ export function ReadingChrome({
   meta,
   children,
 }: {
-  title: string;
-  meta: DocMeta;
+  title?: string;
+  meta?: DocMeta; // absent = home (no document): render the bare shifting column, no running-head
   children: ReactNode;
 }) {
   const { entries, leftOpen, drawerOpen, panelWidth } = useNotesState();
@@ -33,16 +33,18 @@ export function ReadingChrome({
 
   return (
     <main className="page page--read reading-main" data-mode={mode} style={style}>
-      <div className="reading-head">
-        <h1 className="reading-title">{title}</h1>
-        <div className="reading-head-actions">
-          <ReadingSettings triggerClassName="reading-headbtn" />
-          <DocInfo meta={meta} />
-          <button className="reading-notesbtn" onClick={toggleDrawer}>
-            Notes <span className="reading-notescount">{entries.length}</span>
-          </button>
+      {meta && (
+        <div className="reading-head">
+          <h1 className="reading-title">{title}</h1>
+          <div className="reading-head-actions">
+            <ReadingSettings triggerClassName="reading-headbtn" />
+            <DocInfo meta={meta} />
+            <button className="reading-notesbtn" onClick={toggleDrawer}>
+              Notes <span className="reading-notescount">{entries.length}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       {children}
     </main>
   );

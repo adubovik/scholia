@@ -55,6 +55,10 @@ interface ActiveStore {
   set: (annId: string | null, nodeId: string | null) => void;
 }
 
+// Each route mounts its own NotesProvider, so the library-drawer state is stashed
+// in sessionStorage to survive navigation (open on home → click a doc → stays open).
+const LEFT_KEY = "scholia:leftOpen";
+
 const ActionsCtx = createContext<NotesActions | null>(null);
 const StateCtx = createContext<NotesState | null>(null);
 const ActiveCtx = createContext<ActiveStore | null>(null);
@@ -85,15 +89,17 @@ function scrollProseTo(el: HTMLElement) {
 export function NotesProvider({
   entries,
   sections,
+  initialLeftOpen = false,
   children,
 }: {
   entries: NoteEntry[];
   sections: Record<string, string>; // section number → node id, for §links
+  initialLeftOpen?: boolean; // home (no document open) starts with the library showing
   children: ReactNode;
 }) {
   const [state, setState] = useState<Omit<NotesState, "entries" | "sections">>({
     drawerOpen: false,
-    leftOpen: false,
+    leftOpen: initialLeftOpen,
     composeNodeId: null,
     panelWidth: 480,
     filterTag: null,
@@ -101,9 +107,17 @@ export function NotesProvider({
   const [active] = useState(createActiveStore);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- post-mount viewport read
-    setState((s) => ({ ...s, panelWidth: Math.round(window.innerWidth / 2) }));
-  }, []);
+    const stored = sessionStorage.getItem(LEFT_KEY);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- post-mount viewport + storage read
+    setState((s) => ({
+      ...s,
+      panelWidth: Math.round(window.innerWidth / 2),
+      // Home forces the library open; elsewhere restore the last choice so
+      // navigating from the drawer doesn't slam it shut.
+      leftOpen: initialLeftOpen ? true : stored === "1",
+    }));
+    if (initialLeftOpen) sessionStorage.setItem(LEFT_KEY, "1");
+  }, [initialLeftOpen]);
 
   const [actions] = useState<NotesActions>(() => ({
     openAnnotation: (annId, nodeId) => {
@@ -132,8 +146,16 @@ export function NotesProvider({
     },
     toggleDrawer: () => setState((s) => ({ ...s, drawerOpen: !s.drawerOpen })),
     closeDrawer: () => setState((s) => ({ ...s, drawerOpen: false })),
-    toggleLeft: () => setState((s) => ({ ...s, leftOpen: !s.leftOpen })),
-    closeLeft: () => setState((s) => ({ ...s, leftOpen: false })),
+    toggleLeft: () =>
+      setState((s) => {
+        const leftOpen = !s.leftOpen;
+        sessionStorage.setItem(LEFT_KEY, leftOpen ? "1" : "0");
+        return { ...s, leftOpen };
+      }),
+    closeLeft: () => {
+      sessionStorage.setItem(LEFT_KEY, "0");
+      setState((s) => ({ ...s, leftOpen: false }));
+    },
     setPanelWidth: (w) => setState((s) => ({ ...s, panelWidth: w })),
     setFilterTag: (tag) => setState((s) => ({ ...s, filterTag: s.filterTag === tag ? null : tag })),
   }));

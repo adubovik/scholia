@@ -14,14 +14,15 @@ describe("ReadingSurface", () => {
   it("renders the title, node labels, and nested prose", () => {
     render(
       <ReadingSurface
-        title="Tractatus"
-        tree={tree}
+        document={{
+          title: "Tractatus",
+          tree,
+          documentId: "d1",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }}
         canEdit={false}
-        documentId="d1"
-        currentId="d1"
-        createdAt={new Date().toISOString()}
-        updatedAt={new Date().toISOString()}
-        docs={[{ id: "d1", title: "Tractatus" }]}
+        docs={[{ id: "d1", title: "Tractatus", author: "", paragraphs: 2, notes: 0 }]}
         canInvite={false}
         invites={[]}
       />,
@@ -30,5 +31,18 @@ describe("ReadingSurface", () => {
     expect(screen.getByText("Root prose.")).toBeDefined();
     expect(screen.getByText("Child prose.")).toBeDefined();
     expect(screen.getByText("1.1")).toBeDefined();
+  });
+
+  it("renders the empty home surface (no document) with a pick-a-text hint", () => {
+    render(
+      <ReadingSurface
+        canEdit
+        docs={[{ id: "d1", title: "Tractatus", author: "", paragraphs: 2, notes: 0 }]}
+        canInvite={false}
+        invites={[]}
+      />,
+    );
+    expect(screen.getByText("No text open.")).toBeDefined();
+    expect(screen.queryByText("Root prose.")).toBeNull();
   });
 });

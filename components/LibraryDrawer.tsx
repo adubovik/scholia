@@ -24,7 +24,7 @@ export function LibraryDrawer({
   invites,
 }: {
   docs: LibraryDoc[];
-  currentId: string;
+  currentId: string | null;
   canInvite: boolean;
   invites: InviteView[];
 }) {

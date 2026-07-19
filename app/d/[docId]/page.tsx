@@ -21,13 +21,14 @@ export default async function DocumentPage({ params }: { params: Promise<{ docId
   // M2: only the owner can read (getDocument gates on owner_id), so canEdit is true.
   return (
     <ReadingSurface
-      title={data.doc.title}
-      tree={data.tree}
+      document={{
+        title: data.doc.title,
+        tree: data.tree,
+        documentId: data.doc.id,
+        createdAt: data.doc.createdAt.toISOString(),
+        updatedAt: data.doc.updatedAt.toISOString(),
+      }}
       canEdit
-      documentId={data.doc.id}
-      currentId={data.doc.id}
-      createdAt={data.doc.createdAt.toISOString()}
-      updatedAt={data.doc.updatedAt.toISOString()}
       docs={docs.map((d) => ({
         id: d.id,
         title: d.title,

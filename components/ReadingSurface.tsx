@@ -18,60 +18,70 @@ const allNodeIds = (nodes: TreeNode[]): string[] =>
 const countNodes = (nodes: TreeNode[]): number =>
   nodes.reduce((n, x) => n + 1 + countNodes(x.children), 0);
 
-export function ReadingSurface({
-  title,
-  tree,
-  canEdit,
-  documentId,
-  createdAt,
-  updatedAt,
-  docs,
-  currentId,
-  canInvite,
-  invites,
-}: {
+/** The document being read. Absent = the home surface: library open, no prose. */
+export interface ReadingDoc {
   title: string;
   tree: TreeNode[];
-  canEdit: boolean;
   documentId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export function ReadingSurface({
+  document,
+  canEdit,
+  docs,
+  canInvite,
+  invites,
+}: {
+  document?: ReadingDoc;
+  canEdit: boolean;
   docs: LibraryDoc[];
-  currentId: string;
   canInvite: boolean;
   invites: InviteView[];
 }) {
+  const tree = document?.tree ?? [];
   const { byId: numbers, byNumber } = numberSections(tree);
   const sections = Object.fromEntries(byNumber); // section number → node id, for §links
   const entries = flattenEntries(tree, numbers);
-  const meta = {
-    documentId,
-    title,
-    createdAt,
-    updatedAt,
+  const meta = document && {
+    documentId: document.documentId,
+    title: document.title,
+    createdAt: document.createdAt,
+    updatedAt: document.updatedAt,
     nodeCount: countNodes(tree),
     highlightCount: entries.filter((e) => e.kind === "inline").length,
     noteCount: entries.filter((e) => e.kind === "node").length,
   };
 
   return (
-    <NotesProvider entries={entries} sections={sections}>
-      <LibraryDrawer docs={docs} currentId={currentId} canInvite={canInvite} invites={invites} />
+    <NotesProvider entries={entries} sections={sections} initialLeftOpen={!document}>
+      <LibraryDrawer docs={docs} currentId={document?.documentId ?? null} canInvite={canInvite} invites={invites} />
 
-      <ReadingChrome title={title} meta={meta}>
-        <article id="reading-root" className="reading">
-          <CollapseProvider>
-            <RootMenu allIds={allNodeIds(tree)}>
-              {tree.map((node) => (
-                <NodeSection key={node.id} node={node} depth={0} canEdit={canEdit} documentId={documentId} numbers={numbers} />
-              ))}
-            </RootMenu>
-          </CollapseProvider>
-          <SelectionPopover documentId={documentId} rootId="reading-root" />
-        </article>
-      </ReadingChrome>
+      {document ? (
+        <ReadingChrome title={document.title} meta={meta}>
+          <article id="reading-root" className="reading">
+            <CollapseProvider>
+              <RootMenu allIds={allNodeIds(tree)}>
+                {tree.map((node) => (
+                  <NodeSection key={node.id} node={node} depth={0} canEdit={canEdit} documentId={document.documentId} numbers={numbers} />
+                ))}
+              </RootMenu>
+            </CollapseProvider>
+            <SelectionPopover documentId={document.documentId} rootId="reading-root" />
+          </article>
+        </ReadingChrome>
+      ) : (
+        <ReadingChrome>
+          <div className="reading-blank">
+            <span className="reading-blank-fleuron" aria-hidden>❦</span>
+            <p className="reading-blank-line">No text open.</p>
+            <p className="reading-blank-hint">Pick a text from the library, or add a new one.</p>
+          </div>
+        </ReadingChrome>
+      )}
 
-      <NotesDrawer documentId={documentId} />
+      {document && <NotesDrawer documentId={document.documentId} />}
     </NotesProvider>
   );
 }

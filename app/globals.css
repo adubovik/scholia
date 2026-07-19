@@ -77,58 +77,6 @@ body {
   margin: 0;
 }
 
-/* Catalog / table of contents. Each row: serif title (content) + a mono, tracked
-   "edited" date (apparatus). Hairline rules top and bottom frame it as a list. */
-.doc-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--rule); }
-.doc-list li { border-bottom: 1px solid var(--rule); }
-.doc-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;          /* meta drops below the title on narrow screens */
-  gap: 0.35rem 1.25rem;
-  padding: 1rem 0.15rem;
-  text-decoration: none;
-  color: var(--ink);
-  transition: color 0.12s;
-}
-.doc-title {
-  flex: 1 1 auto;
-  font-family: var(--serif);
-  font-size: 1.15rem;
-  line-height: 1.3;
-  text-wrap: pretty;
-}
-.doc-row:hover .doc-title { color: var(--muted); }
-
-/* Meta = a stat cluster (notes / highlights / nodes) + the edited date, all
-   mono apparatus. Counts sit at --muted (a touch more legible); the date recedes
-   to --faint. Each stat carries a native title tooltip naming what it counts. */
-.doc-meta {
-  flex-shrink: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 1.1rem;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-variant-numeric: tabular-nums;
-}
-.doc-stats { display: inline-flex; align-items: baseline; gap: 0.7rem; color: var(--muted); }
-.stat { display: inline-flex; align-items: baseline; gap: 0.3rem; }
-.stat-icon { font-size: 0.82rem; line-height: 1; color: var(--muted); }
-.stat-hl { /* the signature highlighter square marks the highlight count */
-  display: inline-block;
-  width: 0.6rem;
-  height: 0.6rem;
-  background: var(--hl-yellow);
-  border: 1px solid rgba(28, 26, 21, 0.18);
-  transform: translateY(0.02rem);
-}
-.doc-date { color: var(--faint); white-space: nowrap; }
-
 /* Empty library: nothing competes, so the New action is allowed to lead here —
    the one place a filled .btn is the focal element. */
 .home-empty { padding: 2.5rem 0; }
@@ -143,6 +91,35 @@ body {
   font-style: italic;
   color: var(--muted);
   margin: 0 0 1.5rem;
+}
+
+/* Home reading surface: no text open. Hint centred in the viewport. */
+.reading-blank {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.reading-blank-fleuron {
+  font-family: var(--serif);
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--faint);
+  margin-bottom: 0.9rem;
+}
+.reading-blank-line {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  color: var(--ink);
+  margin: 0 0 0.4rem;
+}
+.reading-blank-hint {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--muted);
+  margin: 0;
 }
 
 /* ── Reading surface ─────────────────────────────────────── */
@@ -173,15 +150,8 @@ body {
 }
 
 /* ── Import (accession a text) ───────────────────────────── */
-/* The /new screen as an accession slip for the printed library: a mono eyebrow
-   over a serif title, then apparatus-labelled fields. No tabs — the three
-   provenances (paste · file · URL) coexist on one slip, with the paste/drop
-   canvas as the focal intake and the URL demoted to a secondary line. */
-.import-head {
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: 1.1rem;
-  margin-bottom: 2rem;
-}
+/* Mono eyebrow over the New-text modal's serif title — an accession slip for the
+   printed library. */
 .import-eyebrow {
   font-family: var(--mono);
   font-size: 0.68rem;
@@ -190,16 +160,6 @@ body {
   text-transform: uppercase;
   color: var(--faint);
   margin: 0 0 0.55rem;
-}
-.import-head h1 {
-  font-family: var(--serif);
-  font-size: 1.9rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
-  color: var(--ink);
-  margin: 0;
-  text-wrap: balance;
 }
 
 /* "Add to the library" modal — full-screen backdrop above the drawers (z 80),
@@ -245,7 +205,6 @@ body {
   color: var(--muted);
   margin: 1.5rem 0 0.5rem;
 }
-.import-head + .field-label { margin-top: 0; }
 
 /* Focal intake: a paste canvas that doubles as a file drop target. The textarea
    sits borderless inside the framed .source; a hairline-topped browse strip
@@ -322,10 +281,6 @@ body {
   gap: 1rem;
   margin-top: 1.75rem;
 }
-
-/* The accession form wants more room than the 44rem reading measure — a form is
-   not a prose column. Widen this page only, leaving the reading surface intact. */
-.page--import { max-width: 52rem; }
 
 .input,
 .textarea {
@@ -758,9 +713,6 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 }
 .aa-row input[type="range"]:focus-visible { outline: 1.5px solid var(--muted); outline-offset: 3px; }
 .aa-sheet .link-btn { margin-top: 0.9rem; }
-
-/* Home header actions cluster (gear + New). */
-.home-actions { display: flex; align-items: center; gap: 0.6rem; }
 
 /* Radix Dialog.Content is a sibling of the overlay, not a child — so it must
    position itself. (ReadingSettings nests its sheet inside the backdrop and
