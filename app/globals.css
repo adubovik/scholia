@@ -826,7 +826,10 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 
 /* The reading column slides aside for whichever drawer is open (desktop only —
    on mobile the drawers are sheets, so the column stays centred). */
-.reading-main { transition: margin 0.22s ease, transform 0.22s ease; }
+/* position:relative + left (not transform) for the left-mode nudge: a transform
+   here would become the containing block for the modals' position:fixed backdrop,
+   clamping the scrim to this column instead of the viewport. */
+.reading-main { position: relative; left: 0; transition: margin 0.22s ease, left 0.22s ease; }
 @media (min-width: 861px) {
   /* Right drawer: column expands to fill the space between the two edges. */
   .reading-main[data-mode="right"] {
@@ -837,7 +840,7 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   /* Left library: same-width column, just nudged right to stay centred in what's
      left of the viewport (half the drawer width). */
   .reading-main[data-mode="left"] {
-    transform: translateX(calc(var(--shift-left) / 2));
+    left: calc(var(--shift-left) / 2);
   }
 }
 
