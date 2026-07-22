@@ -1154,6 +1154,43 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 .doc-sheet-val { color: var(--ink); }
 .doc-sheet-stats { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .doc-sheet-stat { display: flex; align-items: center; gap: 0.3rem; }
+/* Export block: reads as its own row of the sheet — same key label as the grid
+   above it, then two equal-weight actions and a line saying what you get. */
+.doc-export { padding: 1.1rem 0 1.2rem; border-bottom: 1px solid var(--rule); }
+.doc-export-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.doc-export-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-top: 0.85rem; }
+.doc-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  background: none;
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 0.72rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.doc-btn:hover { background: var(--field); border-color: var(--faint); }
+.doc-btn-icon { width: 0.95rem; height: 0.95rem; flex: none; }
+.doc-export-hint {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.86rem;
+  color: var(--faint);
+  margin: 0.75rem 0 0;
+}
 .doc-delete {
   margin-top: 1.4rem;
   background: none;

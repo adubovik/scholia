@@ -6,6 +6,20 @@ import { deleteDocument } from "@/lib/actions/documents";
 const fmt = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 const fmtDate = (iso: string) => fmt.format(new Date(iso)).toUpperCase();
 
+const CopyIcon = () => (
+  <svg className="doc-btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden>
+    <rect x="5.5" y="5.5" width="8" height="9" rx="1.2" />
+    <path d="M10.5 3.5v-1a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h1" />
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <svg className="doc-btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden>
+    <path d="M8 1.5v8.5M4.5 7 8 10.5 11.5 7" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 13.5h12" strokeLinecap="round" />
+  </svg>
+);
+
 export interface DocMeta {
   documentId: string;
   title: string;
@@ -21,6 +35,26 @@ export interface DocMeta {
 export function DocInfo({ meta }: { meta: DocMeta }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState<"ok" | "fail" | null>(null);
+  const exportUrl = `/api/export/${meta.documentId}`;
+
+  async function onCopy() {
+    // Safari drops the user gesture across an await, so hand the clipboard the
+    // pending fetch itself; writeText covers browsers without ClipboardItem.
+    const text = fetch(exportUrl).then((r) => r.text());
+    try {
+      try {
+        const item = new ClipboardItem({ "text/plain": text.then((t) => new Blob([t], { type: "text/plain" })) });
+        await navigator.clipboard.write([item]);
+      } catch {
+        await navigator.clipboard.writeText(await text);
+      }
+      setCopied("ok");
+    } catch {
+      setCopied("fail");
+    }
+    setTimeout(() => setCopied(null), 2000);
+  }
 
   async function onDelete() {
     if (!window.confirm(`Delete “${meta.title}”? This removes the text and every annotation on it.`)) return;
@@ -56,6 +90,21 @@ export function DocInfo({ meta }: { meta: DocMeta }) {
                 <span className="doc-sheet-stat"><span className="stat-hl" />{meta.highlightCount} highlights</span>
                 <span>¶ {meta.noteCount} notes</span>
               </div>
+            </div>
+
+            <div className="doc-export">
+              <div className="doc-export-label">Export markdown</div>
+              <div className="doc-export-btns">
+                <button className="doc-btn" onClick={onCopy}>
+                  <CopyIcon />
+                  {copied === "ok" ? "Copied" : copied === "fail" ? "Copy failed" : "Copy to clipboard"}
+                </button>
+                <a className="doc-btn" href={exportUrl} download>
+                  <DownloadIcon />
+                  Save .md file
+                </a>
+              </div>
+              <p className="doc-export-hint">Every annotated block, with its highlights and notes.</p>
             </div>
 
             <button className="doc-delete" disabled={busy} onClick={onDelete}>Delete document</button>
