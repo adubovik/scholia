@@ -470,8 +470,8 @@ body {
    time (the active-selection store), and it persists until the next selection. */
 .node-self {
   border-radius: 5px;
-  padding: 0.2rem 0.45rem;
-  margin: -0.2rem -0.45rem;
+  padding: 0.2rem 0.45rem 0.05rem;
+  margin: -0.2rem -0.45rem -0.05rem;
   transition: background 0.4s, box-shadow 0.4s;
 }
 .node-self--active {
@@ -1030,6 +1030,11 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 }
 .note-cardbody :is(p, ul, ol) { margin: 0 0 0.4rem; }
 .note-cardbody :is(p, ul, ol):last-child { margin-bottom: 0; }
+/* Tailwind Preflight resets list-style/padding to none; restore markers so
+   Markdown-rendered note lists (ordered + bulleted) show numbers/bullets. */
+.note-cardbody :is(ul, ol) { padding-left: 1.4rem; }
+.note-cardbody ul { list-style: disc; }
+.note-cardbody ol { list-style: decimal; }
 .note-cardtags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.35rem 0 0.5rem; }
 .note-cardfoot {
   display: flex;
