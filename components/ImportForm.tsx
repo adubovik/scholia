@@ -4,8 +4,8 @@ import { createDocument } from "@/lib/actions/documents";
 import { extractHtml } from "@/lib/actions/extract";
 
 /** The "add a text to the library" form — paste / file / URL funnel into one
- * { title, author, text } commit. Used both by the /new page and the New-doc modal;
- * `onDone` receives the created document id (navigate or close, per host). */
+ * { title, author, text } commit. Hosted by NewDocModal (the standalone /new route
+ * is gone); `onDone` receives the created document id (navigate or close, per host). */
 export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
