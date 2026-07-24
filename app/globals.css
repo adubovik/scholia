@@ -1035,6 +1035,21 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 .note-cardbody :is(ul, ol) { padding-left: 1.4rem; }
 .note-cardbody ul { list-style: disc; }
 .note-cardbody ol { list-style: decimal; }
+/* Same Preflight story for the rest of what Markdown emits. The note body is
+   already mono, so inline code can't lean on a font switch to read as code —
+   it needs a tint, and one translucent enough to sit on both the plain card
+   and the --field background of an active one. */
+.note-cardbody :is(code, pre) { background: rgba(28, 26, 21, 0.06); border-radius: 3px; }
+.note-cardbody code { padding: 0.05em 0.3em; }
+.note-cardbody pre { padding: 0.4rem 0.55rem; margin: 0 0 0.4rem; overflow-x: auto; }
+.note-cardbody pre code { background: none; padding: 0; }
+.note-cardbody blockquote {
+  margin: 0 0 0.4rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--rule);
+  color: var(--muted);
+}
+.note-cardbody :is(h1, h2, h3, h4, h5, h6) { font-weight: 600; margin: 0 0 0.3rem; }
 .note-cardtags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.35rem 0 0.5rem; }
 .note-cardfoot {
   display: flex;

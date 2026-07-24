@@ -8,6 +8,7 @@ import type { NoteEntry } from "@/lib/annotations/entries";
 import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/annotations";
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
 import { TagEditor } from "./TagEditor";
+import { MarkdownTextarea } from "./MarkdownTextarea";
 import { useNotesActions, useNotesState, useActiveAnnId } from "./NotesContext";
 
 const MIN_W = 320;
@@ -104,7 +105,7 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
 
       {editing ? (
         <>
-          <textarea
+          <MarkdownTextarea
             className="textarea note-textarea"
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -187,7 +188,7 @@ function ComposeCard({ documentId, nodeId }: { documentId: string; nodeId: strin
         <span className="note-num note-num--node">{number ?? ""}</span>
         <span className="note-nodetitle">New note</span>
       </div>
-      <textarea
+      <MarkdownTextarea
         className="textarea note-textarea"
         value={note}
         onChange={(e) => setNote(e.target.value)}
