@@ -497,7 +497,10 @@ body {
 .note-body { color: var(--ink); }
 .note-body :is(p, ul, ol) { margin: 0 0 0.4rem; }
 .note-body :is(p, ul, ol):last-child { margin-bottom: 0; }
-.note-body a { color: var(--ink); text-underline-offset: 2px; }
+/* Preflight strips the default link colour/underline; markdown links (item 5)
+   would otherwise read as plain text. #2a6fdb matches .xref. Excludes .xref
+   (rendered as a <span>, so unaffected) and covers both markdown surfaces. */
+:is(.note-body, .note-cardbody) a { color: #2a6fdb; text-decoration: underline; text-underline-offset: 2px; }
 .note-actions {
   display: flex;
   gap: 1rem;
