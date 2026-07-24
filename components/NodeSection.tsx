@@ -4,7 +4,7 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
 import type { TreeNode } from "@/lib/tree/build";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
-import { NodeContextMenu, NodeNumber } from "./NodeMenu";
+import { NodeContextMenu, NodeNumber, ChildCount } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, useActiveNode } from "./NotesContext";
 
@@ -92,6 +92,7 @@ export function NodeSection({
     (showMenu || hasNote ? (
       <NodeNumber
         number={num}
+        childCount={node.children.length}
         annotated={hasNote}
         runIn={runIn}
         nodeId={node.id}
@@ -99,11 +100,15 @@ export function NodeSection({
         onHighlightNote={nodeAnn ? () => openAnnotation(nodeAnn.id, node.id) : undefined}
       />
     ) : (
-      <span className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}>{num}</span>
+      <span className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}>
+        {num}
+        <ChildCount n={node.children.length} />
+      </span>
     ));
   const plainNumberEl = num && (
     <span className="node-num-id node-num-id--runin" data-annotated={hasNote || undefined}>
       {num}
+      <ChildCount n={node.children.length} />
     </span>
   );
 

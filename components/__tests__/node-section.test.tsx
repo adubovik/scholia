@@ -35,6 +35,36 @@ const heading: TreeNode = {
   children: [{ id: "p", label: null, title: null, text: "Chapter one prose.", sourceId: "s1", startOffset: 20, annotations: [], nodeAnnotation: null, children: [] }],
 };
 
+// Three direct children (each with a child of its own, to prove the count is direct
+// children only and not the whole subtree).
+const many: TreeNode = {
+  id: "a", label: "1", title: null, text: "", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
+  children: ["b", "c", "d"].map((id) => ({
+    id, label: null, title: null, text: `${id} prose.`, sourceId: "s1", startOffset: 100,
+    annotations: [], nodeAnnotation: null,
+    children: [{ id: `${id}1`, label: null, title: null, text: "grandchild.", sourceId: "s1", startOffset: 200, annotations: [], nodeAnnotation: null, children: [] }],
+  })),
+};
+
+describe("child count", () => {
+  it("shows the number of direct children", () => {
+    const { container } = renderNode(many);
+    expect(container.querySelector(".node-num-count")?.textContent).toBe("·3");
+  });
+
+  // Not just "the text ·1 is absent" — no element at all, so a single child adds
+  // nothing to the identifier whatever it might have rendered.
+  it("stays silent for a single child", () => {
+    const { container } = renderNode(node);
+    expect(container.querySelector(".node-num-count")).toBeNull();
+  });
+
+  it("stays silent for a leaf", () => {
+    const { container } = renderNode(leaf);
+    expect(container.querySelector(".node-num-count")).toBeNull();
+  });
+});
+
 describe("NodeSection", () => {
   it("renders a heading node's text once (as its head, no duplicate passage)", () => {
     renderNode(heading);

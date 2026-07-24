@@ -125,12 +125,21 @@ function onHintKeyDown(nodeId: string, canEdit: boolean) {
   };
 }
 
+/** "·20" — how many direct children a section has, trailing its number. Rendered
+ * *inside* the identifier so it inherits the serif/tabular treatment and so the
+ * run-in margin still separates the whole thing from the prose; only the colour is
+ * stepped back. Omitted below two: a lone child tells the reader nothing. */
+export function ChildCount({ n }: { n: number }) {
+  return n > 1 ? <span className="node-num-count">·{n}</span> : null;
+}
+
 // The section identifier. Left-click highlights the node's note (if it has one);
 // the node menu now lives on right-click only (NodeContextMenu wraps this). Editor
 // keyboard shortcuts stay bound here so a focused number can still move/indent.
 // `annotated` flips it red; `runIn` styles it as an inline paragraph prefix.
 export function NodeNumber({
   number,
+  childCount,
   annotated,
   runIn,
   nodeId,
@@ -138,6 +147,7 @@ export function NodeNumber({
   onHighlightNote,
 }: {
   number: string;
+  childCount: number;
   annotated: boolean;
   runIn?: boolean;
   nodeId: string;
@@ -154,6 +164,7 @@ export function NodeNumber({
       onKeyDown={onHintKeyDown(nodeId, canEdit)}
     >
       {number}
+      <ChildCount n={childCount} />
     </button>
   );
 }

@@ -106,7 +106,7 @@ describe("MenuItems", () => {
 // The section number: left-click highlights the note (if any); the menu is right-
 // click only. Editor keyboard shortcuts stay bound to the focused number.
 const numberButton = (over: Partial<React.ComponentProps<typeof NodeNumber>> = {}) => (
-  <NodeNumber nodeId="n1" number="2.1" annotated={false} canEdit {...over} />
+  <NodeNumber nodeId="n1" number="2.1" childCount={0} annotated={false} canEdit {...over} />
 );
 
 describe("NodeNumber", () => {
