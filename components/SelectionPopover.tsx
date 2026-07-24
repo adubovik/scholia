@@ -45,9 +45,10 @@ export function SelectionPopover({ documentId, rootId }: { documentId: string; r
     window.getSelection()?.removeAllRanges();
     pending.current = null;
     setPos(null);
-    // Open the drawer on the new highlight + mark it (and its block) active, so the
-    // just-created annotation is visibly selected — matching the node-note flow.
-    openAnnotation(id, nodeId);
+    // Open the drawer on the new highlight, mark it (and its block) active, and open
+    // its editor focused — so highlighting lands in a textarea exactly like the
+    // node-note composer does, instead of a blank card you have to click ✎ on.
+    openAnnotation(id, nodeId, true);
   }
 
   if (!pos) return null;

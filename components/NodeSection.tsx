@@ -66,9 +66,10 @@ export function NodeSection({
 
   const nodeAnn = node.nodeAnnotation;
   const hasNote = nodeAnn !== null;
-  // Node notes live in the drawer: opening an existing one scrolls to its card +
-  // marks it active; "add note" on a fresh node opens the drawer's composer.
-  const openNote = () => (nodeAnn ? openAnnotation(nodeAnn.id, node.id) : composeNode(node.id));
+  // Node notes live in the drawer: the menu's "Edit note" opens the existing card
+  // straight into its editor; "Add note" on a fresh node opens the composer. (The
+  // section-number click below is the read-only path — it only marks the card.)
+  const openNote = () => (nodeAnn ? openAnnotation(nodeAnn.id, node.id, true) : composeNode(node.id));
   // The menu carries editor actions (canEdit) and/or the view-only Collapse/Expand
   // children (any reader, when there's a subtree to fold).
   const showMenu = canEdit || hasChildren;

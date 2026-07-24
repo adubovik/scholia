@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ComponentPropsWithoutRef } from "reac
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { COLORS } from "@/lib/annotations/types";
+import { compareSections } from "@/lib/tree/number";
 import type { NoteEntry } from "@/lib/annotations/entries";
 import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/annotations";
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
@@ -58,9 +59,13 @@ function timeAgo(iso: string): string {
 /** A saved annotation: view mode + inline editor, mutating via the existing server actions. */
 function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string }) {
   const { locate, setFilterTag } = useNotesActions();
-  const { sections } = useNotesState();
+  const { sections, editingId } = useNotesState();
   const activeId = useActiveAnnId();
-  const [editing, setEditing] = useState(false);
+  // Context opens the editor (a freshly-created highlight, or "Edit note"); ✎ and
+  // Save/Cancel override it locally. null = defer to context, so this works whether
+  // the card was already mounted or mounts with the revalidation that created it.
+  const [override, setOverride] = useState<boolean | null>(null);
+  const editing = override ?? editingId === entry.id;
   const [note, setNote] = useState(entry.note ?? "");
   const [tags, setTags] = useState<string[]>(entry.tags);
   const [busy, setBusy] = useState(false);
@@ -76,7 +81,7 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
       else await deleteNodeAnnotation(entry.id);
     }
     setBusy(false);
-    setEditing(false);
+    setOverride(false);
   }
 
   async function remove() {
@@ -110,6 +115,7 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Note (Markdown)…"
+            autoFocus
           />
           {entry.kind === "inline" && (
             <div className="note-colors">
@@ -127,7 +133,7 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
           <TagEditor tags={tags} onChange={setTags} />
           <div className="note-actions">
             <button className="btn" disabled={busy} onClick={save}>Save</button>
-            <button className="link-btn" disabled={busy} onClick={() => { setEditing(false); setNote(entry.note ?? ""); setTags(entry.tags); }}>Cancel</button>
+            <button className="link-btn" disabled={busy} onClick={() => { setOverride(false); setNote(entry.note ?? ""); setTags(entry.tags); }}>Cancel</button>
           </div>
         </>
       ) : (
@@ -151,7 +157,7 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
           <div className="note-cardfoot">
             <span className="note-time">{timeAgo(entry.createdAt)}</span>
             <span className="note-foot-spacer" />
-            <button className="icon-btn" aria-label="Edit note" title="Edit" onClick={() => setEditing(true)}>✎</button>
+            <button className="icon-btn" aria-label="Edit note" title="Edit" onClick={() => setOverride(true)}>✎</button>
             <button className="icon-btn icon-btn--danger" aria-label="Delete note" title="Delete" disabled={busy} onClick={remove}>
               <svg width="12" height="13" viewBox="0 0 12 13" fill="none" stroke="currentColor" strokeWidth="1.1" style={{ display: "block" }}>
                 <path d="M1 3.2h10M4.2 3.2V1.8h3.6v1.4M2.4 3.2l0.7 8.3h5.8l0.7-8.3M4.7 5.4v4M7.3 5.4v4" />
@@ -164,11 +170,12 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
   );
 }
 
-/** A fresh node-note composer, shown at the top of the list when the menu asks for one. */
-function ComposeCard({ documentId, nodeId }: { documentId: string; nodeId: string }) {
+/** A fresh node-note composer, slotted into the feed at its section's position (the
+ * host computes it — the row doesn't exist yet, so there's nothing to sort). Node
+ * notes can't be created empty (upsertNodeAnnotation rejects a blank note), which is
+ * why this stays an unsaved placeholder instead of a real card in edit mode. */
+function ComposeCard({ documentId, nodeId, number }: { documentId: string; nodeId: string; number?: string }) {
   const { closeDrawer, openAnnotation } = useNotesActions();
-  const { sections } = useNotesState();
-  const number = Object.keys(sections).find((k) => sections[k] === nodeId);
   const [note, setNote] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -183,7 +190,7 @@ function ComposeCard({ documentId, nodeId }: { documentId: string; nodeId: strin
   }
 
   return (
-    <div className="note-card note-card--active">
+    <div className="note-card note-card--active" data-card-id="compose">
       <div className="note-cardhead note-cardhead--compose">
         <span className="note-num note-num--node">{number ?? ""}</span>
         <span className="note-nodetitle">New note</span>
@@ -205,7 +212,7 @@ function ComposeCard({ documentId, nodeId }: { documentId: string; nodeId: strin
 }
 
 export function NotesDrawer({ documentId }: { documentId: string }) {
-  const { entries, drawerOpen, composeNodeId, panelWidth, filterTag } = useNotesState();
+  const { entries, sections, drawerOpen, composeNodeId, panelWidth, filterTag } = useNotesState();
   const { closeDrawer, toggleDrawer, setPanelWidth, setFilterTag } = useNotesActions();
   const activeId = useActiveAnnId();
   const listRef = useRef<HTMLDivElement>(null);
@@ -213,16 +220,31 @@ export function NotesDrawer({ documentId }: { documentId: string }) {
   const tags = [...new Set(entries.flatMap((e) => e.tags))];
   const shown = filterTag ? entries.filter((e) => e.tags.includes(filterTag)) : entries;
 
+  // Slot the unsaved composer into document order rather than pinning it to the top,
+  // so a new node note appears where it will live once saved. Its section sorts before
+  // every entry at or past the same number (flattenEntries emits a node's own note
+  // ahead of that node's highlights); past everything = last.
+  const composeNumber = composeNodeId
+    ? Object.keys(sections).find((k) => sections[k] === composeNodeId)
+    : undefined;
+  const firstAtOrAfter = composeNumber
+    ? shown.findIndex((e) => e.nodeLabel && compareSections(e.nodeLabel, composeNumber) >= 0)
+    : -1;
+  // Also the no-composer case: at === shown.length renders the whole list, then nothing.
+  const at = firstAtOrAfter === -1 ? shown.length : firstAtOrAfter;
+
   // Scroll the active card into view when the selection moves (item 6). The card's
   // highlight is persistent (note-card--active), not a transient flash — the last
-  // selected annotation stays marked until the next selection.
+  // selected annotation stays marked until the next selection. A composer has no
+  // annotation id to be active, so it's tracked by its own sentinel id.
+  const scrollTo = activeId ?? (composeNodeId ? "compose" : null);
   useEffect(() => {
-    if (!drawerOpen || !activeId) return;
+    if (!drawerOpen || !scrollTo) return;
     const list = listRef.current;
-    const card = list?.querySelector<HTMLElement>(`[data-card-id="${activeId}"]`);
+    const card = list?.querySelector<HTMLElement>(`[data-card-id="${scrollTo}"]`);
     if (!list || !card) return;
     list.scrollTo({ top: card.offsetTop - list.offsetTop - 12, behavior: "smooth" });
-  }, [drawerOpen, activeId]);
+  }, [drawerOpen, scrollTo]);
 
   // Edge handle: click (when closed) toggles; drag (when open) resizes.
   function onHandleDown(e: React.PointerEvent) {
@@ -294,8 +316,13 @@ export function NotesDrawer({ documentId }: { documentId: string }) {
         )}
 
         <div className="notes-list" ref={listRef}>
-          {composeNodeId && <ComposeCard documentId={documentId} nodeId={composeNodeId} />}
-          {shown.map((e) => (
+          {shown.slice(0, at).map((e) => (
+            <EntryCard key={e.id} entry={e} documentId={documentId} />
+          ))}
+          {composeNodeId && (
+            <ComposeCard documentId={documentId} nodeId={composeNodeId} number={composeNumber} />
+          )}
+          {shown.slice(at).map((e) => (
             <EntryCard key={e.id} entry={e} documentId={documentId} />
           ))}
           {shown.length === 0 && !composeNodeId && (

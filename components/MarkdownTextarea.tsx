@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentPropsWithoutRef } from "react";
+import { useLayoutEffect, useRef, type ComponentPropsWithoutRef } from "react";
 
 /** A splice to apply to a textarea: replace [from,to) with text, then select [selStart,selEnd). */
 export type MdEdit = { text: string; from: number; to: number; selStart: number; selEnd: number };
@@ -65,6 +65,21 @@ function apply(el: HTMLTextAreaElement, edit: MdEdit) {
  * Cmd/Ctrl+B/I/E wrap the selection, Cmd+K links it, and pasting a URL over a
  * selection turns it into [selection](url). */
 export function MarkdownTextarea(props: ComponentPropsWithoutRef<"textarea">) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  // Grow with the content. CSS owns the floor and the ceiling (min-height /
+  // max-height on .note-textarea); this just tracks the text in between, so the
+  // scrollbar appears exactly when the cap is hit and never before. Height is
+  // zeroed first so scrollHeight reports the content, not the current box, and
+  // the border delta is added back because box-sizing here is border-box.
+  // Layout effect, not effect: reopening a long note must not paint short first.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "0";
+    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+  }, [props.value]);
+
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
     const el = e.currentTarget;
@@ -89,5 +104,5 @@ export function MarkdownTextarea(props: ComponentPropsWithoutRef<"textarea">) {
     props.onPaste?.(e);
   }
 
-  return <textarea {...props} onKeyDown={onKeyDown} onPaste={onPaste} />;
+  return <textarea {...props} ref={ref} onKeyDown={onKeyDown} onPaste={onPaste} />;
 }

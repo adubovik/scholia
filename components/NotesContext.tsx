@@ -22,8 +22,11 @@ import type { NoteEntry } from "@/lib/annotations/entries";
 
 export interface NotesActions {
   /** In-text highlight / node identifier / freshly-saved note → open the drawer on
-   * that card + mark it (and its block) active. nodeId null = highlight only, no block. */
-  openAnnotation: (annId: string, nodeId: string | null) => void;
+   * that card + mark it (and its block) active. nodeId null = highlight only, no block.
+   * `edit` opens the card's editor straight away — what a just-created highlight and
+   * the menu's "Edit note" both want, so creating either kind of note lands you in
+   * a focused textarea rather than a card you have to click ✎ on. */
+  openAnnotation: (annId: string, nodeId: string | null, edit?: boolean) => void;
   /** Node menu "add note" → open the drawer with a fresh node-note composer. */
   composeNode: (nodeId: string) => void;
   /** Drawer card → scroll the prose to the annotation, mark active. */
@@ -44,6 +47,7 @@ export interface NotesState {
   drawerOpen: boolean;
   leftOpen: boolean;
   composeNodeId: string | null;
+  editingId: string | null; // card whose editor should be open (see openAnnotation)
   panelWidth: number;
   filterTag: string | null;
 }
@@ -101,6 +105,7 @@ export function NotesProvider({
     drawerOpen: false,
     leftOpen: initialLeftOpen,
     composeNodeId: null,
+    editingId: null,
     panelWidth: 480,
     filterTag: null,
   });
@@ -120,13 +125,13 @@ export function NotesProvider({
   }, [initialLeftOpen]);
 
   const [actions] = useState<NotesActions>(() => ({
-    openAnnotation: (annId, nodeId) => {
+    openAnnotation: (annId, nodeId, edit = false) => {
       active.set(annId, nodeId);
-      setState((s) => ({ ...s, drawerOpen: true, composeNodeId: null }));
+      setState((s) => ({ ...s, drawerOpen: true, composeNodeId: null, editingId: edit ? annId : null }));
     },
     composeNode: (nodeId) => {
       active.set(null, nodeId);
-      setState((s) => ({ ...s, drawerOpen: true, composeNodeId: nodeId }));
+      setState((s) => ({ ...s, drawerOpen: true, composeNodeId: nodeId, editingId: null }));
     },
     locate: (entry) => {
       active.set(entry.id, entry.nodeId);

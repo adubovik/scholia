@@ -112,6 +112,8 @@ Most "it doesn't react right" bugs are in a context, not a component.
 | Symptom | Look here |
 |---|---|
 | drawer opens/closes/resizes wrong; wrong card selected; clicking a highlight does nothing | `components/NotesContext.tsx` |
+| a new note opens in the wrong place in the feed, or not in its editor | `NotesDrawer.tsx` (`at`, `compareSections`) + `NotesContext.tsx` (`editingId`) |
+| the note editor doesn't grow with the text, or grows without limit | `MarkdownTextarea.tsx` (JS height) + `.note-textarea` `max-height` (CSS cap) |
 | folding/unfolding sections, Collapse/Expand children | `components/CollapseContext.tsx` |
 | reading column doesn't shift when a drawer opens | `ReadingChrome.tsx` (`--shift-left` / `--shift-right`, `data-mode`) |
 | text size / line height / column width | `lib/reading/prefs.ts` + the pre-paint script in `app/layout.tsx` |

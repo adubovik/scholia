@@ -585,7 +585,14 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   gap: 0.35rem;
   align-items: flex-start;
 }
-.note-textarea { min-height: 4.5rem; }
+/* Auto-growing (MarkdownTextarea sets height from scrollHeight): CSS owns the
+   floor and the 10-line ceiling, at which overflow-y turns the scrollbar on.
+   Cap = 10 × line-height + vertical padding + borders, matching .textarea. */
+.note-textarea {
+  min-height: 4.5rem;
+  max-height: calc(10 * 1.6rem + 1.1rem + 2px);
+  resize: none; /* a manual drag would be undone by the next keystroke */
+}
 
 /* ── Reading preferences (Aa display sheet) ──────────────── */
 /* Quiet trigger in the reading column's top-right corner, on the running-head. */

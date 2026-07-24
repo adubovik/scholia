@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { numberSections } from "@/lib/tree/number";
+import { numberSections, compareSections } from "@/lib/tree/number";
 import type { TreeNode } from "@/lib/tree/build";
 
 // Minimal tree factory — only id + children matter to numberSections.
@@ -20,5 +20,18 @@ describe("numberSections", () => {
     });
     expect(byNumber.get("1.2.1")).toBe("a2a");
     expect(byNumber.get("2")).toBe("b");
+  });
+});
+
+describe("compareSections", () => {
+  it("sorts into document order", () => {
+    const shuffled = ["2", "1.10", "1", "10", "1.2", "1.2.1", "2.1"];
+    expect([...shuffled].sort(compareSections)).toEqual([
+      "1", "1.2", "1.2.1", "1.10", "2", "2.1", "10",
+    ]);
+  });
+
+  it("treats equal numbers as equal", () => {
+    expect(compareSections("1.2", "1.2")).toBe(0);
   });
 });
