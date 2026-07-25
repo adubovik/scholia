@@ -3,6 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useState } from "react";
 import { createInvite, revokeInvite } from "@/lib/actions/invites";
+import { SettingsIcon } from "./SettingsIcon";
 import type { InviteView } from "@/lib/data/invites";
 
 // Radix handles focus-trap / Esc / portal; the existing .aa-* classes give the
@@ -49,7 +50,7 @@ export function InviteSettings({ invites }: { invites: InviteView[] }) {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <button className="btn btn--ghost" aria-label="Invite people">⚙</button>
+        <button className="btn btn--ghost btn--icon" aria-label="Invite people"><SettingsIcon /></button>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="aa-backdrop" />

@@ -18,9 +18,10 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
   // dragenter/dragleave fire per child element; count depth so the overlay only
   // clears when the pointer truly leaves the canvas, not on inner boundaries.
   const dragDepth = useRef(0);
-  // headingLevels are valid only while `text` is exactly what extraction produced;
-  // once the user edits the textarea the paragraph count can drift, so we drop them.
-  const structured = useRef<{ text: string; headingLevels: (number | null)[] } | null>(null);
+  // headingLevels + origin url are valid only while `text` is exactly what
+  // extraction produced; once the user edits the textarea the paragraph count can
+  // drift (and the text is no longer that url's), so we drop them together.
+  const structured = useRef<{ text: string; headingLevels: (number | null)[]; url?: string } | null>(null);
 
   // Keep a stray drop outside the canvas from navigating the browser to the file.
   useEffect(() => {
@@ -67,7 +68,7 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
       });
       if (!res.ok) throw new Error((await res.json()).error ?? "Import failed");
       const { title: t, text: extracted, headingLevels } = await res.json();
-      structured.current = { text: extracted, headingLevels };
+      structured.current = { text: extracted, headingLevels, url: url.trim() };
       setText(extracted);
       setTitle((cur) => cur || t || "");
     } catch (e) {
@@ -81,11 +82,16 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
     setBusy(true);
     setError(null);
     try {
-      const headingLevels =
-        structured.current && structured.current.text === text
-          ? structured.current.headingLevels
-          : undefined;
-      const id = await createDocument({ title: title.trim(), author: author.trim(), text, headingLevels });
+      // Only carry structure + origin url if the textarea still holds the exact
+      // extracted text (editing it invalidates both).
+      const src = structured.current && structured.current.text === text ? structured.current : null;
+      const id = await createDocument({
+        title: title.trim(),
+        author: author.trim(),
+        text,
+        headingLevels: src?.headingLevels,
+        url: src?.url,
+      });
       onDone(id);
     } catch (e) {
       setError((e as Error).message);

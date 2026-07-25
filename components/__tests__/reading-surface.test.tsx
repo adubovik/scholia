@@ -16,13 +16,15 @@ describe("ReadingSurface", () => {
       <ReadingSurface
         document={{
           title: "Tractatus",
+          author: "Wittgenstein",
+          sourceUrl: null,
           tree,
           documentId: "d1",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }}
         canEdit={false}
-        docs={[{ id: "d1", title: "Tractatus", author: "", paragraphs: 2, notes: 0 }]}
+        docs={[{ id: "d1", title: "Tractatus", author: "", nodeCount: 2, highlightCount: 0, noteCount: 0 }]}
         canInvite={false}
         invites={[]}
       />,
@@ -37,7 +39,7 @@ describe("ReadingSurface", () => {
     render(
       <ReadingSurface
         canEdit
-        docs={[{ id: "d1", title: "Tractatus", author: "", paragraphs: 2, notes: 0 }]}
+        docs={[{ id: "d1", title: "Tractatus", author: "", nodeCount: 2, highlightCount: 0, noteCount: 0 }]}
         canInvite={false}
         invites={[]}
       />,

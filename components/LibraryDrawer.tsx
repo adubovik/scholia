@@ -11,8 +11,9 @@ export interface LibraryDoc {
   id: string;
   title: string;
   author: string;
-  paragraphs: number;
-  notes: number;
+  nodeCount: number;
+  highlightCount: number;
+  noteCount: number;
 }
 
 /** Left slide-in library: brand, new/invite actions, and the catalog. Toggled by
@@ -58,7 +59,7 @@ export function LibraryDrawer({
           </div>
           <div className="library-actions">
             {canInvite && <InviteSettings invites={invites} />}
-            <button type="button" className="btn btn--ghost library-new" onClick={() => setNewOpen(true)}>＋ New</button>
+            <button type="button" className="btn btn--ghost library-new" aria-label="Add a text" title="Add a text" onClick={() => setNewOpen(true)}>＋</button>
           </div>
         </div>
 
@@ -69,10 +70,14 @@ export function LibraryDrawer({
               href={`/d/${d.id}`}
               className={d.id === currentId ? "library-row library-row--current" : "library-row"}
             >
-              <span className="library-row-title">{d.title}</span>
-              <span className="library-row-author">{d.author}</span>
+              <span className="library-row-main">
+                <span className="library-row-title">{d.title}</span>
+                <span className="library-row-author">{d.author}</span>
+              </span>
               <span className="library-row-stats">
-                {d.paragraphs} ¶ · {d.notes} {d.notes === 1 ? "note" : "notes"}
+                <span className="lib-stat" title={`${d.nodeCount} text nodes`}>§ {d.nodeCount}</span>
+                <span className="lib-stat" title={`${d.highlightCount} highlights`}><span className="stat-hl" />{d.highlightCount}</span>
+                <span className="lib-stat" title={`${d.noteCount} notes`}>✎ {d.noteCount}</span>
               </span>
             </Link>
           ))}

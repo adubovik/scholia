@@ -21,6 +21,8 @@ const countNodes = (nodes: TreeNode[]): number =>
 /** The document being read. Absent = the home surface: library open, no prose. */
 export interface ReadingDoc {
   title: string;
+  author: string | null;
+  sourceUrl: string | null;
   tree: TreeNode[];
   documentId: string;
   createdAt: string;
@@ -47,6 +49,8 @@ export function ReadingSurface({
   const meta = document && {
     documentId: document.documentId,
     title: document.title,
+    author: document.author,
+    sourceUrl: document.sourceUrl,
     createdAt: document.createdAt,
     updatedAt: document.updatedAt,
     nodeCount: countNodes(tree),

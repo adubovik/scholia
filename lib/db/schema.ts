@@ -41,6 +41,7 @@ export const sources = pgTable("sources", {
   documentId: uuid("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
   language: text("language"),
   label: text("label"),
+  url: text("url"), // origin URL when imported from the web; null for paste/file
   isPrimary: boolean("is_primary").notNull().default(false),
   position: integer("position").notNull(),
   text: text("text").notNull(),

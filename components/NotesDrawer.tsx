@@ -155,14 +155,18 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
             </div>
           )}
           <div className="note-cardfoot">
-            <span className="note-time">{timeAgo(entry.createdAt)}</span>
-            <span className="note-foot-spacer" />
-            <button className="icon-btn" aria-label="Edit note" title="Edit" onClick={() => setOverride(true)}>✎</button>
+            <button className="icon-btn" aria-label="Edit note" title="Edit" onClick={() => setOverride(true)}>
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.1" style={{ display: "block" }}>
+                <path d="M9.2 2.4l2.4 2.4M2 12l0.4-2.6 6.4-6.4 2.4 2.4-6.4 6.4L2 12z" strokeLinejoin="round" />
+              </svg>
+            </button>
             <button className="icon-btn icon-btn--danger" aria-label="Delete note" title="Delete" disabled={busy} onClick={remove}>
-              <svg width="12" height="13" viewBox="0 0 12 13" fill="none" stroke="currentColor" strokeWidth="1.1" style={{ display: "block" }}>
+              <svg width="13" height="13" viewBox="0 0 12 13" fill="none" stroke="currentColor" strokeWidth="1.1" style={{ display: "block" }}>
                 <path d="M1 3.2h10M4.2 3.2V1.8h3.6v1.4M2.4 3.2l0.7 8.3h5.8l0.7-8.3M4.7 5.4v4M7.3 5.4v4" />
               </svg>
             </button>
+            <span className="note-foot-spacer" />
+            <span className="note-time">{timeAgo(entry.createdAt)}</span>
           </div>
         </>
       )}

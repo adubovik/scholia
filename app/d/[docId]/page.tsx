@@ -23,6 +23,8 @@ export default async function DocumentPage({ params }: { params: Promise<{ docId
     <ReadingSurface
       document={{
         title: data.doc.title,
+        author: data.doc.author,
+        sourceUrl: data.source.url,
         tree: data.tree,
         documentId: data.doc.id,
         createdAt: data.doc.createdAt.toISOString(),
@@ -33,8 +35,9 @@ export default async function DocumentPage({ params }: { params: Promise<{ docId
         id: d.id,
         title: d.title,
         author: d.author,
-        paragraphs: d.nodeCount,
-        notes: d.highlightCount + d.noteCount,
+        nodeCount: d.nodeCount,
+        highlightCount: d.highlightCount,
+        noteCount: d.noteCount,
       }))}
       canInvite={canInvite}
       invites={invites}

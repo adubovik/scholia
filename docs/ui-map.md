@@ -53,8 +53,8 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 |---|---|---|---|
 | the bar at the top with the book title | **running head** | `ReadingChrome.tsx` | `.reading-head`, `.reading-title` |
 | the `Aa` button / text size controls | **display sheet** (trigger: **Aa button**) | `ReadingSettings.tsx` | `.aa-sheet`, `.aa-row` |
-| the ⚙ next to `Aa` / where export lives | **document info sheet** | `DocInfo.tsx` | `.doc-sheet` |
-| the `Notes 12` button top-right | **notes button** | `ReadingChrome.tsx` | `.reading-notesbtn` |
+| the sliders button next to `Aa` / where export lives / edit title+author / the source URL | **document info sheet** | `DocInfo.tsx` (glyph: `SettingsIcon.tsx`) | `.doc-sheet`, `.settings-icon` |
+| the bare count pill top-right (just `12`) | **notes button** | `ReadingChrome.tsx` | `.reading-notesbtn` |
 | one paragraph or heading of the text | **node** | `NodeSection.tsx` | `.node`, `.node-body` |
 | the `1`, `2.1`, `3.1.1` markers | **section number** | `NodeMenu.tsx` → `NodeNumber` | `.node-num-id` |
 | …the one sitting *inside* the paragraph | **run-in section number** | same | `.node-num-id--runin` |
@@ -88,10 +88,10 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 |---|---|---|---|
 | the whole left panel | **library drawer** | `LibraryDrawer.tsx` | `.library-drawer` |
 | one text in the list | **library row** | `LibraryDrawer.tsx` | `.library-row` |
-| the `＋ New` button | **new-text button** | `LibraryDrawer.tsx` | `.library-new` |
+| the `＋` button | **new-text button** | `LibraryDrawer.tsx` | `.library-new` |
 | the "Add to the library" dialog | **new-doc modal** | `NewDocModal.tsx` | `.newdoc-sheet` |
 | the title / author / paste / URL fields in it | **import form** | `ImportForm.tsx` | `.source`, `.url-row` |
-| the ⚙ next to `＋ New` | **invite sheet** | `InviteSettings.tsx` | `.invite-dialog` |
+| the sliders button next to `＋` | **invite sheet** | `InviteSettings.tsx` (glyph: `SettingsIcon.tsx`) | `.invite-dialog` |
 
 ---
 
@@ -99,7 +99,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 
 The three most common sources of "we're talking about different things":
 
-- **Two ⚙ icons.** Reading header ⚙ = **document info sheet** (`DocInfo`). Library drawer ⚙ = **invite sheet** (`InviteSettings`). Neither is the **display sheet** — that's the `Aa` button.
+- **Two sliders icons.** Both use the shared `SettingsIcon` (a "tune" glyph, formerly ⚙). Reading header = **document info sheet** (`DocInfo`); library drawer = **invite sheet** (`InviteSettings`). Neither is the **display sheet** — that's the `Aa` button.
 - **Two kinds of "note".** A **highlight** (`inline_annotations`) is anchored to a character range inside a paragraph and shows a coloured underline. A **node note** (`node_annotations`) is attached to a whole paragraph/section and shows only as a red section number. Both appear as cards in the notes drawer, so "my note" is ambiguous — say *highlight* or *node note*.
 - **Two edge tabs.** Both use `.notes-edge`. The left one only toggles; the right one toggles **and** drag-resizes.
 

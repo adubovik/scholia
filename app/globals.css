@@ -179,6 +179,7 @@ body {
   width: min(34rem, 100%);
   background: var(--paper);
   border: 1px solid var(--rule);
+  border-radius: 10px;
   box-shadow: 0 24px 60px rgba(28, 26, 21, 0.12);
   padding: 2rem 2.1rem 2.2rem;
 }
@@ -415,10 +416,10 @@ body {
 .node-children {
   border-left: 1px solid var(--rule);
   /* Drop the connector straight down from the toggle triangle (see -0.9rem note
-     below). Base child indent tightened 1.15rem → 0.5rem to close the gap
-     between the connector line and each child's note pencil. */
+     below). padding-left is the visible gutter between the connector line and the
+     child text — tightened to sit the prose closer to the rule. */
   margin-left: -0.9rem;
-  padding-left: 1.4rem; /* 0.5rem base indent + 0.9rem pulled back */
+  padding-left: 1rem; /* gutter: 0.1rem base indent + 0.9rem pulled back */
   margin-top: var(--reading-block-gap); /* uniform block spacing at every depth */
 }
 
@@ -530,18 +531,9 @@ body {
   align-items: center;
   margin: 0.4rem 0;
 }
-.tag {
-  font-family: var(--mono);
-  background: none;
-  border: 1px solid var(--rule);
-  color: var(--muted);
-  font-size: 0.68rem;
-  letter-spacing: 0.03em;
-  padding: 0.1rem 0.4rem;
-  cursor: default;
-}
-button.tag { cursor: pointer; transition: color 0.12s, border-color 0.12s; }
-button.tag:hover { color: var(--error); border-color: var(--error); }
+/* Added tags in the editor reuse the filter .chip pill; the × dims until hover. */
+.chip-x { opacity: 0.55; }
+.chip:hover .chip-x { opacity: 1; }
 .tag-input {
   font-family: var(--mono);
   border: none;
@@ -563,6 +555,7 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   width: 1.15rem;
   height: 1.15rem;
   border: 1px solid rgba(28, 26, 21, 0.15);
+  border-radius: 5px;
   cursor: pointer;
   padding: 0;
   transition: transform 0.1s;
@@ -621,7 +614,7 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 .aa-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 80; /* above both drawers (notes z60 / edge z65) — see newdoc-backdrop */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -641,6 +634,7 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   width: min(24rem, calc(100vw - 2rem));
   background: var(--paper);
   border: 1px solid var(--rule);
+  border-radius: 10px;
   box-shadow: 0 10px 34px rgba(28, 26, 21, 0.14);
   padding: 1.25rem 1.35rem 1rem;
 }
@@ -732,7 +726,7 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 50;
+  z-index: 81; /* above its own backdrop (z80) and both drawers */
 }
 .invite-error {
   margin-top: 0.75rem;
@@ -807,32 +801,28 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 }
 .reading-headbtn:hover,
 .reading-headbtn:focus-visible { color: var(--muted); }
-.reading-headbtn--icon { font-size: 0.95rem; }
+.reading-headbtn--icon { display: flex; align-items: center; }
+/* Settings glyph (SettingsIcon) — shared by the reading-header doc-info trigger
+   and the library-drawer invite trigger. Knob fill = page colour so the slider
+   line reads as passing behind the handle. */
+.settings-icon { width: 0.95rem; height: 0.95rem; display: block; }
+.settings-icon circle { fill: var(--paper); }
+.btn--icon { display: inline-flex; align-items: center; justify-content: center; padding: 0.42rem 0.55rem; border-radius: 9px; }
 .reading-notesbtn {
   background: none;
   border: 1px solid var(--rule);
   border-radius: 9px;
   cursor: pointer;
   font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.68rem;
   color: var(--muted);
-  padding: 0.35rem 0.6rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  padding: 0.2rem 0.55rem;
+  min-width: 2rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
   transition: color 0.12s, border-color 0.12s;
 }
 .reading-notesbtn:hover { color: var(--ink); border-color: var(--muted); }
-.reading-notescount {
-  background: var(--ink);
-  color: var(--paper);
-  font-size: 0.6rem;
-  padding: 0.05rem 0.35rem;
-  border-radius: 9px;
-  font-variant-numeric: tabular-nums;
-}
 
 /* The reading column slides aside for whichever drawer is open (desktop only —
    on mobile the drawers are sheets, so the column stays centred). */
@@ -1123,12 +1113,13 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
 }
 .library-tagline { font-family: var(--serif); font-style: italic; font-size: 0.86rem; color: var(--muted); margin-top: 0.3rem; }
 .library-actions { display: flex; gap: 0.5rem; margin-top: 1.1rem; }
-.library-new { flex: 1 1 auto; text-align: center; text-decoration: none; }
+.library-new { flex: 1 1 auto; text-align: center; text-decoration: none; border-radius: 9px; font-size: 1.05rem; line-height: 1; padding: 0.45rem 1.15rem; }
 .library-list { flex: 1 1 auto; overflow-y: auto; padding: 0.5rem 0.9rem 1.5rem; }
 .library-row {
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
   color: var(--ink);
   text-decoration: none;
   border-radius: 5px;
@@ -1137,6 +1128,7 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   transition: background 0.12s;
 }
 .library-row:hover { background: var(--field); }
+.library-row-main { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1 1 auto; }
 .library-row-title {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1146,17 +1138,36 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   color: var(--ink);
 }
 .library-row-author {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--serif);
   font-style: italic;
   font-size: 0.78rem;
   color: var(--muted);
 }
 .library-row-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex: 0 0 auto;
   font-family: var(--mono);
   font-size: 0.62rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--faint);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lib-stat { display: inline-flex; align-items: center; gap: 0.24rem; }
+/* Highlight swatch shared by the library row and the doc-info sheet — sized in em
+   so it tracks whatever mono font-size surrounds it. */
+.stat-hl {
+  display: inline-block;
+  width: 0.66em;
+  height: 0.66em;
+  background: var(--hl-yellow);
+  border: 1px solid rgba(28, 26, 21, 0.18);
+  border-radius: 1px;
 }
 .library-row--current {
   background: var(--field);
@@ -1169,10 +1180,36 @@ button.tag:hover { color: var(--error); border-color: var(--error); }
   width: min(31rem, calc(100vw - 2rem));
   background: var(--paper);
   border: 1px solid var(--rule);
+  border-radius: 10px;
   box-shadow: 0 24px 60px rgba(28, 26, 21, 0.12);
   padding: 1.8rem 2rem 1.9rem;
 }
 .doc-sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.doc-sheet-headmain { min-width: 0; flex: 1 1 auto; }
+.doc-sheet-headbtns { display: flex; align-items: center; gap: 0.25rem; flex: 0 0 auto; }
+.doc-sheet-author { font-family: var(--serif); font-style: italic; font-size: 0.98rem; color: var(--muted); margin-top: 0.3rem; }
+.doc-sheet-titleinput,
+.doc-sheet-authorinput {
+  width: 100%;
+  font-family: var(--serif);
+  color: var(--ink);
+  background: var(--field);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.12rem 0.45rem;
+}
+.doc-sheet-titleinput { font-weight: 600; font-size: 1.5rem; line-height: 1.15; margin-top: 0.35rem; }
+.doc-sheet-authorinput { font-style: italic; font-size: 0.98rem; color: var(--muted); margin-top: 0.45rem; }
+.doc-sheet-titleinput:focus, .doc-sheet-authorinput:focus { border-color: var(--muted); outline: none; }
+.doc-sheet-editbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-top: 1rem; }
+.doc-sheet-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+.doc-sheet-link:hover { text-decoration-color: var(--muted); }
 .doc-sheet-eyebrow {
   font-family: var(--mono);
   font-size: 0.66rem;

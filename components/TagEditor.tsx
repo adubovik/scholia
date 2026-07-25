@@ -15,8 +15,9 @@ export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags:
   return (
     <div className="note-tags">
       {tags.map((t) => (
-        <button key={t} className="tag" onClick={() => onChange(tags.filter((x) => x !== t))}>
-          {t} ×
+        // Same pill as the filter chips at the top of the drawer; click removes it.
+        <button key={t} className="chip" aria-label={`Remove tag ${t}`} onClick={() => onChange(tags.filter((x) => x !== t))}>
+          #{t} <span className="chip-x">×</span>
         </button>
       ))}
       <input
@@ -32,7 +33,7 @@ export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags:
         // Commit a half-typed tag when focus leaves (e.g. clicking Save) — otherwise
         // a tag typed but not Enter'd is silently dropped and never renders/filters.
         onBlur={addTag}
-        placeholder="tag"
+        placeholder="add tag…"
       />
     </div>
   );

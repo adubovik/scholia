@@ -39,8 +39,8 @@ export function ReadingChrome({
           <div className="reading-head-actions">
             <ReadingSettings triggerClassName="reading-headbtn" />
             <DocInfo meta={meta} />
-            <button className="reading-notesbtn" onClick={toggleDrawer}>
-              Notes <span className="reading-notescount">{entries.length}</span>
+            <button className="reading-notesbtn" aria-label={`Notes (${entries.length})`} onClick={toggleDrawer}>
+              {entries.length}
             </button>
           </div>
         </div>

@@ -7,6 +7,8 @@ import { db } from "@/lib/db";
 import type { BatchItem } from "drizzle-orm/batch";
 import { documents, sources, paragraphs, nodes, nodeSourceRanges } from "@/lib/db/schema";
 import { requireMember } from "@/lib/auth/access";
+import { requireUser } from "@/lib/auth/current-user";
+import { authorize } from "@/lib/auth/authorize";
 import { normalizeText, paragraphize } from "@/lib/import/paragraphs";
 import { planNodes } from "@/lib/tree/plan";
 
@@ -15,6 +17,7 @@ export async function createDocument(input: {
   author?: string;
   language?: string;
   label?: string;
+  url?: string;
   text: string;
   headingLevels?: (number | null)[];
 }): Promise<string> {
@@ -30,7 +33,8 @@ export async function createDocument(input: {
     db.insert(documents).values({ id: docId, ownerId: user.id, title: input.title, author: input.author?.trim() || null }),
     db.insert(sources).values({
       id: srcId, documentId: docId, language: input.language ?? null,
-      label: input.label ?? null, isPrimary: true, position: 0, text: normalized,
+      label: input.label ?? null, url: input.url?.trim() || null,
+      isPrimary: true, position: 0, text: normalized,
     }),
   ];
 
@@ -65,6 +69,24 @@ export async function createDocument(input: {
   // neon-http has no interactive transactions; batch is a single atomic round-trip.
   await db.batch(statements as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
   return docId;
+}
+
+/** Owner-only rename of the work's title/author. Title is required; a blank
+ * author clears it (nullable column). Bumps updatedAt like any other edit. */
+export async function updateDocument(input: {
+  documentId: string;
+  title: string;
+  author: string;
+}): Promise<void> {
+  const user = await requireUser();
+  await authorize(user.id, input.documentId, "edit");
+  const title = input.title.trim();
+  if (!title) throw new Error("Title is required");
+  await db
+    .update(documents)
+    .set({ title, author: input.author.trim() || null, updatedAt: new Date() })
+    .where(eq(documents.id, input.documentId));
+  revalidatePath(`/d/${input.documentId}`);
 }
 
 /** Owner-only delete. Sources, nodes, ranges, and annotations all FK-cascade off

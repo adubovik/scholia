@@ -20,8 +20,9 @@ export default async function Home() {
         id: d.id,
         title: d.title,
         author: d.author,
-        paragraphs: d.nodeCount,
-        notes: d.highlightCount + d.noteCount,
+        nodeCount: d.nodeCount,
+        highlightCount: d.highlightCount,
+        noteCount: d.noteCount,
       }))}
       canInvite={canInvite}
       invites={invites}
