@@ -143,7 +143,7 @@ export function NodeSection({
   );
 
   return (
-    <section className="node" style={{ marginLeft: depth ? "1.25rem" : undefined }} data-node-id={node.id}>
+    <section className="node" style={{ marginLeft: depth ? "0.4rem" : undefined }} data-node-id={node.id}>
       <div className="node-toggle-col">
         {collapsible && (
           <button

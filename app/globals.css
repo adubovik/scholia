@@ -347,9 +347,9 @@ body {
 /* align-items: baseline keeps the toggle glyph on the first text line's
    baseline regardless of whether that line is prose or mono head chrome —
    a fixed padding only matches one line-height and drifts between node types. */
-.node { position: relative; margin-top: var(--reading-block-gap); display: flex; align-items: baseline; gap: 0.35rem; }
+.node { position: relative; margin-top: var(--reading-block-gap); display: flex; align-items: baseline; gap: 0.25rem; }
 .node:first-child { margin-top: 0; }
-.node-toggle-col { flex: 0 0 1.1rem; display: flex; justify-content: center; }
+.node-toggle-col { flex: 0 0 0.9rem; display: flex; justify-content: center; }
 .node-body { flex: 1 1 auto; min-width: 0; }
 .node-toggle {
   background: none;
@@ -415,11 +415,11 @@ body {
 }
 .node-children {
   border-left: 1px solid var(--rule);
-  /* Drop the connector straight down from the toggle triangle (see -0.9rem note
-     below). padding-left is the visible gutter between the connector line and the
-     child text — tightened to sit the prose closer to the rule. */
-  margin-left: -0.9rem;
-  padding-left: 1rem; /* gutter: 0.1rem base indent + 0.9rem pulled back */
+  /* Drop the connector straight down from the toggle triangle: margin-left must stay
+     -(toggle-col/2 + gap) = -(0.45 + 0.25) so the rule sits under the ▾. padding-left
+     is the visible gutter between the connector line and the child text. */
+  margin-left: -0.7rem;
+  padding-left: 0.5rem;
   margin-top: var(--reading-block-gap); /* uniform block spacing at every depth */
 }
 
