@@ -11,7 +11,7 @@ export interface NoteEntry {
   color: Color | null; // inline only
   snippet: string; // inline only — the highlighted text
   note: string | null;
-  tags: string[];
+  tags: string[]; // includes ":glyph" system tags; split at render time
   createdAt: string; // ISO
 }
 

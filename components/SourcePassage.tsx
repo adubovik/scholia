@@ -4,11 +4,26 @@ import type { ReactNode } from "react";
 import { splitSpans, type Segment } from "@/lib/annotations/spans";
 import type { InlineAnnotationView } from "@/lib/annotations/types";
 import { useNotesActions, useActiveAnnInSet } from "./NotesContext";
+import { GlyphMarker } from "./GlyphPill";
+import { glyphsInTags } from "@/lib/annotations/glyphs";
 
 /** One highlighted segment. Isolated so it can subscribe to the active-selection
  * store on its own — when it becomes the selected highlight it fills its background
- * with that annotation's colour (item 9); otherwise it's a bottom underline. */
-function HlSpan({ seg, sourceId, nodeId }: { seg: Segment; sourceId: string; nodeId: string }) {
+ * with that annotation's colour (item 9); otherwise it's a bottom underline.
+ * `markers` are the glyph pills for annotations that START at this segment; rendered
+ * as absolutely-positioned first children so they float above the highlight's top-left
+ * without ever reflowing the prose. */
+function HlSpan({
+  seg,
+  sourceId,
+  nodeId,
+  markers,
+}: {
+  seg: Segment;
+  sourceId: string;
+  nodeId: string;
+  markers: InlineAnnotationView[];
+}) {
   const { openAnnotation } = useNotesActions();
   const ids = seg.annotations.map((a) => a.id);
   const activeId = useActiveAnnInSet(ids); // this segment's active ann, or null
@@ -30,6 +45,9 @@ function HlSpan({ seg, sourceId, nodeId }: { seg: Segment; sourceId: string; nod
       }}
       onClick={() => openAnnotation(top.id, nodeId)}
     >
+      {markers.map((a) => (
+        <GlyphMarker key={a.id} glyphs={glyphsInTags(a.tags)} />
+      ))}
       {seg.text}
     </span>
   );
@@ -53,6 +71,17 @@ export function SourcePassage({
 }) {
   const segments = splitSpans(text, startOffset, annotations);
 
+  // One glyph marker per annotation that carries a ":glyph" tag, keyed by its clamped
+  // start offset (always a segment boundary). splitSpans only carries {id,color}, so
+  // the glyphs are read from the full annotations here and attached to that
+  // annotation's first (start) segment.
+  const markersByStart = new Map<number, InlineAnnotationView[]>();
+  for (const a of annotations) {
+    if (glyphsInTags(a.tags).length === 0) continue;
+    const start = Math.max(a.startOffset, startOffset);
+    (markersByStart.get(start) ?? markersByStart.set(start, []).get(start)!).push(a);
+  }
+
   return (
     <p className="reading-p">
       {prefix}
@@ -62,7 +91,13 @@ export function SourcePassage({
             {seg.text}
           </span>
         ) : (
-          <HlSpan key={seg.charStart} seg={seg} sourceId={sourceId} nodeId={nodeId} />
+          <HlSpan
+            key={seg.charStart}
+            seg={seg}
+            sourceId={sourceId}
+            nodeId={nodeId}
+            markers={markersByStart.get(seg.charStart) ?? []}
+          />
         ),
       )}
     </p>

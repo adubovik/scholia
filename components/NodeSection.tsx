@@ -7,6 +7,7 @@ import { SourcePassage } from "./SourcePassage";
 import { NodeContextMenu, NodeNumber, ChildCount } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, useActiveNode } from "./NotesContext";
+import { glyphsInTags } from "@/lib/annotations/glyphs";
 
 // Every id beneath this node (not the node itself) — the target of Collapse/Expand
 // children.
@@ -97,6 +98,7 @@ export function NodeSection({
         runIn={runIn}
         nodeId={node.id}
         canEdit={canEdit}
+        glyphs={nodeAnn ? glyphsInTags(nodeAnn.tags) : []}
         onHighlightNote={nodeAnn ? () => openAnnotation(nodeAnn.id, node.id) : undefined}
       />
     ) : (

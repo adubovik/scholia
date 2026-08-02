@@ -1,4 +1,5 @@
 import { splitSpans } from "@/lib/annotations/spans";
+import { displayTags, glyphsInTags, GLYPH_META } from "@/lib/annotations/glyphs";
 import type { TreeNode } from "@/lib/tree/build";
 
 /**
@@ -16,7 +17,12 @@ const EMPTY = "{empty}"; // a highlight with no note still gets a numbered entry
 
 const withTags = (note: string | null, tags: string[]) => {
   const body = note?.trim() || EMPTY;
-  return tags.length ? `${body} ${tags.map((t) => `#${t}`).join(" ")}` : body;
+  // Glyph tags (":summary" …) export as their mark char; the rest as #tags.
+  const suffix = [
+    ...displayTags(tags).map((t) => `#${t}`),
+    ...glyphsInTags(tags).map((g) => GLYPH_META[g].char),
+  ].join(" ");
+  return suffix ? `${body} ${suffix}` : body;
 };
 
 /**

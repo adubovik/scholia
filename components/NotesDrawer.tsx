@@ -10,6 +10,8 @@ import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/an
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
 import { TagEditor } from "./TagEditor";
 import { MarkdownTextarea } from "./MarkdownTextarea";
+import { GlyphPill, GlyphToggle } from "./GlyphPill";
+import { glyphsInTags, displayTags, glyphTag, toggleGlyphTag } from "@/lib/annotations/glyphs";
 import { useNotesActions, useNotesState, useActiveAnnId } from "./NotesContext";
 
 const MIN_W = 320;
@@ -67,7 +69,7 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
   const [override, setOverride] = useState<boolean | null>(null);
   const editing = override ?? editingId === entry.id;
   const [note, setNote] = useState(entry.note ?? "");
-  const [tags, setTags] = useState<string[]>(entry.tags);
+  const [tags, setTags] = useState<string[]>(entry.tags); // includes ":glyph" system tags
   const [busy, setBusy] = useState(false);
   const isActive = activeId === entry.id;
 
@@ -131,6 +133,9 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
             </div>
           )}
           <TagEditor tags={tags} onChange={setTags} />
+          <div className="note-glyphs">
+            <GlyphToggle active={glyphsInTags(tags)} onToggle={(g) => setTags(toggleGlyphTag(tags, g))} />
+          </div>
           <div className="note-actions">
             <button className="btn" disabled={busy} onClick={save}>Save</button>
             <button className="link-btn" disabled={busy} onClick={() => { setOverride(false); setNote(entry.note ?? ""); setTags(entry.tags); }}>Cancel</button>
@@ -147,11 +152,12 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
               <span className="muted">No note.</span>
             )}
           </div>
-          {entry.tags.length > 0 && (
+          {(displayTags(entry.tags).length > 0 || glyphsInTags(entry.tags).length > 0) && (
             <div className="note-cardtags">
-              {entry.tags.map((t) => (
+              {displayTags(entry.tags).map((t) => (
                 <button key={t} className="chip" onClick={() => setFilterTag(t)}>#{t}</button>
               ))}
+              <GlyphPill glyphs={glyphsInTags(entry.tags)} />
             </div>
           )}
           <div className="note-cardfoot">
@@ -181,7 +187,7 @@ function EntryCard({ entry, documentId }: { entry: NoteEntry; documentId: string
 function ComposeCard({ documentId, nodeId, number }: { documentId: string; nodeId: string; number?: string }) {
   const { closeDrawer, openAnnotation } = useNotesActions();
   const [note, setNote] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]); // includes ":glyph" system tags
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -207,6 +213,9 @@ function ComposeCard({ documentId, nodeId, number }: { documentId: string; nodeI
         autoFocus
       />
       <TagEditor tags={tags} onChange={setTags} />
+      <div className="note-glyphs">
+        <GlyphToggle active={glyphsInTags(tags)} onToggle={(g) => setTags(toggleGlyphTag(tags, g))} />
+      </div>
       <div className="note-actions">
         <button className="btn" disabled={busy || !note.trim()} onClick={save}>Save</button>
         <button className="link-btn" disabled={busy} onClick={closeDrawer}>Cancel</button>
@@ -216,13 +225,21 @@ function ComposeCard({ documentId, nodeId, number }: { documentId: string; nodeI
 }
 
 export function NotesDrawer({ documentId }: { documentId: string }) {
-  const { entries, sections, drawerOpen, composeNodeId, panelWidth, filterTag } = useNotesState();
-  const { closeDrawer, toggleDrawer, setPanelWidth, setFilterTag } = useNotesActions();
+  const { entries, sections, drawerOpen, composeNodeId, panelWidth, filterTag, filterGlyphs } = useNotesState();
+  const { closeDrawer, toggleDrawer, setPanelWidth, setFilterTag, toggleFilterGlyph, clearFilters } = useNotesActions();
   const activeId = useActiveAnnId();
   const listRef = useRef<HTMLDivElement>(null);
 
-  const tags = [...new Set(entries.flatMap((e) => e.tags))];
-  const shown = filterTag ? entries.filter((e) => e.tags.includes(filterTag)) : entries;
+  // #tag chips exclude the ":glyph" system tags — those are surfaced by the glyph pill.
+  const tags = [...new Set(entries.flatMap((e) => displayTags(e.tags)))];
+  const anyGlyphs = entries.some((e) => glyphsInTags(e.tags).length > 0);
+  // Tag filter (single) AND glyph filter (must carry every active glyph's system tag).
+  const shown = entries.filter(
+    (e) =>
+      (!filterTag || e.tags.includes(filterTag)) &&
+      filterGlyphs.every((g) => e.tags.includes(glyphTag(g))),
+  );
+  const filtersActive = filterTag !== null || filterGlyphs.length > 0;
 
   // Slot the unsaved composer into document order rather than pinning it to the top,
   // so a new node note appears where it will live once saved. Its section sorts before
@@ -299,11 +316,11 @@ export function NotesDrawer({ documentId }: { documentId: string }) {
           <button className="glyph" aria-label="Close" onClick={closeDrawer}>✕</button>
         </div>
 
-        {tags.length > 0 && (
+        {(tags.length > 0 || anyGlyphs) && (
           <div className="notes-filters">
             <button
-              className={filterTag ? "chip" : "chip chip--active"}
-              onClick={() => setFilterTag(null)}
+              className={filtersActive ? "chip" : "chip chip--active"}
+              onClick={clearFilters}
             >
               All
             </button>
@@ -316,6 +333,7 @@ export function NotesDrawer({ documentId }: { documentId: string }) {
                 #{t}
               </button>
             ))}
+            <GlyphToggle active={filterGlyphs} onToggle={toggleFilterGlyph} />
           </div>
         )}
 

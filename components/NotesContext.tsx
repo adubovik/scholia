@@ -39,6 +39,10 @@ export interface NotesActions {
   closeLeft: () => void;
   setPanelWidth: (w: number) => void;
   setFilterTag: (tag: string | null) => void;
+  /** Toggle a preset-glyph filter section; ANDs with the tag filter. */
+  toggleFilterGlyph: (glyph: string) => void;
+  /** The "All" chip — clear both the tag and glyph filters at once. */
+  clearFilters: () => void;
 }
 
 export interface NotesState {
@@ -50,6 +54,7 @@ export interface NotesState {
   editingId: string | null; // card whose editor should be open (see openAnnotation)
   panelWidth: number;
   filterTag: string | null;
+  filterGlyphs: string[]; // active preset-glyph filters (AND); [] = no glyph filter
 }
 
 interface ActiveStore {
@@ -108,6 +113,7 @@ export function NotesProvider({
     editingId: null,
     panelWidth: 480,
     filterTag: null,
+    filterGlyphs: [],
   });
   const [active] = useState(createActiveStore);
 
@@ -163,6 +169,14 @@ export function NotesProvider({
     },
     setPanelWidth: (w) => setState((s) => ({ ...s, panelWidth: w })),
     setFilterTag: (tag) => setState((s) => ({ ...s, filterTag: s.filterTag === tag ? null : tag })),
+    toggleFilterGlyph: (glyph) =>
+      setState((s) => ({
+        ...s,
+        filterGlyphs: s.filterGlyphs.includes(glyph)
+          ? s.filterGlyphs.filter((g) => g !== glyph)
+          : [...s.filterGlyphs, glyph],
+      })),
+    clearFilters: () => setState((s) => ({ ...s, filterTag: null, filterGlyphs: [] })),
   }));
 
   return (

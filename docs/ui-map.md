@@ -62,6 +62,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the one-line "…" summary when folded | **collapsed preview** | `NodeSection.tsx` | `.node-preview` |
 | the actual prose text | **passage** | `SourcePassage.tsx` | `.reading-p` |
 | coloured underline / marked-up phrase | **highlight** (a.k.a. inline annotation) | `SourcePassage.tsx` → `HlSpan` | `.hl` |
+| the tiny ≡/?/! badge floating above a highlight or a section number | **glyph marker** | `GlyphPill.tsx` → `GlyphMarker` (placed by `SourcePassage`/`NodeNumber`) | `.glyph-marker`, `.glyph-pill--marker` |
 | the 4 colour dots after selecting text | **selection popover** | `SelectionPopover.tsx` | `.selection-popover` |
 | right-click menu on a paragraph | **node menu** | `NodeMenu.tsx` → `NodeContextMenu` | `.node-menu` |
 | right-click menu on empty space | **root menu** | `NodeMenu.tsx` → `RootMenu` | `.node-menu` |
@@ -78,7 +79,8 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the rendered Markdown of the note | **card body** | `EntryCard` | `.note-cardbody` |
 | the box you type the note into | **note editor** | `MarkdownTextarea.tsx` | `.note-textarea` |
 | the `#tag` pills | **tag chips** (editor: **tag editor**) | `TagEditor.tsx` | `.chip`, `.note-tags` |
-| the `All / #tag` row at the top | **filter chips** | `NotesDrawer.tsx` | `.notes-filters` |
+| the segmented ≡ ? ! capsule (filter row, editor, card) | **glyph pill** (interactive: **glyph toggle**) | `GlyphPill.tsx` → `GlyphPill` / `GlyphToggle` | `.glyph-pill`, `.glyph-cell` |
+| the `All / #tag` row at the top (glyph toggle sits at its end) | **filter chips** | `NotesDrawer.tsx` | `.notes-filters` |
 | the blank card for a brand-new note | **compose card** | `NotesDrawer.tsx` → `ComposeCard` | `.note-card--active` |
 | a `§2.2` that jumps you to a section | **§ cross-reference** | `NotesDrawer.tsx` → `SectionLink`, `linkifySections` | `.xref` |
 
@@ -102,6 +104,7 @@ The three most common sources of "we're talking about different things":
 - **Two sliders icons.** Both use the shared `SettingsIcon` (a "tune" glyph, formerly ⚙). Reading header = **document info sheet** (`DocInfo`); library drawer = **invite sheet** (`InviteSettings`). Neither is the **display sheet** — that's the `Aa` button.
 - **Two kinds of "note".** A **highlight** (`inline_annotations`) is anchored to a character range inside a paragraph and shows a coloured underline. A **node note** (`node_annotations`) is attached to a whole paragraph/section and shows only as a red section number. Both appear as cards in the notes drawer, so "my note" is ambiguous — say *highlight* or *node note*.
 - **Two edge tabs.** Both use `.notes-edge`. The left one only toggles; the right one toggles **and** drag-resizes.
+- **Glyphs ARE tags.** The three preset marks (≡ summary, ? question, ! insight) aren't a separate column — they're `":summary"`/`":question"`/`":insight"` system tags inside an annotation's `tags`. `lib/annotations/glyphs.ts` splits a tag list into display (`#`) tags and glyphs. So "tags" spans both: the `#tag` chips exclude glyph tags, and the glyph pill/marker render the glyph tags. Adding the tag is what turns on the mark.
 
 ---
 
@@ -112,6 +115,8 @@ Most "it doesn't react right" bugs are in a context, not a component.
 | Symptom | Look here |
 |---|---|
 | drawer opens/closes/resizes wrong; wrong card selected; clicking a highlight does nothing | `components/NotesContext.tsx` |
+| glyph filter narrows the list wrong; "All" doesn't clear it | `NotesContext.tsx` (`filterGlyphs`, `toggleFilterGlyph`, `clearFilters`) + `NotesDrawer.tsx` (`shown` predicate) |
+| a `:summary` tag shows as a `#chip`, or a glyph won't render | `lib/annotations/glyphs.ts` (`glyphsInTags`, `displayTags`) |
 | a new note opens in the wrong place in the feed, or not in its editor | `NotesDrawer.tsx` (`at`, `compareSections`) + `NotesContext.tsx` (`editingId`) |
 | the note editor doesn't grow with the text, or grows without limit | `MarkdownTextarea.tsx` (JS height) + `.note-textarea` `max-height` (CSS cap) |
 | folding/unfolding sections, Collapse/Expand children | `components/CollapseContext.tsx` |

@@ -894,6 +894,76 @@ body {
 .xref:hover { text-decoration: underline; }
 .xref:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
 
+/* ══ Preset glyph marks — the segmented pill ═════════════════ */
+/* One primitive, three modes: read-only (card + reading marker, only enabled glyphs),
+   interactive toggle (filter header + note editor, all three sections), and the
+   floated reading marker (the same pill, smaller + absolutely positioned). Capsule:
+   hairline border, --field fill, equal SQUARE cells split by 1px dividers; overflow
+   + border-radius:999px clips a single-cell pill into a clean circle. Height/roundness
+   sit with the #tag chips it flows beside. */
+.glyph-pill {
+  display: inline-flex;
+  align-items: stretch;
+  height: 1.15rem;
+  vertical-align: middle;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--field);
+  overflow: hidden;
+  font-family: var(--mono);
+  line-height: 1;
+}
+.glyph-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;          /* equal square cell → a circle when it's the only one */
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: inherit;           /* per-glyph colour is set inline */
+}
+.glyph-cell + .glyph-cell { border-left: 1px solid var(--rule); }
+/* IBM Plex Mono draws ≡ high — its ink centre sits ~0.13em above where ?/! centre
+   (measured against the loaded font). Nudge only that glyph down so the three align. */
+.glyph-cell[data-glyph="summary"] { transform: translateY(0.13em); }
+/* Interactive sections are buttons: the active/enabled one fills (colour set inline)
+   with a white glyph; the rest keep the outline look (coloured glyph on --field). */
+.glyph-pill--toggle .glyph-cell { cursor: pointer; }
+.glyph-cell--on { color: #fff; }
+
+/* Reading-pane corner marker. The wrapper is a zero-width inline anchor placed at the
+   annotation's start (first char of a highlight, or the run-in/head number of a node);
+   it inherits the surrounding text metrics so it adds no width and never changes the
+   line height — the prose can't reflow when glyphs are added, removed, or absent. Its
+   only child is absolutely positioned, floated just above the line's top edge, where
+   the line's half-leading gives a consistent gap that clears tall capitals and
+   headings. pointer-events:none passes clicks through to the text underneath. */
+/* inline-block (not inline): a single atomic zero-size box that can't split across
+   lines, so it stays pinned to the annotation's first character even when the
+   highlight wraps. The pill floats a fixed 1.05em above the baseline — an em offset
+   is deterministic across browsers (unlike bottom:100% off an inline box) and is
+   identical for a highlight and a run-in number since both inherit the reading size. */
+.glyph-marker { display: inline-block; position: relative; width: 0; height: 0; }
+.glyph-pill--marker {
+  position: absolute;
+  left: 0;
+  bottom: 1.05em;
+  height: 0.92rem;
+  pointer-events: none;
+}
+.glyph-pill--marker .glyph-cell { font-size: 0.58rem; }
+
+/* Filter row + editor: keep the pill vertically centred against the chips it sits with. */
+.notes-filters { align-items: center; }
+.note-glyphs { margin: 0.5rem 0; }
+.note-cardtags { align-items: center; }
+
 /* ══ Drawers (shared) ════════════════════════════════════════ */
 .notes-backdrop {
   position: fixed;
