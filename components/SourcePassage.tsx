@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { splitSpans, type Segment } from "@/lib/annotations/spans";
 import type { InlineAnnotationView } from "@/lib/annotations/types";
 import { useNotesActions, useActiveAnnInSet } from "./NotesContext";
@@ -9,7 +9,9 @@ import { glyphsInTags } from "@/lib/annotations/glyphs";
 
 /** One highlighted segment. Isolated so it can subscribe to the active-selection
  * store on its own — when it becomes the selected highlight it fills its background
- * with that annotation's colour (item 9); otherwise it's a bottom underline.
+ * with that annotation's colour (item 9). Its resting look (filled tint vs. bottom
+ * underline) is driven by the `data-hl-mode` display pref via CSS; this component
+ * only supplies the segment colour as `--seg-hl`.
  * `markers` are the glyph pills for annotations that START at this segment; rendered
  * as absolutely-positioned first children so they float above the highlight's top-left
  * without ever reflowing the prose. */
@@ -39,10 +41,10 @@ function HlSpan({
       data-char-start={seg.charStart}
       data-ann-id={ids.join(" ")}
       style={{
-        borderBottom: `2px solid var(--hl-${top.color})`,
+        "--seg-hl": `var(--hl-${top.color})`,
         background: fill ? `var(--hl-${fill})` : undefined,
         boxShadow: boxShadow || undefined,
-      }}
+      } as CSSProperties}
       onClick={() => openAnnotation(top.id, nodeId)}
     >
       {markers.map((a) => (

@@ -6,6 +6,39 @@ export const STORAGE_KEY = "scholia:reading-prefs";
 
 export type PrefKey = "size" | "line" | "word" | "block" | "width";
 
+// Inline-highlight display mode. Unlike the slider prefs above it's a two-value
+// choice, so it lives in its own key and is applied as a root data-attribute
+// (not a CSS var slider). "filled" is the default and needs no attribute — only
+// "underline" is materialised — so default readers get zero pre-paint work.
+export type HlMode = "filled" | "underline";
+export const HL_MODE_KEY = "scholia:hl-mode";
+export const DEFAULT_HL_MODE: HlMode = "filled";
+
+export function readStoredHlMode(): HlMode {
+  if (typeof localStorage === "undefined") return DEFAULT_HL_MODE;
+  try {
+    return localStorage.getItem(HL_MODE_KEY) === "underline" ? "underline" : DEFAULT_HL_MODE;
+  } catch {
+    return DEFAULT_HL_MODE;
+  }
+}
+
+export function writeStoredHlMode(mode: HlMode): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    if (mode === DEFAULT_HL_MODE) localStorage.removeItem(HL_MODE_KEY);
+    else localStorage.setItem(HL_MODE_KEY, mode);
+  } catch {
+    /* private-mode / quota — preferences are best-effort */
+  }
+}
+
+export function applyHlMode(mode: HlMode): void {
+  const el = document.documentElement;
+  if (mode === "underline") el.setAttribute("data-hl-mode", "underline");
+  else el.removeAttribute("data-hl-mode");
+}
+
 // steps are pre-formatted CSS values (line-height is unitless) so mapping is a
 // plain lookup. 8 steps per control (a tick per step in the UI). Index `default`
 // reproduces today's look (except block, tightened).
@@ -81,5 +114,7 @@ export function preloadScript(): string {
   return `(function(){try{var C=${JSON.stringify(map)},K=${JSON.stringify(STORAGE_KEY)};` +
     `var raw=localStorage.getItem(K),p=raw?JSON.parse(raw):{},d=document.documentElement;` +
     `for(var k in C){var c=C[k],i=p&&typeof p[k]==="number"&&p[k]>=0&&p[k]<c.s.length&&Math.floor(p[k])===p[k]?p[k]:c.d;` +
-    `d.style.setProperty(c.v,c.s[i]);}}catch(e){}})();`;
+    `d.style.setProperty(c.v,c.s[i]);}` +
+    `if(localStorage.getItem(${JSON.stringify(HL_MODE_KEY)})==="underline")d.setAttribute("data-hl-mode","underline");` +
+    `}catch(e){}})();`;
 }

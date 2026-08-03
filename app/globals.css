@@ -339,9 +339,21 @@ body {
 }
 
 /* ── Inline highlight ────────────────────────────────────── */
-/* The selected highlight fills its background (inline style, item 9); the underline
-   is the resting state. Transition both so selection eases in. */
-.hl { cursor: pointer; transition: background 0.4s; }
+/* Two display modes, chosen in the Aa display sheet. Each segment's colour comes
+   in inline as --seg-hl (per-annotation); CSS decides how to paint it. Default is
+   "filled" (whole span tinted); [data-hl-mode="underline"] on <html> switches to a
+   bottom rule. The 2px border is reserved in both modes so line height never shifts
+   between them. A selected highlight still overrides `background` inline (item 9). */
+.hl {
+  cursor: pointer;
+  transition: background 0.4s;
+  background: var(--seg-hl);
+  border-bottom: 2px solid transparent;
+}
+:root[data-hl-mode="underline"] .hl {
+  background: transparent;
+  border-bottom-color: var(--seg-hl);
+}
 
 /* ── Tree ────────────────────────────────────────────────── */
 /* align-items: baseline keeps the toggle glyph on the first text line's
@@ -717,6 +729,44 @@ body {
 }
 .aa-row input[type="range"]:focus-visible { outline: 1.5px solid var(--muted); outline-offset: 3px; }
 .aa-sheet .link-btn { margin-top: 0.9rem; }
+
+/* Highlight display-mode toggle: a two-cell segmented control sharing the slider
+   label column. aria-pressed marks the active cell. */
+.aa-modrow {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1.1rem 0 0.2rem;
+}
+.aa-seg { display: flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; }
+.aa-seg-btn {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0.42rem 0;
+  background: var(--field);
+  border: none;
+  cursor: pointer;
+}
+.aa-seg-btn + .aa-seg-btn { border-left: 1px solid var(--rule); }
+.aa-seg-btn[aria-pressed="true"] { background: var(--paper); }
+.aa-seg-btn:focus-visible { outline: 1.5px solid var(--muted); outline-offset: -1.5px; }
+/* Each cell previews its own mode: "Filled" tinted yellow, "Underline" ruled
+   yellow — the same --hl-yellow a real highlight uses. The 2px bottom border is
+   reserved (transparent) on both so the cells stay the same height. */
+.aa-seg-sample {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.06rem 0.34rem;
+  border-bottom: 2px solid transparent;
+}
+.aa-seg-btn[aria-pressed="true"] .aa-seg-sample { color: var(--ink); font-weight: 500; }
+.aa-seg-btn[data-mode="filled"] .aa-seg-sample { background: var(--hl-yellow); color: var(--ink); }
+.aa-seg-btn[data-mode="underline"] .aa-seg-sample { border-bottom-color: var(--hl-yellow); }
 
 /* Radix Dialog.Content is a sibling of the overlay, not a child — so it must
    position itself. (ReadingSettings nests its sheet inside the backdrop and

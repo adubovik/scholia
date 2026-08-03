@@ -3,11 +3,13 @@ import {
   STORAGE_KEY, DEFAULT_INDICES,
   stepsToVars, clampIndices, readStoredIndices, writeStoredIndices,
   clearStoredIndices, preloadScript,
+  HL_MODE_KEY, readStoredHlMode, writeStoredHlMode, applyHlMode,
 } from "@/lib/reading/prefs";
 
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.removeAttribute("style");
+  document.documentElement.removeAttribute("data-hl-mode");
 });
 
 describe("stepsToVars", () => {
@@ -60,11 +62,41 @@ describe("preloadScript", () => {
   it("references the storage key", () => {
     expect(preloadScript()).toContain(STORAGE_KEY);
   });
+  it("materialises data-hl-mode only for a stored 'underline'", () => {
+    localStorage.setItem(HL_MODE_KEY, "underline");
+    // eslint-disable-next-line no-eval
+    eval(preloadScript());
+    expect(document.documentElement.getAttribute("data-hl-mode")).toBe("underline");
+  });
+  it("leaves the default (filled) as no attribute", () => {
+    // eslint-disable-next-line no-eval
+    eval(preloadScript());
+    expect(document.documentElement.hasAttribute("data-hl-mode")).toBe(false);
+  });
   it("falls back to default for a non-integer stored index", () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...DEFAULT_INDICES, size: 1.5 }));
     // eslint-disable-next-line no-eval
     eval(preloadScript());
     // default size index 3 → "1.1875rem"; must not be "undefined"
     expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.1875rem");
+  });
+});
+
+describe("highlight mode", () => {
+  it("defaults to filled when unset", () => {
+    expect(readStoredHlMode()).toBe("filled");
+  });
+  it("persists underline but stores the filled default as no key", () => {
+    writeStoredHlMode("underline");
+    expect(readStoredHlMode()).toBe("underline");
+    writeStoredHlMode("filled");
+    expect(localStorage.getItem(HL_MODE_KEY)).toBeNull();
+    expect(readStoredHlMode()).toBe("filled");
+  });
+  it("applies underline as an attribute and clears it for filled", () => {
+    applyHlMode("underline");
+    expect(document.documentElement.getAttribute("data-hl-mode")).toBe("underline");
+    applyHlMode("filled");
+    expect(document.documentElement.hasAttribute("data-hl-mode")).toBe(false);
   });
 });

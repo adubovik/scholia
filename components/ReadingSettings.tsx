@@ -4,8 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import {
   CONTROLS, DEFAULT_INDICES, stepsToVars,
   readStoredIndices, writeStoredIndices, clearStoredIndices,
-  type PrefKey, type PrefIndices,
+  DEFAULT_HL_MODE, applyHlMode, readStoredHlMode, writeStoredHlMode,
+  type PrefKey, type PrefIndices, type HlMode,
 } from "@/lib/reading/prefs";
+
+// Highlight display-mode options, in display order.
+const HL_MODES: { value: HlMode; label: string }[] = [
+  { value: "filled", label: "Filled" },
+  { value: "underline", label: "Underline" },
+];
 
 // Display order + end-cap glyphs (small→large / tight→loose). Labels double as
 // each slider's accessible name.
@@ -27,6 +34,7 @@ function applyVars(indices: PrefIndices) {
 export function ReadingSettings({ triggerClassName = "reading-aa" }: { triggerClassName?: string } = {}) {
   const [open, setOpen] = useState(false);
   const [indices, setIndices] = useState<PrefIndices>(DEFAULT_INDICES);
+  const [hlMode, setHlMode] = useState<HlMode>(DEFAULT_HL_MODE);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +44,7 @@ export function ReadingSettings({ triggerClassName = "reading-aa" }: { triggerCl
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration mirror, see above
     setIndices(readStoredIndices());
+    setHlMode(readStoredHlMode());
   }, []);
 
   function close() {
@@ -50,10 +59,17 @@ export function ReadingSettings({ triggerClassName = "reading-aa" }: { triggerCl
     writeStoredIndices(next);
   }
 
+  function setMode(mode: HlMode) {
+    setHlMode(mode);
+    applyHlMode(mode);
+    writeStoredHlMode(mode);
+  }
+
   function reset() {
     setIndices(DEFAULT_INDICES);
     applyVars(DEFAULT_INDICES);
     clearStoredIndices();
+    setMode(DEFAULT_HL_MODE);
   }
 
   useEffect(() => {
@@ -148,6 +164,25 @@ export function ReadingSettings({ triggerClassName = "reading-aa" }: { triggerCl
                 </label>
               );
             })}
+
+            <div className="aa-modrow">
+              <span className="aa-label">Marks</span>
+              <span className="aa-seg" role="group" aria-label="Highlight display">
+                {HL_MODES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className="aa-seg-btn"
+                    data-mode={value}
+                    aria-pressed={hlMode === value}
+                    onClick={() => setMode(value)}
+                  >
+                    {/* the label doubles as a live sample of the mode it selects */}
+                    <span className="aa-seg-sample">{label}</span>
+                  </button>
+                ))}
+              </span>
+            </div>
 
             <button className="link-btn" onClick={reset}>Reset to defaults</button>
           </div>

@@ -53,6 +53,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 |---|---|---|---|
 | the bar at the top with the book title | **running head** | `ReadingChrome.tsx` | `.reading-head`, `.reading-title` |
 | the `Aa` button / text size controls | **display sheet** (trigger: **Aa button**) | `ReadingSettings.tsx` | `.aa-sheet`, `.aa-row` |
+| the Filled/Underline toggle in that sheet | **marks toggle** | `ReadingSettings.tsx` | `.aa-modrow`, `.aa-seg` |
 | the sliders button next to `Aa` / where export lives / edit title+author / the source URL | **document info sheet** | `DocInfo.tsx` (glyph: `SettingsIcon.tsx`) | `.doc-sheet`, `.settings-icon` |
 | the bare count pill top-right (just `12`) | **notes button** | `ReadingChrome.tsx` | `.reading-notesbtn` |
 | one paragraph or heading of the text | **node** | `NodeSection.tsx` | `.node`, `.node-body` |
@@ -61,7 +62,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the ▾ / ▸ arrow that folds a section | **collapse toggle** | `NodeSection.tsx` | `.node-toggle` |
 | the one-line "…" summary when folded | **collapsed preview** | `NodeSection.tsx` | `.node-preview` |
 | the actual prose text | **passage** | `SourcePassage.tsx` | `.reading-p` |
-| coloured underline / marked-up phrase | **highlight** (a.k.a. inline annotation) | `SourcePassage.tsx` → `HlSpan` | `.hl` |
+| coloured tint / underline on a phrase | **highlight** (a.k.a. inline annotation; filled or underlined per the **marks toggle**) | `SourcePassage.tsx` → `HlSpan` | `.hl`, `[data-hl-mode]` |
 | the tiny ≡/?/! badge floating above a highlight or a section number | **glyph marker** | `GlyphPill.tsx` → `GlyphMarker` (placed by `SourcePassage`/`NodeNumber`) | `.glyph-marker`, `.glyph-pill--marker` |
 | the 4 colour dots after selecting text | **selection popover** | `SelectionPopover.tsx` | `.selection-popover` |
 | right-click menu on a paragraph | **node menu** | `NodeMenu.tsx` → `NodeContextMenu` | `.node-menu` |
