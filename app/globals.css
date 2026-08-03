@@ -923,14 +923,13 @@ body {
   line-height: inherit;
 }
 .node-num-id[data-annotated] { color: #e23b2e; }
-/* Direct-child count trailing a section number ("2.1 ·20"). Nested inside
+/* Direct-child count trailing a section number ("2.1·20"). Nested inside
    .node-num-id, so face, size and tabular figures come for free and only the colour
    steps back — including under [data-annotated], since inheritance doesn't compete
-   on specificity. The gap is a margin, not a space, so the interpunct stays welded
-   to its digits and only detaches from the number. */
+   on specificity. Slight margin: the interpunct alone separates the count from the number. */
 .node-num-count {
   color: var(--faint);
-  margin-left: 0.3em;
+  margin-left: 0.1em;
 }
 .node-num-id--runin { margin-right: 0.5em; }
 .node-num-id:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
