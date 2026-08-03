@@ -38,8 +38,15 @@ Three regions, left to right. The reading column **shifts and re-centres** when 
 | Region | Component | Opened by |
 |---|---|---|
 | Library drawer (left) | `components/LibraryDrawer.tsx` | left edge tab, or automatically on `/` |
-| Reading column (centre) | `components/ReadingChrome.tsx` → `NodeSection` tree | always |
-| Notes drawer (right) | `components/NotesDrawer.tsx` | right edge tab, `Notes N` button, or clicking any highlight |
+| Reading column (centre) | `components/ReadingChrome.tsx` → the centred panel | always |
+| Right drawer | `components/SideDrawer.tsx` → the other panel | right edge tab, `Notes N` button, clicking a highlight |
+
+**Two panels, one toggle.** `components/ReadingWorkspace.tsx` (client shell) owns the **reading-first ↔ annotation-first** toggle, which **swaps which panel is centred and which is in the right drawer** (see [Annotation-first view](#annotation-first-view)):
+
+- **Reading panel** — the prose, `NodeSection` tree. Centred by default (editable, with the selection popover); read-only when it's in the drawer.
+- **Annotation panel** — the annotations as a foldable tree, `DualNodeSection`. In the drawer by default; centred when swapped. Editable in place wherever it sits.
+
+`ReadingSurface.tsx` (server) computes both trees and passes them in. `SideDrawer.tsx` is just the drawer *shell* (fixed panel, edge handle, resize) and renders whichever panel isn't centred. **`NotesDrawer.tsx` (the old card-list drawer with filter chips + compose card) is currently unmounted** — kept for that UI, which the tree view doesn't yet replace.
 
 ---
 
@@ -52,6 +59,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | If you'd say… | **Call it** | File | CSS |
 |---|---|---|---|
 | the bar at the top with the book title | **running head** | `ReadingChrome.tsx` | `.reading-head`, `.reading-title` |
+| the icon button left of `Aa` that swaps text↔annotation | **mode toggle** (switches to **annotation-first view**) | `ReadingChrome.tsx` (state in `ReadingWorkspace.tsx`) | `.reading-modebtn` |
 | the `Aa` button / text size controls | **display sheet** (trigger: **Aa button**) | `ReadingSettings.tsx` | `.aa-sheet`, `.aa-row` |
 | the Filled/Underline toggle in that sheet | **marks toggle** | `ReadingSettings.tsx` | `.aa-modrow`, `.aa-seg` |
 | the sliders button next to `Aa` / where export lives / edit title+author / the source URL | **document info sheet** | `DocInfo.tsx` (glyph: `SettingsIcon.tsx`) | `.doc-sheet`, `.settings-icon` |
@@ -69,21 +77,22 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | right-click menu on empty space | **root menu** | `NodeMenu.tsx` → `RootMenu` | `.node-menu` |
 | the "No text open ❦" screen | **blank surface** | `ReadingSurface.tsx` | `.reading-blank` |
 
-### Notes drawer (right)
+### Right drawer + annotation panel
+
+> **The card-list drawer is gone.** There are no note *cards* any more — annotations are a **tree** (`AnnotationPanel` → `DualNodeSection`) that sits in the right drawer by default and swaps to centre. `SideDrawer.tsx` is the bare drawer shell (edge handle, resize, geometry); `NotesDrawer.tsx`/`EntryCard`/`ComposeCard` were deleted.
 
 | If you'd say… | **Call it** | File | CSS |
 |---|---|---|---|
-| the whole right panel | **notes drawer** | `NotesDrawer.tsx` | `.notes-drawer` |
-| the thin strip you drag to resize it | **edge tab** / **drawer handle** | `NotesDrawer.tsx` → `onHandleDown` | `.notes-edge` |
-| one entry in the list | **note card** | `NotesDrawer.tsx` → `EntryCard` | `.note-card` |
-| the highlighted phrase at the card's top | **card head** / **snippet** | `EntryCard` | `.note-cardhead`, `.note-snippet` |
-| the rendered Markdown of the note | **card body** | `EntryCard` | `.note-cardbody` |
-| the box you type the note into | **note editor** | `MarkdownTextarea.tsx` | `.note-textarea` |
-| the `#tag` pills | **tag chips** (editor: **tag editor**) | `TagEditor.tsx` | `.chip`, `.note-tags` |
-| the segmented ≡ ? ! capsule (filter row, editor, card) | **glyph pill** (interactive: **glyph toggle**) | `GlyphPill.tsx` → `GlyphPill` / `GlyphToggle` | `.glyph-pill`, `.glyph-cell` |
-| the `All / #tag` row at the top (glyph toggle sits at its end) | **filter chips** | `NotesDrawer.tsx` | `.notes-filters` |
-| the blank card for a brand-new note | **compose card** | `NotesDrawer.tsx` → `ComposeCard` | `.note-card--active` |
-| a `§2.2` that jumps you to a section | **§ cross-reference** | `NotesDrawer.tsx` → `SectionLink`, `linkifySections` | `.xref` |
+| the whole right panel | **right drawer** | `SideDrawer.tsx` | `.notes-drawer` |
+| the thin strip you drag to resize it | **edge tab** / **drawer handle** | `SideDrawer.tsx` → `onHandleDown` | `.notes-edge` |
+| the annotations (filter row + tree) inside it | **annotation panel** | `AnnotationPanel.tsx` | `.annot-panel` |
+| one annotation row | **dual block** | `DualNodeSection.tsx` | `.dual-block`, `.dual-note` |
+| the box you type the note into | **note editor** | `NoteEditor.tsx` → `MarkdownTextarea.tsx` | `.note-textarea` |
+| the colour swatches / `#tag` editor / glyph toggle in it | (all in) **note editor** | `NoteEditor.tsx` (`TagEditor`, `GlyphToggle`) | `.note-colors`, `.note-tags`, `.note-glyphs` |
+| the `#tag` pills under a note | **tag chips** | `DualNodeSection.tsx` | `.dual-meta`, `.chip` |
+| the segmented ≡ ? ! capsule | **glyph pill** (interactive: **glyph toggle**) | `GlyphPill.tsx` → `GlyphPill` / `GlyphToggle` | `.glyph-pill`, `.glyph-cell` |
+| the `All / #tag` row atop the annotation panel | **filter chips** | `AnnotationPanel.tsx` | `.notes-filters`, `.annot-filters` |
+| the small colour dot leading an inline row | **colour dot** | `DualNodeSection.tsx` | `.dual-color` |
 
 ### Library drawer (left)
 
@@ -103,11 +112,22 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 The three most common sources of "we're talking about different things":
 
 - **Two sliders icons.** Both use the shared `SettingsIcon` (a "tune" glyph, formerly ⚙). Reading header = **document info sheet** (`DocInfo`); library drawer = **invite sheet** (`InviteSettings`). Neither is the **display sheet** — that's the `Aa` button.
-- **Two kinds of "note".** A **highlight** (`inline_annotations`) is anchored to a character range inside a paragraph and shows a coloured underline. A **node note** (`node_annotations`) is attached to a whole paragraph/section and shows only as a red section number. Both appear as cards in the notes drawer, so "my note" is ambiguous — say *highlight* or *node note*.
+- **Two kinds of "note".** A **highlight** (`inline_annotations`) is anchored to a character range inside a paragraph and shows a coloured underline. A **node note** (`node_annotations`) is attached to a whole paragraph/section and shows only as a red section number. Both appear as rows in the annotation tree (a highlight nests under its node), so "my note" is ambiguous — say *highlight* or *node note*.
 - **Two edge tabs.** Both use `.notes-edge`. The left one only toggles; the right one toggles **and** drag-resizes.
 - **Glyphs ARE tags.** The three preset marks (≡ summary, ? question, ! insight) aren't a separate column — they're `":summary"`/`":question"`/`":insight"` system tags inside an annotation's `tags`. `lib/annotations/glyphs.ts` splits a tag list into display (`#`) tags and glyphs. So "tags" spans both: the `#tag` chips exclude glyph tags, and the glyph pill/marker render the glyph tags. Adding the tag is what turns on the mark.
 
 ---
+
+## Annotation-first view
+
+The **mode toggle** (left of `Aa`) **swaps the two panels' places**. Default (reading-first): reading prose centred, annotations in the right drawer. Annotation-first: annotations centred, reading prose in the drawer (read-only). Both panels render as foldable trees in the reading typeface — same font, same collapse toggles — so they read as one system.
+
+- The annotation tree is built by two pure functions in `lib/tree/dual.ts`: **`buildDual(tree, numbers)`** → the *full* `DualNode[]` (annotations arranged along the document hierarchy; a node's note is the prose, its inline annotations are **child rows**), and **`visibleDual(nodes, {filterTag, filterGlyphs, forceIds})`** which prunes/filters it at render time. Numbers come from the *reading* tree (a note on §2.1 is still 2.1 in both panels). Base pruning drops note-less leaves; a note-less node holding an annotated descendant survives as a **dim skeleton** (`.dual-skel`).
+- Rendered by **`DualNodeSection.tsx`** (not `NodeSection`) inside **`AnnotationPanel.tsx`** (which also renders the **filter chips**). One row is a **dual block** (`.dual-block`); a note's prose is the **dual note** (`.dual-note`), with the inline colour as a `.dual-color` dot and `#tags`/glyphs in `.dual-meta`.
+- **Everything the old card drawer did now lives here.** Edit/remove are hover controls (`.dual-controls`); the pencil opens **`NoteEditor.tsx`** — body + colour swatches (inline) + tag editor + glyph toggle, saving via the same `upsert/updateInlineAnnotation` actions. **Filtering** (tag + glyph) uses the same `NotesContext` state the drawer used; `visibleDual` keeps matches + their ancestors. **Compose** a note on a skeleton/bare-highlight row via its add-note pencil, or from reading-first's node menu → `composeNode` force-includes the node (`forceIds`) with an open editor; the tree reacts to `editingId`/`composeNodeId` and calls `stopEditing()` when done.
+- **Creating** new inline annotations stays reading-first only — the selection popover renders only while the reading panel is centred.
+- **Cross-panel select + scroll:** `openAnnotation(id, nodeId)` embosses the node in both panels (`useActiveNode`) and `scrollPanels` scrolls each panel to it — panels are tagged `data-panel="reading"|"annotation"` so the (colliding) node ids resolve within the right one.
+- Mode is client state in `ReadingWorkspace.tsx`, persisted to `localStorage["scholia:dualMode"]` (default off; mirrored after mount).
 
 ## Where the behaviour lives
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { SourcePassage } from "@/components/SourcePassage";
 import { NotesProvider } from "@/components/NotesContext";
-import { NotesDrawer } from "@/components/NotesDrawer";
+import { SideDrawer } from "@/components/SideDrawer";
 import type { InlineAnnotationView } from "@/lib/annotations/types";
 
 vi.mock("@/lib/actions/annotations", () => ({
@@ -18,7 +18,7 @@ function renderPassage(anns: InlineAnnotationView[], text = "abcdef") {
   return render(
     <NotesProvider entries={[]} sections={{}}>
       <SourcePassage text={text} sourceId="s1" nodeId="n1" startOffset={0} annotations={anns} />
-      <NotesDrawer documentId="d1" />
+      <SideDrawer title="Notes"><div /></SideDrawer>
     </NotesProvider>,
   );
 }

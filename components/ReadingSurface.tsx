@@ -1,13 +1,8 @@
-import { NodeSection } from "./NodeSection";
-import { SelectionPopover } from "./SelectionPopover";
-import { CollapseProvider } from "./CollapseContext";
-import { RootMenu } from "./NodeMenu";
-import { NotesProvider } from "./NotesContext";
-import { NotesDrawer } from "./NotesDrawer";
-import { LibraryDrawer, type LibraryDoc } from "./LibraryDrawer";
-import { ReadingChrome } from "./ReadingChrome";
+import { ReadingWorkspace } from "./ReadingWorkspace";
+import { type LibraryDoc } from "./LibraryDrawer";
 import { flattenEntries } from "@/lib/annotations/entries";
 import { numberSections } from "@/lib/tree/number";
+import { buildDual } from "@/lib/tree/dual";
 import type { InviteView } from "@/lib/data/invites";
 import type { TreeNode } from "@/lib/tree/build";
 
@@ -43,9 +38,11 @@ export function ReadingSurface({
   invites: InviteView[];
 }) {
   const tree = document?.tree ?? [];
-  const { byId: numbers, byNumber } = numberSections(tree);
-  const sections = Object.fromEntries(byNumber); // section number → node id, for §links
+  const { byId: numbers } = numberSections(tree);
   const entries = flattenEntries(tree, numbers);
+  // Annotation-first lens: the annotations arranged along the document's hierarchy,
+  // numbered off the reading tree so the two panels agree.
+  const dualTree = buildDual(tree, numbers);
   const meta = document && {
     documentId: document.documentId,
     title: document.title,
@@ -59,33 +56,18 @@ export function ReadingSurface({
   };
 
   return (
-    <NotesProvider entries={entries} sections={sections} initialLeftOpen={!document}>
-      <LibraryDrawer docs={docs} currentId={document?.documentId ?? null} canInvite={canInvite} invites={invites} />
-
-      {document ? (
-        <ReadingChrome title={document.title} meta={meta}>
-          <article id="reading-root" className="reading">
-            <CollapseProvider>
-              <RootMenu allIds={allNodeIds(tree)}>
-                {tree.map((node) => (
-                  <NodeSection key={node.id} node={node} depth={0} canEdit={canEdit} documentId={document.documentId} numbers={numbers} />
-                ))}
-              </RootMenu>
-            </CollapseProvider>
-            <SelectionPopover documentId={document.documentId} rootId="reading-root" />
-          </article>
-        </ReadingChrome>
-      ) : (
-        <ReadingChrome>
-          <div className="reading-blank">
-            <span className="reading-blank-fleuron" aria-hidden>❦</span>
-            <p className="reading-blank-line">No text open.</p>
-            <p className="reading-blank-hint">Pick a text from the library, or add a new one.</p>
-          </div>
-        </ReadingChrome>
-      )}
-
-      {document && <NotesDrawer documentId={document.documentId} />}
-    </NotesProvider>
+    <ReadingWorkspace
+      reading={{ tree, numbers, entries, allIds: allNodeIds(tree) }}
+      dual={{ tree: dualTree }}
+      meta={meta ?? undefined}
+      title={document?.title}
+      documentId={document?.documentId}
+      canEdit={canEdit}
+      docs={docs}
+      currentId={document?.documentId ?? null}
+      canInvite={canInvite}
+      invites={invites}
+      initialLeftOpen={!document}
+    />
   );
 }

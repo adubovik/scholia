@@ -31,6 +31,8 @@ pnpm backfill         # scripts/backfill-nodes.ts (one-off data backfills, uses 
 
 Requires Node 24 and pnpm (`corepack enable`). Secrets in `.env.local` (`DATABASE_URL`, Clerk keys); `.env.example` lists the full set.
 
+**End-to-end check without Vercel/Clerk/Neon:** `docker compose up --build -d app` runs the full app locally at **http://localhost:3000/** with auth bypassed and a local Postgres (see the compose file / `local-docker-e2e` memory for the bypass + neon-proxy gotchas). Rebuild the `app` service with the same command after code changes; this is the way to verify a change in the real UI, not just tests.
+
 ## Architecture
 
 **Request shapes** (from `docs/design/00-architecture.md`):

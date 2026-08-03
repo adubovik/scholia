@@ -1202,6 +1202,108 @@ body {
 }
 .icon-btn:hover { color: var(--ink); }
 .icon-btn--danger:hover { color: var(--error); }
+/* ══ Annotation-first (dual) view ════════════════════════════ */
+/* The view toggle swaps which panel is centred and which is the drawer; the two panels
+   (reading prose, annotation tree) share the same tree chrome, so most styling is
+   reused. What's specific to the annotation tree lives here. */
+
+/* Reading-head toggle, left of the Aa button. Inherits .reading-headbtn; the icon
+   goes solid --ink when annotation-first view is active. */
+.reading-modebtn[data-dual] { color: var(--ink); }
+
+/* One annotation row. Reading typography, markdown-aware; the section number is a
+   run-in float the prose wraps around, matching reading mode's run-in numbers. The
+   edit/remove controls float top-right and only appear on hover, so they never
+   clutter the column. Active (cross-panel selected) row gets the reading-mode emboss. */
+.dual-block { position: relative; border-radius: 6px; }
+.dual-block--active {
+  background: var(--field);
+  box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+}
+.dual-note {
+  font-family: var(--serif);
+  font-size: var(--reading-font-size);
+  line-height: var(--reading-line-height);
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.dual-note .node-num-id { float: left; margin-right: 0.5em; }
+.dual-note :is(p, ul, ol) { margin: 0 0 0.5rem; }
+.dual-note :is(p, ul, ol):last-child { margin-bottom: 0; }
+.dual-note :is(ul, ol) { padding-left: 1.4rem; }
+.dual-note ul { list-style: disc; }
+.dual-note ol { list-style: decimal; }
+.dual-note :is(code, pre) { font-family: var(--mono); font-size: 0.85em; background: rgba(28, 26, 21, 0.06); border-radius: 3px; }
+.dual-note code { padding: 0.05em 0.3em; }
+.dual-note pre { padding: 0.4rem 0.55rem; overflow-x: auto; }
+.dual-note pre code { background: none; padding: 0; }
+.dual-note blockquote { margin: 0 0 0.5rem; padding-left: 0.6rem; border-left: 2px solid var(--rule); color: var(--muted); }
+/* A highlight with no note yet: its span, dimmed, awaiting a note. */
+.dual-note--source .dual-source-text { color: var(--muted); }
+
+/* Note-less structural node kept only to hold the hierarchy — a dim one-line label. */
+.dual-skel {
+  font-family: var(--serif);
+  font-size: var(--reading-font-size);
+  line-height: var(--reading-line-height);
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dual-skel .node-num-id { color: var(--faint); }
+.dual-skel-label { font-style: italic; }
+
+/* Hover controls (edit / remove), floated top-right, out of the text flow. */
+.dual-controls {
+  position: absolute;
+  top: 0.05rem;
+  right: 0.05rem;
+  display: flex;
+  gap: 0.1rem;
+  background: var(--paper);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.dual-block:hover .dual-controls,
+.dual-controls:focus-within { opacity: 1; }
+.dual-ctl {
+  background: none;
+  border: none;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 0.15rem;
+  line-height: 1;
+  transition: color 0.12s;
+}
+.dual-ctl:hover { color: var(--ink); }
+.dual-ctl--danger:hover { color: var(--error); }
+.dual-editor { display: flex; flex-direction: column; gap: 0.5rem; }
+
+/* Inline highlight's colour, as a small dot leading its note row. */
+.dual-color {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  margin-right: 0.4em;
+  vertical-align: baseline;
+}
+/* View-mode #tag chips + glyph pill under a note. */
+.dual-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; margin: 0.35rem 0 0; }
+
+/* Annotation-tree filter row (chips + glyph toggle), above the tree in either slot.
+   Overrides the drawer-specific padding of .notes-filters so it sits flush. */
+.annot-filters { padding: 0 0 0.7rem; margin-bottom: 0.9rem; }
+
+/* A panel living in the drawer (reading prose when swapped, annotations by default):
+   scroll area + a slightly tighter reading measure so book-width prose fits the panel. */
+.drawer-scroll {
+  padding: 0.6rem 1.25rem 1.5rem;
+  --reading-font-size: 0.98rem;
+  --reading-line-height: 1.5;
+}
+.drawer-scroll .reading-p { text-align: left; hyphens: none; }
 
 /* ══ Library drawer (left) ═══════════════════════════════════ */
 .library-drawer {

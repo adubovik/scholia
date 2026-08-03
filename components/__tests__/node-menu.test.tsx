@@ -20,7 +20,6 @@ import { MenuItems, NodeNumber, RootMenu } from "@/components/NodeMenu";
 import { NodeSection } from "@/components/NodeSection";
 import { CollapseProvider } from "@/components/CollapseContext";
 import { NotesProvider } from "@/components/NotesContext";
-import { NotesDrawer } from "@/components/NotesDrawer";
 
 // Stub Radix's Item/Separator so we can exercise item logic without opening a
 // portal-based menu in jsdom.
@@ -158,13 +157,12 @@ function node(over: Partial<TreeNode> = {}): TreeNode {
 const ann = { id: "a1", nodeId: "n1", note: "hi", tags: [], authorId: "u1", createdAt: new Date().toISOString() };
 
 const NUMS = new Map([["n1", "2"], ["c1", "2.1"]]);
-function renderNode(node: TreeNode, canEdit: boolean, withDrawer = false) {
+function renderNode(node: TreeNode, canEdit: boolean) {
   return render(
     <NotesProvider entries={[]} sections={{}}>
       <CollapseProvider>
         <NodeSection node={node} depth={0} canEdit={canEdit} documentId="d1" numbers={NUMS} />
       </CollapseProvider>
-      {withDrawer && <NotesDrawer documentId="d1" />}
     </NotesProvider>,
   );
 }

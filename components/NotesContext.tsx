@@ -27,8 +27,10 @@ export interface NotesActions {
    * the menu's "Edit note" both want, so creating either kind of note lands you in
    * a focused textarea rather than a card you have to click ✎ on. */
   openAnnotation: (annId: string, nodeId: string | null, edit?: boolean) => void;
-  /** Node menu "add note" → open the drawer with a fresh node-note composer. */
+  /** Node menu "add note" → reveal the node in the annotation tree with an open composer. */
   composeNode: (nodeId: string) => void;
+  /** Close whatever the node menu opened (edit/compose), once the tree has handled it. */
+  stopEditing: () => void;
   /** Drawer card → scroll the prose to the annotation, mark active. */
   locate: (entry: NoteEntry) => void;
   /** §cross-reference → scroll the prose to a section by its number. */
@@ -95,6 +97,35 @@ function scrollProseTo(el: HTMLElement) {
   el.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
+// Cross-panel select: scroll both the reading panel and the annotation panel to the
+// selected annotation, so a click in one lines the other up. Panels are marked with
+// data-panel; each is searched independently (their node ids collide across trees, so
+// scoping by panel is what keeps the right one). Deferred a frame so a just-opened
+// drawer has laid out.
+function scrollPanels(annId: string | null, nodeId: string | null) {
+  requestAnimationFrame(() => {
+    const esc = (s: string) => (typeof CSS !== "undefined" && CSS.escape ? CSS.escape(s) : s);
+    const find = (panel: string, sels: string[]) => {
+      const root = document.querySelector(`[data-panel="${panel}"]`);
+      for (const sel of sels) {
+        const el = root?.querySelector<HTMLElement>(sel);
+        if (el) return el;
+      }
+      return null;
+    };
+    // Reading panel: the highlight span, else the node block.
+    find("reading", [
+      annId ? `[data-ann-id~="${esc(annId)}"]` : "",
+      nodeId ? `[data-node-id="${esc(nodeId)}"]` : "",
+    ].filter(Boolean))?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Annotation panel: the dual row keyed by the annotation id, else by the node id.
+    find("annotation", [
+      annId ? `[data-node-id="${esc(annId)}"]` : "",
+      nodeId ? `[data-node-id="${esc(nodeId)}"]` : "",
+    ].filter(Boolean))?.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+}
+
 export function NotesProvider({
   entries,
   sections,
@@ -134,11 +165,14 @@ export function NotesProvider({
     openAnnotation: (annId, nodeId, edit = false) => {
       active.set(annId, nodeId);
       setState((s) => ({ ...s, drawerOpen: true, composeNodeId: null, editingId: edit ? annId : null }));
+      scrollPanels(annId, nodeId);
     },
     composeNode: (nodeId) => {
       active.set(null, nodeId);
       setState((s) => ({ ...s, drawerOpen: true, composeNodeId: nodeId, editingId: null }));
+      scrollPanels(null, nodeId);
     },
+    stopEditing: () => setState((s) => ({ ...s, composeNodeId: null, editingId: null })),
     locate: (entry) => {
       active.set(entry.id, entry.nodeId);
       const sel =

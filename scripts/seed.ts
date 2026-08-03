@@ -3,10 +3,43 @@ import { db } from "@/lib/db";
 import { documents, nodes, nodeSourceRanges, nodeAnnotations, inlineAnnotations } from "@/lib/db/schema";
 import { htmlToSource } from "@/lib/import/html";
 import { createDocument } from "@/lib/actions/documents";
+import { COLORS } from "@/lib/annotations/types";
+import { GLYPHS, glyphTag } from "@/lib/annotations/glyphs";
 import { withSpinner } from "./seed-progress";
 
 const BOOK_URL = "https://www.gutenberg.org/files/5827/5827-h/5827-h.htm";
 const DEV_USER = "local-dev";
+
+// Demo #tags to sprinkle across the seeded annotations, so the filter row + tag chips
+// have something to show.
+const DEMO_TAGS = ["appearance", "reality", "sense-data", "knowledge", "matter", "idealism"];
+
+type SourceRange = { sourceId: string; startOffset: number; endOffset: number };
+
+/** Insert one inline highlight over [from,to) chars into a node's range (clamped). */
+async function addInline(
+  docId: string,
+  range: SourceRange,
+  from: number,
+  to: number,
+  color: string,
+  note: string | null,
+  tags: string[],
+) {
+  const start = range.startOffset + from;
+  const end = Math.min(range.endOffset, range.startOffset + to);
+  if (end <= start) return;
+  await db.insert(inlineAnnotations).values({
+    documentId: docId,
+    sourceId: range.sourceId,
+    authorId: DEV_USER,
+    startOffset: start,
+    endOffset: end,
+    color,
+    note,
+    tags,
+  });
+}
 
 async function main() {
   // Idempotent: if the dev user already owns a document, do nothing.
@@ -49,35 +82,38 @@ async function main() {
         .from(nodes)
         .where(and(eq(nodes.documentId, docId), eq(nodes.parentId, firstHeading.id)))
         .orderBy(nodes.position)
-        .limit(2)
+        .limit(3)
     : [];
-  for (const n of prose) {
+
+  // Rotate colours, glyphs, and #tags across the demo annotations so every display
+  // feature has live data: all four highlight colours, all three preset glyphs, a
+  // handful of tags, and one note-less highlight (the "dim span, add a note" case).
+  let ci = 0; // colour cursor
+  let ti = 0; // tag cursor
+  const nextTag = () => DEMO_TAGS[ti++ % DEMO_TAGS.length];
+  const nextColor = () => COLORS[ci++ % COLORS.length];
+
+  for (let i = 0; i < prose.length; i++) {
+    const n = prose[i];
+    // A node note with a #tag and a preset glyph (":summary" / ":question" / ":insight").
     await db.insert(nodeAnnotations).values({
       documentId: docId,
       nodeId: n.id,
       authorId: DEV_USER,
-      note: "Seeded demo comment on this block.",
-      tags: [],
+      note: `Seeded node note on paragraph ${i + 1}.`,
+      tags: [nextTag(), glyphTag(GLYPHS[i % GLYPHS.length])],
     });
     const [range] = await db.select().from(nodeSourceRanges).where(eq(nodeSourceRanges.nodeId, n.id));
-    if (range) {
-      const start = range.startOffset;
-      const end = Math.min(range.endOffset, start + 24);
-      if (end > start) {
-        await db.insert(inlineAnnotations).values({
-          documentId: docId,
-          sourceId: range.sourceId,
-          authorId: DEV_USER,
-          startOffset: start,
-          endOffset: end,
-          color: "yellow",
-          note: "inline comment",
-          tags: [],
-        });
-      }
-    }
+    if (!range) continue;
+    // Two inline highlights per paragraph: the first noted (with a glyph), the second
+    // bare (no note) to exercise the add-a-note affordance.
+    await addInline(docId, range, 0, 24, nextColor(), "Seeded inline note.", [
+      nextTag(),
+      glyphTag(GLYPHS[(i + 1) % GLYPHS.length]),
+    ]);
+    await addInline(docId, range, 30, 60, nextColor(), null, [nextTag()]);
   }
-  console.log("Seed: added node + inline comments on the first chapter's opening paragraphs");
+  console.log("Seed: added varied node + inline annotations (colours, glyphs, tags) on the first chapter");
   console.log("Seed: done.");
 }
 
