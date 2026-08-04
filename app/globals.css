@@ -356,8 +356,11 @@ body {
   cursor: pointer;
   transition: background 0.4s;
   background: var(--seg-hl);
+  /* Clip the tint to the padding box: otherwise it bleeds under the reserved 2px
+     bottom border and reads bottom-heavy. With this, top and bottom padding are equal. */
+  background-clip: padding-box;
   border-bottom: 2px solid transparent;
-  padding: 0 0.15em;
+  padding: 0.12em 0.15em;
   border-radius: 3px;
   /* clone so a highlight wrapping to a second line keeps padding + rounded corners
      on each fragment, not just the run's very start/end. */
@@ -367,6 +370,10 @@ body {
 :root[data-hl-mode="underline"] .hl {
   background: transparent;
   border-bottom-color: var(--seg-hl);
+  /* the rule IS the mark here — drop the vertical padding so it stays on the text
+     (horizontal padding stays, insetting the rule ends slightly). */
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 /* ── Tree ────────────────────────────────────────────────── */
@@ -572,6 +579,26 @@ body {
   padding: 0.1rem 0;
 }
 .tag-input:focus { border-bottom-color: var(--muted); }
+/* Collapsed tag entry: a small + that reveals the .tag-input on click. Round, sized to
+   sit level with the #chips beside it. */
+.tag-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+.tag-add:hover { color: var(--ink); border-color: var(--muted); }
 
 /* ── Node (entity) note ──────────────────────────────────── */
 .node-note { border-left-color: var(--rule); }
@@ -1322,9 +1349,13 @@ body {
 .dual-editor .note-colors,
 .dual-editor .note-tags,
 .dual-editor .note-glyphs { margin: 0; }
+/* Glyphs + tags + colour share one row above the body. align-items:center levels the
+   pill, chips, + button and swatches; the glyph pill's fixed height keeps the row (and
+   so the body below) from shifting as you edit. Wraps only if the tags overrun. */
+.dual-meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
 .dual-editor .swatch { width: 1rem; height: 1rem; border-radius: 4px; }
 .dual-editor .note-actions { margin-top: 0.15rem; gap: 0.9rem; }
-.dual-editor .btn { padding: 0.3rem 0.75rem; font-size: 0.66rem; letter-spacing: 0.06em; }
+.dual-editor .btn { padding: 0.3rem 0.85rem; font-size: 0.66rem; letter-spacing: 0.06em; border-radius: 7px; }
 
 /* View-mode #tag chips — inline right after the glyph and before the text, so a row
    reads glyph → #tags → text, the same order as the panel's filter header. Inline-flex

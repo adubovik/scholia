@@ -8,6 +8,7 @@ import { displayTags } from "@/lib/annotations/glyphs";
  * glyph pill represents them; typing ":summary" simply lights up that glyph. */
 export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
   const [tagInput, setTagInput] = useState("");
+  const [adding, setAdding] = useState(false);
 
   function addTag() {
     const t = tagInput.trim();
@@ -23,21 +24,35 @@ export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags:
           #{t} <span className="chip-x">×</span>
         </button>
       ))}
-      <input
-        className="tag-input"
-        value={tagInput}
-        onChange={(e) => setTagInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
+      {adding ? (
+        <input
+          className="tag-input"
+          value={tagInput}
+          autoFocus
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addTag(); // keep the field open so several tags can be added in a row
+            } else if (e.key === "Escape") {
+              setTagInput("");
+              setAdding(false);
+            }
+          }}
+          // Commit a half-typed tag when focus leaves (e.g. clicking Save) — otherwise a
+          // tag typed but not Enter'd is silently dropped — then collapse back to the +.
+          onBlur={() => {
             addTag();
-          }
-        }}
-        // Commit a half-typed tag when focus leaves (e.g. clicking Save) — otherwise
-        // a tag typed but not Enter'd is silently dropped and never renders/filters.
-        onBlur={addTag}
-        placeholder="add tag…"
-      />
+            setAdding(false);
+          }}
+          placeholder="add tag…"
+        />
+      ) : (
+        // Collapsed by default: the input only appears on demand, keeping the editor tidy.
+        <button type="button" className="tag-add" aria-label="Add tag" onClick={() => setAdding(true)}>
+          +
+        </button>
+      )}
     </div>
   );
 }

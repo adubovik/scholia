@@ -8,7 +8,7 @@ import { firstSentence } from "@/lib/tree/firstSentence";
 import { NoteEditor } from "./NoteEditor";
 import { GlyphPill } from "./GlyphPill";
 import { displayTags, glyphsInTags } from "@/lib/annotations/glyphs";
-import { updateInlineAnnotation } from "@/lib/actions/annotations";
+import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/annotations";
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, useNotesState, useActiveNode, useActiveAnn } from "./NotesContext";
@@ -77,9 +77,14 @@ export function DualNodeSection({
   }
 
   async function remove() {
-    // Clear the note but keep the highlight (a highlight is removed in reading view).
-    if (isInline) await updateInlineAnnotation({ id: node.noteId!, note: null });
-    else if (node.noteId) await deleteNodeAnnotation(node.noteId);
+    if (isInline) {
+      // Highlight + note → clear the note, keep the highlight. Bare highlight (no note)
+      // → remove the highlight itself; there's nothing else to delete.
+      if (hasNote) await updateInlineAnnotation({ id: node.noteId!, note: null });
+      else await deleteInlineAnnotation(node.noteId!);
+    } else if (node.noteId) {
+      await deleteNodeAnnotation(node.noteId);
+    }
     close();
   }
 
@@ -104,7 +109,11 @@ export function DualNodeSection({
   const controls = canEdit && (
     <span className="dual-controls">
       <EditControl label={hasNote ? "Edit note" : "Add note"} onClick={() => setOverride(true)} />
-      {hasNote && <RemoveControl onClick={remove} />}
+      {/* Inline rows always get a delete: it clears the note, or removes a note-less
+          highlight (which otherwise had no delete affordance here). */}
+      {(hasNote || isInline) && (
+        <RemoveControl label={hasNote ? "Delete note" : "Delete highlight"} onClick={remove} />
+      )}
     </span>
   );
 
@@ -205,9 +214,9 @@ function EditControl({ label, onClick }: { label: string; onClick: () => void })
   );
 }
 
-function RemoveControl({ onClick }: { onClick: () => void }) {
+function RemoveControl({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button className="dual-ctl dual-ctl--danger" aria-label="Delete note" title="Delete note" onClick={onClick}>
+    <button className="dual-ctl dual-ctl--danger" aria-label={label} title={label} onClick={onClick}>
       <svg width="12" height="12" viewBox="0 0 12 13" fill="none" stroke="currentColor" strokeWidth="1.1" style={{ display: "block" }}>
         <path d="M1 3.2h10M4.2 3.2V1.8h3.6v1.4M2.4 3.2l0.7 8.3h5.8l0.7-8.3M4.7 5.4v4M7.3 5.4v4" />
       </svg>
