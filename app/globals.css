@@ -1304,8 +1304,11 @@ body {
 .dual-editor .note-actions { margin-top: 0.15rem; gap: 0.9rem; }
 .dual-editor .btn { padding: 0.3rem 0.75rem; font-size: 0.66rem; letter-spacing: 0.06em; }
 
-/* View-mode #tag chips under a note. */
-.dual-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; margin: 0.35rem 0 0; }
+/* View-mode #tag chips — inline right after the glyph and before the text, so a row
+   reads glyph → #tags → text, the same order as the panel's filter header. Inline-flex
+   keeps them on the quote line for an inline row; on a node row they sit beside the
+   floated number/glyph with the note prose wrapping below. */
+.dual-meta { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; vertical-align: middle; margin: 0 0.3em 0 0; }
 
 /* Annotation-tree filter row (chips + glyph toggle), above the tree in either slot.
    Overrides the drawer-specific padding of .notes-filters so it sits flush. */

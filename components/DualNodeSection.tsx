@@ -149,10 +149,12 @@ export function DualNodeSection({
           ) : isInline ? (
             <div className="dual-note">
               {/* The highlighted span itself, painted like the reading column (filled or
-                  underlined per the display setting) and preceded by its glyphs — the
+                  underlined per the display setting) and preceded by its glyphs then
+                  #tags — same glyphs-then-tags order as the panel's filter header. The
                   note, if any, reads underneath it (items 1–3). */}
               <div className="dual-quote">
                 {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--inline" />}
+                {metaEl}
                 <span
                   className="hl"
                   style={node.color ? ({ "--seg-hl": `var(--hl-${node.color})` } as CSSProperties) : undefined}
@@ -162,15 +164,14 @@ export function DualNodeSection({
                 </span>
               </div>
               {hasNote && <ReactMarkdown remarkPlugins={[remarkGfm]}>{node.note}</ReactMarkdown>}
-              {metaEl}
               {controls}
             </div>
           ) : (
             <div className="dual-note">
               {numberEl}
               {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--lead" />}
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{node.note}</ReactMarkdown>
               {metaEl}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{node.note}</ReactMarkdown>
               {controls}
             </div>
           )}
