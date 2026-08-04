@@ -1,30 +1,24 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { splitSpans, type Segment } from "@/lib/annotations/spans";
 import type { InlineAnnotationView } from "@/lib/annotations/types";
 import { useNotesActions, useActiveAnnInSet } from "./NotesContext";
-import { GlyphMarker } from "./GlyphPill";
+import { GlyphPill } from "./GlyphPill";
 import { glyphsInTags } from "@/lib/annotations/glyphs";
 
 /** One highlighted segment. Isolated so it can subscribe to the active-selection
  * store on its own — when it becomes the selected highlight it fills its background
  * with that annotation's colour (item 9). Its resting look (filled tint vs. bottom
  * underline) is driven by the `data-hl-mode` display pref via CSS; this component
- * only supplies the segment colour as `--seg-hl`.
- * `markers` are the glyph pills for annotations that START at this segment; rendered
- * as absolutely-positioned first children so they float above the highlight's top-left
- * without ever reflowing the prose. */
+ * only supplies the segment colour as `--seg-hl`. Any glyph pills for annotations
+ * starting here are rendered inline just BEFORE this span by SourcePassage. */
 function HlSpan({
   seg,
   sourceId,
-  nodeId,
-  markers,
 }: {
   seg: Segment;
   sourceId: string;
-  nodeId: string;
-  markers: InlineAnnotationView[];
 }) {
   const { openAnnotation } = useNotesActions();
   const ids = seg.annotations.map((a) => a.id);
@@ -45,11 +39,8 @@ function HlSpan({
         background: fill ? `var(--hl-${fill})` : undefined,
         boxShadow: boxShadow || undefined,
       } as CSSProperties}
-      onClick={() => openAnnotation(top.id, nodeId)}
+      onClick={() => openAnnotation(top.id, null)}
     >
-      {markers.map((a) => (
-        <GlyphMarker key={a.id} glyphs={glyphsInTags(a.tags)} />
-      ))}
       {seg.text}
     </span>
   );
@@ -58,14 +49,13 @@ function HlSpan({
 export function SourcePassage({
   text,
   sourceId,
-  nodeId,
   startOffset,
   annotations,
   prefix,
 }: {
   text: string;
   sourceId: string;
-  nodeId: string;
+  nodeId: string; // owning node id — kept in the contract (passed by NodeSection); unused since highlight clicks select the highlight only, not the node
   startOffset: number;
   annotations: InlineAnnotationView[];
   canEdit?: boolean;
@@ -87,21 +77,26 @@ export function SourcePassage({
   return (
     <p className="reading-p">
       {prefix}
-      {segments.map((seg) =>
-        seg.annotations.length === 0 ? (
-          <span key={seg.charStart} data-source-id={sourceId} data-char-start={seg.charStart}>
-            {seg.text}
-          </span>
-        ) : (
-          <HlSpan
-            key={seg.charStart}
-            seg={seg}
-            sourceId={sourceId}
-            nodeId={nodeId}
-            markers={markersByStart.get(seg.charStart) ?? []}
-          />
-        ),
-      )}
+      {segments.map((seg) => {
+        if (seg.annotations.length === 0) {
+          return (
+            <span key={seg.charStart} data-source-id={sourceId} data-char-start={seg.charStart}>
+              {seg.text}
+            </span>
+          );
+        }
+        // Glyphs for annotations starting at this segment render inline, right before
+        // the highlight — "(?) text" — instead of floating above the corner (item 5).
+        const marks = markersByStart.get(seg.charStart) ?? [];
+        return (
+          <Fragment key={seg.charStart}>
+            {marks.map((a) => (
+              <GlyphPill key={a.id} glyphs={glyphsInTags(a.tags)} className="glyph-pill--inline" />
+            ))}
+            <HlSpan seg={seg} sourceId={sourceId} />
+          </Fragment>
+        );
+      })}
     </p>
   );
 }

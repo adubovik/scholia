@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { indentNode, outdentNode, moveNodeUp, moveNodeDown } from "@/lib/actions/tree";
 import { useCollapse } from "./CollapseContext";
-import { GlyphMarker } from "./GlyphPill";
+import { GlyphPill } from "./GlyphPill";
 
 // The five node actions, shared verbatim by the right-click ContextMenu (row) and
 // the ⋯ DropdownMenu (hint). Radix's ContextMenu.* and DropdownMenu.* item parts
@@ -154,7 +154,7 @@ export function NodeNumber({
   runIn?: boolean;
   nodeId: string;
   canEdit: boolean;
-  glyphs?: string[]; // node-note preset marks; floated above the number as a corner marker
+  glyphs?: string[]; // node-note preset marks; rendered inline right after the number
   onHighlightNote?: () => void; // present only when the node has a note
 }) {
   return (
@@ -166,9 +166,9 @@ export function NodeNumber({
       onClick={onHighlightNote}
       onKeyDown={onHintKeyDown(nodeId, canEdit)}
     >
-      <GlyphMarker glyphs={glyphs} />
       {number}
       <ChildCount n={childCount} />
+      {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--inline" />}
     </button>
   );
 }

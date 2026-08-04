@@ -30,12 +30,12 @@ export function AnnotationPanel({ nodes, canEdit, documentId }: { nodes: DualNod
       {(tags.length > 0 || anyGlyphs) && (
         <div className="notes-filters annot-filters">
           <button className={filtersActive ? "chip" : "chip chip--active"} onClick={clearFilters}>All</button>
+          {anyGlyphs && <GlyphToggle active={filterGlyphs} onToggle={toggleFilterGlyph} />}
           {tags.map((t) => (
             <button key={t} className={filterTag === t ? "chip chip--active" : "chip"} onClick={() => setFilterTag(t)}>
               #{t}
             </button>
           ))}
-          {anyGlyphs && <GlyphToggle active={filterGlyphs} onToggle={toggleFilterGlyph} />}
         </div>
       )}
       <CollapseProvider>

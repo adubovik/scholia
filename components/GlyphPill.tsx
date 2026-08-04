@@ -52,15 +52,3 @@ export function GlyphToggle({
     </span>
   );
 }
-
-/** Reading-pane marker: the read-only pill lifted into its own absolutely-positioned
- * layer above the text's top-left, taking zero space in the flow (see .glyph-marker).
- * pointer-events:none so clicks pass through to the highlight/number underneath. */
-export function GlyphMarker({ glyphs }: { glyphs: string[] }) {
-  if (orderGlyphs(glyphs).length === 0) return null;
-  return (
-    <span className="glyph-marker" aria-hidden>
-      <GlyphPill glyphs={glyphs} className="glyph-pill--marker" />
-    </span>
-  );
-}

@@ -986,27 +986,30 @@ body {
 .glyph-pill--toggle .glyph-cell { cursor: pointer; }
 .glyph-cell--on { color: #fff; }
 
-/* Reading-pane corner marker. The wrapper is a zero-width inline anchor placed at the
-   annotation's start (first char of a highlight, or the run-in/head number of a node);
-   it inherits the surrounding text metrics so it adds no width and never changes the
-   line height — the prose can't reflow when glyphs are added, removed, or absent. Its
-   only child is absolutely positioned, floated just above the line's top edge, where
-   the line's half-leading gives a consistent gap that clears tall capitals and
-   headings. pointer-events:none passes clicks through to the text underneath. */
-/* inline-block (not inline): a single atomic zero-size box that can't split across
-   lines, so it stays pinned to the annotation's first character even when the
-   highlight wraps. The pill floats a fixed 1.05em above the baseline — an em offset
-   is deterministic across browsers (unlike bottom:100% off an inline box) and is
-   identical for a highlight and a run-in number since both inherit the reading size. */
-.glyph-marker { display: inline-block; position: relative; width: 0; height: 0; }
-.glyph-pill--marker {
-  position: absolute;
-  left: 0;
-  bottom: 1.05em;
-  height: 0.92rem;
-  pointer-events: none;
+/* Inline glyph pill — rendered in the text flow, not floated: right after a section
+   number ("1.1 (?) …") or just before a highlighted span ("(?) text"), in both the
+   reading column and the annotation panel. Sized in em so it scales with the reading
+   font and sits on the line without enlarging it. */
+.glyph-pill--inline {
+  height: 1em;
+  vertical-align: middle;
+  margin: 0 0.3em 0 0; /* trailing-only: the gap to the next pill or the text is one margin, never two stacked */
 }
-.glyph-pill--marker .glyph-cell { font-size: 0.58rem; }
+.glyph-pill--inline .glyph-cell { font-size: 0.58em; }
+/* A node glyph sits inside the section-number button: give it the leading gap (from
+   the number) instead of a trailing one, and drop the button's wider run-in margin when
+   it ends in a glyph — otherwise the number-glyph and the following inline glyph would
+   sit ~2× further apart than the glyph sits from its text (owner feedback). */
+.node-num-id .glyph-pill--inline { margin: 0 0 0 0.3em; }
+.node-num-id--runin:has(.glyph-pill--inline) { margin-right: 0.3em; }
+/* A node row's glyphs in the annotation panel float beside its floated section number,
+   so the note prose wraps under both ("1.1 (?) note text…"). */
+.dual-note .glyph-pill--lead {
+  float: left;
+  height: 1.1em;
+  margin: 0.12em 0.4em 0 0;
+}
+.dual-note .glyph-pill--lead .glyph-cell { font-size: 0.62em; }
 
 /* Filter row + editor: keep the pill vertically centred against the chips it sits with. */
 .notes-filters { align-items: center; }
@@ -1238,8 +1241,10 @@ body {
 .dual-note pre { padding: 0.4rem 0.55rem; overflow-x: auto; }
 .dual-note pre code { background: none; padding: 0; }
 .dual-note blockquote { margin: 0 0 0.5rem; padding-left: 0.6rem; border-left: 2px solid var(--rule); color: var(--muted); }
-/* A highlight with no note yet: its span, dimmed, awaiting a note. */
-.dual-note--source .dual-source-text { color: var(--muted); }
+/* An inline row leads with the highlighted span itself, painted like the reading
+   column (.hl → filled or underlined per the display setting); its note reads below. */
+.dual-quote { margin-bottom: 0.3rem; }
+.dual-quote:last-child { margin-bottom: 0; }
 
 /* Note-less structural node kept only to hold the hierarchy — a dim one-line label. */
 .dual-skel {
@@ -1278,18 +1283,28 @@ body {
 }
 .dual-ctl:hover { color: var(--ink); }
 .dual-ctl--danger:hover { color: var(--error); }
-.dual-editor { display: flex; flex-direction: column; gap: 0.5rem; }
 
-/* Inline highlight's colour, as a small dot leading its note row. */
-.dual-color {
-  display: inline-block;
-  width: 0.6em;
-  height: 0.6em;
-  border-radius: 50%;
-  margin-right: 0.4em;
-  vertical-align: baseline;
+/* Inline note editor — compact + quiet so editing reads as a light in-place edit, not
+   a heavy modal (item 7). Overrides the shared form styles, which are sized for the
+   full-page import form. */
+.dual-editor { display: flex; flex-direction: column; gap: 0.4rem; }
+.dual-editor .note-textarea {
+  margin: 0;
+  min-height: 3rem;
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  padding: 0.45rem 0.55rem;
+  border-radius: 5px;
 }
-/* View-mode #tag chips + glyph pill under a note. */
+.dual-editor .note-colors,
+.dual-editor .note-tags,
+.dual-editor .note-glyphs { margin: 0; }
+.dual-editor .swatch { width: 1rem; height: 1rem; border-radius: 4px; }
+.dual-editor .note-actions { margin-top: 0.15rem; gap: 0.9rem; }
+.dual-editor .btn { padding: 0.3rem 0.75rem; font-size: 0.66rem; letter-spacing: 0.06em; }
+
+/* View-mode #tag chips under a note. */
 .dual-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; margin: 0.35rem 0 0; }
 
 /* Annotation-tree filter row (chips + glyph toggle), above the tree in either slot.

@@ -71,7 +71,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the one-line "…" summary when folded | **collapsed preview** | `NodeSection.tsx` | `.node-preview` |
 | the actual prose text | **passage** | `SourcePassage.tsx` | `.reading-p` |
 | coloured tint / underline on a phrase | **highlight** (a.k.a. inline annotation; filled or underlined per the **marks toggle**) | `SourcePassage.tsx` → `HlSpan` | `.hl`, `[data-hl-mode]` |
-| the tiny ≡/?/! badge floating above a highlight or a section number | **glyph marker** | `GlyphPill.tsx` → `GlyphMarker` (placed by `SourcePassage`/`NodeNumber`) | `.glyph-marker`, `.glyph-pill--marker` |
+| the ≡/?/! badge inline after a section number or before a highlight | **glyph marker** | `GlyphPill.tsx` → `GlyphPill` (placed inline by `SourcePassage`/`NodeNumber`) | `.glyph-pill--inline` |
 | the 4 colour dots after selecting text | **selection popover** | `SelectionPopover.tsx` | `.selection-popover` |
 | right-click menu on a paragraph | **node menu** | `NodeMenu.tsx` → `NodeContextMenu` | `.node-menu` |
 | right-click menu on empty space | **root menu** | `NodeMenu.tsx` → `RootMenu` | `.node-menu` |
@@ -92,7 +92,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the `#tag` pills under a note | **tag chips** | `DualNodeSection.tsx` | `.dual-meta`, `.chip` |
 | the segmented ≡ ? ! capsule | **glyph pill** (interactive: **glyph toggle**) | `GlyphPill.tsx` → `GlyphPill` / `GlyphToggle` | `.glyph-pill`, `.glyph-cell` |
 | the `All / #tag` row atop the annotation panel | **filter chips** | `AnnotationPanel.tsx` | `.notes-filters`, `.annot-filters` |
-| the small colour dot leading an inline row | **colour dot** | `DualNodeSection.tsx` | `.dual-color` |
+| the highlighted phrase leading an inline row (filled/underlined like the reading column) | **inline quote** | `DualNodeSection.tsx` → `HlSpan`-styled `.hl` | `.dual-quote`, `.hl` |
 
 ### Library drawer (left)
 

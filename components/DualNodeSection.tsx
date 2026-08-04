@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { DualNode } from "@/lib/tree/dual";
@@ -11,7 +11,7 @@ import { displayTags, glyphsInTags } from "@/lib/annotations/glyphs";
 import { updateInlineAnnotation } from "@/lib/actions/annotations";
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
 import { useCollapse, useCollapsed } from "./CollapseContext";
-import { useNotesActions, useNotesState, useActiveNode } from "./NotesContext";
+import { useNotesActions, useNotesState, useActiveNode, useActiveAnn } from "./NotesContext";
 
 /**
  * One row of the annotation-first tree — rendered like the reading column (serif,
@@ -36,7 +36,13 @@ export function DualNodeSection({
   const collapsed = useCollapsed(node.id);
   const { openAnnotation, setFilterTag, stopEditing } = useNotesActions();
   const { editingId, composeNodeId } = useNotesState();
-  const active = useActiveNode(node.id);
+  // A node row is active when its owning node is selected; an inline row (keyed by the
+  // annotation id) is active when that annotation is selected — so clicking a highlight
+  // embosses the inline row, not just its parent node (item 4). Both hooks run every
+  // render (rules-of-hooks); node.id only ever matches one of the two stores.
+  const activeNode = useActiveNode(node.id);
+  const activeAnn = useActiveAnn(node.id);
+  const active = activeNode || activeAnn;
 
   const hasChildren = node.children.length > 0;
   const isInline = node.kind === "inline";
@@ -87,6 +93,21 @@ export function DualNodeSection({
     </button>
   );
 
+  const metaEl = tags.length > 0 && (
+    <div className="dual-meta">
+      {tags.map((t) => (
+        <button key={t} className="chip" onClick={() => setFilterTag(t)}>#{t}</button>
+      ))}
+    </div>
+  );
+
+  const controls = canEdit && (
+    <span className="dual-controls">
+      <EditControl label={hasNote ? "Edit note" : "Add note"} onClick={() => setOverride(true)} />
+      {hasNote && <RemoveControl onClick={remove} />}
+    </span>
+  );
+
   return (
     <section className="node" style={{ marginLeft: depth ? "0.4rem" : undefined }} data-node-id={node.id}>
       <div className="node-toggle-col">
@@ -125,31 +146,32 @@ export function DualNodeSection({
                 </span>
               )}
             </div>
-          ) : (
-            <div className={hasNote ? "dual-note" : "dual-note dual-note--source"}>
-              {isInline && node.color && (
-                <span className="dual-color" style={{ background: `var(--hl-${node.color})` }} aria-hidden />
-              )}
-              {numberEl}
-              {hasNote ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{node.note}</ReactMarkdown>
-              ) : (
-                <span className="dual-source-text">{node.source}</span>
-              )}
-              {(tags.length > 0 || glyphs.length > 0) && (
-                <div className="dual-meta">
-                  {tags.map((t) => (
-                    <button key={t} className="chip" onClick={() => setFilterTag(t)}>#{t}</button>
-                  ))}
-                  <GlyphPill glyphs={glyphs} />
-                </div>
-              )}
-              {canEdit && (
-                <span className="dual-controls">
-                  <EditControl label={hasNote ? "Edit note" : "Add note"} onClick={() => setOverride(true)} />
-                  {hasNote && <RemoveControl onClick={remove} />}
+          ) : isInline ? (
+            <div className="dual-note">
+              {/* The highlighted span itself, painted like the reading column (filled or
+                  underlined per the display setting) and preceded by its glyphs — the
+                  note, if any, reads underneath it (items 1–3). */}
+              <div className="dual-quote">
+                {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--inline" />}
+                <span
+                  className="hl"
+                  style={node.color ? ({ "--seg-hl": `var(--hl-${node.color})` } as CSSProperties) : undefined}
+                  onClick={() => openAnnotation(node.id, null)}
+                >
+                  {node.source}
                 </span>
-              )}
+              </div>
+              {hasNote && <ReactMarkdown remarkPlugins={[remarkGfm]}>{node.note}</ReactMarkdown>}
+              {metaEl}
+              {controls}
+            </div>
+          ) : (
+            <div className="dual-note">
+              {numberEl}
+              {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--lead" />}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{node.note}</ReactMarkdown>
+              {metaEl}
+              {controls}
             </div>
           )}
         </div>
