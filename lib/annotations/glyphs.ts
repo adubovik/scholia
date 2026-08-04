@@ -6,9 +6,9 @@ export const GLYPHS: Glyph[] = ["summary", "question", "insight"];
 
 /** Canonical glyph char + colour, used everywhere the pill renders. */
 export const GLYPH_META: Record<Glyph, { char: string; color: string; label: string }> = {
-  summary: { char: "≡", color: "#b8860b", label: "Summary" },
-  question: { char: "?", color: "#d97706", label: "Question" },
-  insight: { char: "!", color: "#e23b2e", label: "Insight" },
+  summary: { char: "≡", color: "var(--glyph-summary)", label: "Summary" },
+  question: { char: "?", color: "var(--glyph-question)", label: "Question" },
+  insight: { char: "!", color: "var(--glyph-insight)", label: "Insight" },
 };
 
 const TAG_TO_GLYPH = new Map<string, Glyph>(GLYPHS.map((g) => [`:${g}`, g]));

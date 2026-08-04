@@ -2,18 +2,26 @@
 
 :root {
   /* neutrals — ink on a warm printed page */
-  --ink:    #1c1a15;   /* primary text (prose)          */
+  --ink:    #33292a;   /* primary text — warm graphite   */
   --muted:  #6f6754;   /* labels, numbering, chrome      */
   --faint:  #b3a88f;   /* running heads, leaf meta       */
-  --paper:  #f6f3ec;   /* warm parchment background      */
+  --paper:  #fcfaf4;   /* light warm cream background     */
   --field:  #fbf9f4;   /* inset control surface          */
+  --select: #f3ead4;   /* selected block / menu row fill  */
   --rule:   #e6dfce;   /* warm hairline separators       */
   --error:  #9b2c2c;   /* rare accent: destructive       */
-  /* highlighter pastels — the ONLY color in the app */
-  --hl-yellow:  #f2e6a8;
-  --hl-pink:    #f0cdd6;
-  --hl-green:   #cfe6c9;
-  --hl-blue:    #cdd9ee;
+  /* highlighter markers */
+  --hl-yellow:  #ffdd57;
+  --hl-pink:    #f7b8bd;
+  --hl-green:   #c0e097;
+  --hl-blue:    #b4cdf0;
+  /* accents & marks — identity colors, constant across surfaces */
+  --id-node:        #2a6fdb;  /* plain node numeric id          */
+  --id-annotated:   #e23b2e;  /* annotated node numeric id      */
+  --id-count:       #b3a88f;  /* grey child-count after an id (·20) */
+  --glyph-summary:  #b8860b;  /* ≡ */
+  --glyph-question: #d97706;  /* ? */
+  --glyph-insight:  #e23b2e;  /* ! */
   /* type */
   --serif: var(--font-serif), Georgia, Cambria, "Times New Roman", serif;
   --mono:  var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
@@ -488,7 +496,7 @@ body {
   transition: background 0.4s, box-shadow 0.4s;
 }
 .node-self--active {
-  background: var(--field);
+  background: var(--select);
   box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
 }
 .node-menu-sep {
@@ -511,9 +519,9 @@ body {
 .note-body :is(p, ul, ol) { margin: 0 0 0.4rem; }
 .note-body :is(p, ul, ol):last-child { margin-bottom: 0; }
 /* Preflight strips the default link colour/underline; markdown links (item 5)
-   would otherwise read as plain text. #2a6fdb matches .xref. Excludes .xref
+   would otherwise read as plain text. var(--id-node) matches .xref. Excludes .xref
    (rendered as a <span>, so unaffected) and covers both markdown surfaces. */
-:is(.note-body, .note-cardbody) a { color: #2a6fdb; text-decoration: underline; text-underline-offset: 2px; }
+:is(.note-body, .note-cardbody) a { color: var(--id-node); text-decoration: underline; text-underline-offset: 2px; }
 .note-actions {
   display: flex;
   gap: 1rem;
@@ -900,7 +908,7 @@ body {
   border: none;
   padding: 0;
   cursor: pointer;
-  color: #e23b2e;
+  color: var(--id-annotated);
   font-family: var(--mono);
   font-size: 0.72rem;
   letter-spacing: 0.05em;
@@ -919,16 +927,16 @@ body {
   font-family: var(--serif);
   font-size: var(--reading-font-size, 1rem);
   font-variant-numeric: tabular-nums;
-  color: #2a6fdb;
+  color: var(--id-node);
   line-height: inherit;
 }
-.node-num-id[data-annotated] { color: #e23b2e; }
+.node-num-id[data-annotated] { color: var(--id-annotated); }
 /* Direct-child count trailing a section number ("2.1·20"). Nested inside
    .node-num-id, so face, size and tabular figures come for free and only the colour
    steps back — including under [data-annotated], since inheritance doesn't compete
    on specificity. Slight margin: the interpunct alone separates the count from the number. */
 .node-num-count {
-  color: var(--faint);
+  color: var(--id-count);
   margin-left: 0.1em;
 }
 .node-num-id--runin { margin-right: 0.5em; }
@@ -936,7 +944,7 @@ body {
 
 /* In-note cross-reference (§2.2): blue, tabular, behaves as a link to the section. */
 .xref {
-  color: #2a6fdb;
+  color: var(--id-node);
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
@@ -1119,7 +1127,7 @@ body {
 }
 .note-card--active {
   border-radius: 6px;
-  background: var(--field);
+  background: var(--select);
   box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
 }
 .note-cardhead {
@@ -1140,8 +1148,8 @@ body {
   font-variant-numeric: tabular-nums;
   margin-right: 0.5em;
 }
-.note-num--inline { color: #2a6fdb; }
-.note-num--node { color: #e23b2e; }
+.note-num--inline { color: var(--id-node); }
+.note-num--node { color: var(--id-annotated); }
 .note-snippet {
   font-family: var(--serif);
   font-size: 0.82rem;
@@ -1220,7 +1228,7 @@ body {
    clutter the column. Active (cross-panel selected) row gets the reading-mode emboss. */
 .dual-block { position: relative; border-radius: 6px; }
 .dual-block--active {
-  background: var(--field);
+  background: var(--select);
   box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
 }
 .dual-note {
@@ -1409,7 +1417,7 @@ body {
   border-radius: 1px;
 }
 .library-row--current {
-  background: var(--field);
+  background: var(--select);
   box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
 }
 
