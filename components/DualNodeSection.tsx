@@ -11,7 +11,7 @@ import { displayTags, glyphsInTags } from "@/lib/annotations/glyphs";
 import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/annotations";
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
 import { useCollapse, useCollapsed } from "./CollapseContext";
-import { useNotesActions, useNotesState, useActiveNode, useActiveAnn } from "./NotesContext";
+import { useNotesActions, useNotesState, usePanelCentred, useActiveNode, useActiveAnn } from "./NotesContext";
 
 /**
  * One row of the annotation-first tree — rendered like the reading column (serif,
@@ -34,8 +34,11 @@ export function DualNodeSection({
 }) {
   const { toggle } = useCollapse();
   const collapsed = useCollapsed(node.id);
-  const { openAnnotation, setFilterTag, stopEditing } = useNotesActions();
+  const { openAnnotation, toggleAnnotation, setFilterTag, stopEditing } = useNotesActions();
   const { editingId, composeNodeId } = useNotesState();
+  // Centred (annotation-first): a re-click on the selected row closes the drawer.
+  // In the drawer copy, just select — never close the drawer the row lives in.
+  const select = usePanelCentred() ? toggleAnnotation : openAnnotation;
   // A node row is active when its owning node is selected; an inline row (keyed by the
   // annotation id) is active when that annotation is selected — so clicking a highlight
   // embosses the inline row, not just its parent node (item 4). Both hooks run every
@@ -93,7 +96,7 @@ export function DualNodeSection({
     <button
       className="node-num-id node-num-id--runin"
       aria-label={`Section ${node.number} in the text`}
-      onClick={() => openAnnotation(node.id, node.id)}
+      onClick={() => select(node.id, node.id)}
     >
       {node.number}
     </button>
@@ -106,7 +109,7 @@ export function DualNodeSection({
     <button
       className="node-num-id dual-inline-id"
       aria-label={`Select annotation ${node.number}.${node.index}`}
-      onClick={() => openAnnotation(node.id, null)}
+      onClick={() => select(node.id, null)}
     >
       {node.number}
       <sub>{node.index}</sub>
@@ -197,7 +200,7 @@ export function DualNodeSection({
                 <span
                   className={active ? "hl hl--selected" : "hl"}
                   style={node.color ? ({ "--seg-hl": `var(--hl-${node.color})` } as CSSProperties) : undefined}
-                  onClick={() => openAnnotation(node.id, null)}
+                  onClick={() => select(node.id, null)}
                 >
                   {node.source}
                 </span>

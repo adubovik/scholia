@@ -6,7 +6,7 @@ import { AnnotationPanel } from "./AnnotationPanel";
 import { SelectionPopover } from "./SelectionPopover";
 import { CollapseProvider } from "./CollapseContext";
 import { RootMenu } from "./NodeMenu";
-import { NotesProvider } from "./NotesContext";
+import { NotesProvider, CentredPanel } from "./NotesContext";
 import { SideDrawer } from "./SideDrawer";
 import { LibraryDrawer, type LibraryDoc } from "./LibraryDrawer";
 import { ReadingChrome } from "./ReadingChrome";
@@ -96,7 +96,7 @@ export function ReadingWorkspace({
       {hasDoc ? (
         <>
           <ReadingChrome title={title} meta={meta} dualMode={dualMode} onToggleMode={toggleMode}>
-            {dualMode ? annotationPanel : readingPanel(true)}
+            <CentredPanel>{dualMode ? annotationPanel : readingPanel(true)}</CentredPanel>
           </ReadingChrome>
 
           <SideDrawer title={dualMode ? "Original" : "Notes"}>

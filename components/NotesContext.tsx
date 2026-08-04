@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -27,6 +28,10 @@ export interface NotesActions {
    * the menu's "Edit note" both want, so creating either kind of note lands you in
    * a focused textarea rather than a card you have to click ✎ on. */
   openAnnotation: (annId: string, nodeId: string | null, edit?: boolean) => void;
+  /** Reading-panel click on a highlight / node-note number → open+select like
+   * openAnnotation, but a second click on the one already selected closes the drawer
+   * (a toggle). No `edit` — the reading panel never opens the editor. */
+  toggleAnnotation: (annId: string, nodeId: string | null) => void;
   /** Node menu "add note" → reveal the node in the annotation tree with an open composer. */
   composeNode: (nodeId: string) => void;
   /** Close whatever the node menu opened (edit/compose), once the tree has handled it. */
@@ -73,6 +78,12 @@ const LEFT_KEY = "scholia:leftOpen";
 const ActionsCtx = createContext<NotesActions | null>(null);
 const StateCtx = createContext<NotesState | null>(null);
 const ActiveCtx = createContext<ActiveStore | null>(null);
+// Whether a component renders in the CENTRED panel (vs. its drawer copy). Only a
+// centred-panel click toggles the drawer shut on re-select — a row *inside* the drawer
+// must never close the drawer it lives in. Default false; ReadingWorkspace wraps the
+// centre slot in <CentredPanel>. The value is a constant, so consumers never re-render
+// for it (safe to read from the book-sized reading tree).
+const CentredCtx = createContext(false);
 
 function createActiveStore(): ActiveStore {
   let annId: string | null = null;
@@ -148,6 +159,14 @@ export function NotesProvider({
   });
   const [active] = useState(createActiveStore);
 
+  // Mirror drawerOpen into a ref so the (never-rebuilt) actions can read the live
+  // value in a click handler — the reading tree consumes only actions, so it must
+  // not subscribe to drawer state.
+  const openRef = useRef(false);
+  useEffect(() => {
+    openRef.current = state.drawerOpen;
+  }, [state.drawerOpen]);
+
   useEffect(() => {
     const stored = sessionStorage.getItem(LEFT_KEY);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- post-mount viewport + storage read
@@ -165,6 +184,17 @@ export function NotesProvider({
     openAnnotation: (annId, nodeId, edit = false) => {
       active.set(annId, nodeId);
       setState((s) => ({ ...s, drawerOpen: true, composeNodeId: null, editingId: edit ? annId : null }));
+      scrollPanels(annId, nodeId);
+    },
+    toggleAnnotation: (annId, nodeId) => {
+      // Already the selected one AND the drawer's open → this click closes it. Leave
+      // the selection as-is so the next click on the same target reopens.
+      if (openRef.current && active.getAnn() === annId && active.getNode() === nodeId) {
+        setState((s) => ({ ...s, drawerOpen: false }));
+        return;
+      }
+      active.set(annId, nodeId);
+      setState((s) => ({ ...s, drawerOpen: true, composeNodeId: null, editingId: null }));
       scrollPanels(annId, nodeId);
     },
     composeNode: (nodeId) => {
@@ -220,6 +250,19 @@ export function NotesProvider({
       </ActiveCtx.Provider>
     </ActionsCtx.Provider>
   );
+}
+
+/** Marks its subtree as the centred panel — the one whose annotation clicks toggle
+ * the drawer. ReadingWorkspace wraps only the centre slot; the drawer copy inherits
+ * the default (false). */
+export function CentredPanel({ children }: { children: ReactNode }) {
+  return <CentredCtx.Provider value={true}>{children}</CentredCtx.Provider>;
+}
+
+/** True when in the centred panel — picks toggleAnnotation over openAnnotation so a
+ * re-click closes the drawer instead of just re-selecting. */
+export function usePanelCentred(): boolean {
+  return useContext(CentredCtx);
 }
 
 export function useNotesActions(): NotesActions {

@@ -3,7 +3,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { splitSpans, type Segment } from "@/lib/annotations/spans";
 import type { InlineAnnotationView } from "@/lib/annotations/types";
-import { useNotesActions, useActiveAnnInSet } from "./NotesContext";
+import { useNotesActions, usePanelCentred, useActiveAnnInSet } from "./NotesContext";
 import { GlyphPill } from "./GlyphPill";
 import { glyphsInTags } from "@/lib/annotations/glyphs";
 
@@ -20,7 +20,10 @@ function HlSpan({
   seg: Segment;
   sourceId: string;
 }) {
-  const { openAnnotation } = useNotesActions();
+  const { openAnnotation, toggleAnnotation } = useNotesActions();
+  // Centred reading panel: re-clicking the selected highlight closes the drawer. In the
+  // drawer copy (read-only "Original" under annotation-first), just select.
+  const select = usePanelCentred() ? toggleAnnotation : openAnnotation;
   const ids = seg.annotations.map((a) => a.id);
   const activeId = useActiveAnnInSet(ids); // this segment's active ann, or null
   const top = seg.annotations[seg.annotations.length - 1]; // newest renders on top
@@ -39,7 +42,7 @@ function HlSpan({
         background: fill ? `var(--hl-${fill})` : undefined,
         boxShadow: boxShadow || undefined,
       } as CSSProperties}
-      onClick={() => openAnnotation(top.id, null)}
+      onClick={() => select(top.id, null)}
     >
       {seg.text}
     </span>

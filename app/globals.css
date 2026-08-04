@@ -512,10 +512,12 @@ body {
    reads as gently pressed in. Padding + negative margin bleed the wash past the text
    without shifting layout; box-shadow adds none. Exactly one node carries this at a
    time (the active-selection store), and it persists until the next selection. */
+/* Horizontal bleed kept tight (0.3rem, was 0.45): like .dual-block, the fatter wash
+   reached into the collapse-toggle column and touched the ▾ triangle. */
 .node-self {
   border-radius: 5px;
-  padding: 0.2rem 0.45rem 0.05rem;
-  margin: -0.2rem -0.45rem -0.05rem;
+  padding: 0.2rem 0.3rem 0.05rem;
+  margin: -0.2rem -0.3rem -0.05rem;
   transition: background 0.4s, box-shadow 0.4s;
 }
 .node-self--active {

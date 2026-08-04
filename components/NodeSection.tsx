@@ -6,7 +6,7 @@ import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
 import { NodeContextMenu, NodeNumber, ChildCount } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
-import { useNotesActions, useActiveNode } from "./NotesContext";
+import { useNotesActions, usePanelCentred, useActiveNode } from "./NotesContext";
 import { glyphsInTags } from "@/lib/annotations/glyphs";
 
 // Every id beneath this node (not the node itself) — the target of Collapse/Expand
@@ -43,7 +43,9 @@ export function NodeSection({
   numbers: Map<string, string>;
 }) {
   const { toggle, setMany } = useCollapse();
-  const { openAnnotation, composeNode } = useNotesActions();
+  const { openAnnotation, toggleAnnotation, composeNode } = useNotesActions();
+  // Centred reading panel toggles the drawer on re-click; the drawer copy just selects.
+  const select = usePanelCentred() ? toggleAnnotation : openAnnotation;
   const collapsed = useCollapsed(node.id);
   const hasChildren = node.children.length > 0;
   const hasText = Boolean(node.text);
@@ -99,7 +101,7 @@ export function NodeSection({
         nodeId={node.id}
         canEdit={canEdit}
         glyphs={nodeAnn ? glyphsInTags(nodeAnn.tags) : []}
-        onHighlightNote={nodeAnn ? () => openAnnotation(nodeAnn.id, node.id) : undefined}
+        onHighlightNote={nodeAnn ? () => select(nodeAnn.id, node.id) : undefined}
       />
     ) : (
       <span className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}>
