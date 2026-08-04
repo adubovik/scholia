@@ -1292,6 +1292,12 @@ body {
    column (.hl → filled or underlined per the display setting); its note reads below. */
 .dual-quote { margin-bottom: 0.3rem; }
 .dual-quote:last-child { margin-bottom: 0; }
+/* Fake citation id leading an inline row (2.1₁): reuses .node-num-id for face/size/
+   tabular figures, dimmed to --faint like a skeleton so adjacent inline annotations
+   read apart. The subscript is the annotation's 1-based index on its level. */
+.dual-inline-id { color: var(--faint); margin-right: 0.4em; }
+.dual-inline-id:hover { color: var(--muted); }
+.dual-inline-id sub { font-size: 0.7em; }
 
 /* Note-less structural node kept only to hold the hierarchy — a dim one-line label. */
 .dual-skel {

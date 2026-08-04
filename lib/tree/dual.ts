@@ -10,7 +10,10 @@ import { displayTags, glyphTag, glyphsInTags } from "@/lib/annotations/glyphs";
  * `buildDual` produces the *full* tree; `visibleDual` prunes/filters it at render time
  * (client-side) so filter chips and the compose flow can reveal or hide branches
  * without a refetch. Numbers come from the *reading* tree, so a note on §2.1 is still
- * labelled 2.1 here — the two panels agree. Inline rows carry no number of their own.
+ * labelled 2.1 here — the two panels agree. Inline rows carry the *parent's* number
+ * plus a 1-based `index`, so the panel can label them 2.1₁, 2.1₂ … as fake citation
+ * ids (nodes have index 0). The index is fixed at build time so it stays stable when
+ * `visibleDual` filters siblings out.
  *
  * A separate type from TreeNode on purpose: this reuses the tree's *shape* (nesting,
  * collapse) but none of reading mode's per-node logic, keeping the reading path
@@ -18,7 +21,8 @@ import { displayTags, glyphTag, glyphsInTags } from "@/lib/annotations/glyphs";
  */
 export interface DualNode {
   id: string; // dual identity: the source node id (node) or the inline annotation id (inline)
-  number: string; // the source node's reading section number ("" for inline rows)
+  number: string; // reading section number: the node's own (node) or its parent's (inline)
+  index: number; // inline rows: 1-based position among the parent's inline annotations; nodes: 0
   kind: "node" | "inline";
   nodeId: string; // owning source node — target for upsertNodeAnnotation / cross-panel select
   noteId: string | null; // real annotation row to edit; null = node has no note (skeleton)
@@ -31,15 +35,18 @@ export interface DualNode {
 }
 
 function toDual(n: TreeNode, numbers: Map<string, string>): DualNode {
-  // Inline annotations of this node become leaf children, in reading order.
+  const number = numbers.get(n.id) ?? "";
+  // Inline annotations of this node become leaf children, in reading order. Each carries
+  // the parent's number + its 1-based position, so the panel can label them 2.1₁, 2.1₂.
   const inlineKids: DualNode[] = [...n.annotations]
     .sort((a, b) => a.startOffset - b.startOffset)
-    .map((a) => {
+    .map((a, i) => {
       const s = Math.max(0, a.startOffset - n.startOffset);
       const e = Math.max(0, a.endOffset - n.startOffset);
       return {
         id: a.id,
-        number: "",
+        number,
+        index: i + 1,
         kind: "inline" as const,
         nodeId: n.id,
         noteId: a.id,
@@ -53,7 +60,8 @@ function toDual(n: TreeNode, numbers: Map<string, string>): DualNode {
     });
   return {
     id: n.id,
-    number: numbers.get(n.id) ?? "",
+    number,
+    index: 0,
     kind: "node",
     nodeId: n.id,
     noteId: n.nodeAnnotation?.id ?? null,

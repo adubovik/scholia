@@ -19,7 +19,7 @@ beforeEach(() => {
 });
 
 const dnode = (over: Partial<DualNode>): DualNode => ({
-  id: "n1", number: "1", kind: "node", nodeId: "n1", noteId: "a1",
+  id: "n1", number: "1", index: 0, kind: "node", nodeId: "n1", noteId: "a1",
   note: "note text", tags: [], color: null, source: "src", title: null, children: [], ...over,
 });
 

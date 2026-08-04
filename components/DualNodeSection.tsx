@@ -98,6 +98,20 @@ export function DualNodeSection({
     </button>
   );
 
+  // Inline rows lead with a fake citation id — the parent section number with a
+  // subscript index (2.1₁) — dimmed like a skeleton so two adjacent inline annotations
+  // read as separate blocks. Clicking it selects the annotation, same as its highlight.
+  const inlineIdEl = isInline && node.number && (
+    <button
+      className="node-num-id dual-inline-id"
+      aria-label={`Select annotation ${node.number}.${node.index}`}
+      onClick={() => openAnnotation(node.id, null)}
+    >
+      {node.number}
+      <sub>{node.index}</sub>
+    </button>
+  );
+
   const metaEl = tags.length > 0 && (
     <div className="dual-meta">
       {tags.map((t) => (
@@ -162,6 +176,7 @@ export function DualNodeSection({
                   #tags — same glyphs-then-tags order as the panel's filter header. The
                   note, if any, reads underneath it (items 1–3). */}
               <div className="dual-quote">
+                {inlineIdEl}
                 {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--inline" />}
                 {metaEl}
                 <span

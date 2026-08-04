@@ -93,6 +93,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the segmented ≡ ? ! capsule | **glyph pill** (interactive: **glyph toggle**) | `GlyphPill.tsx` → `GlyphPill` / `GlyphToggle` | `.glyph-pill`, `.glyph-cell` |
 | the `All / #tag` row atop the annotation panel | **filter chips** | `AnnotationPanel.tsx` | `.notes-filters`, `.annot-filters` |
 | the highlighted phrase leading an inline row (filled/underlined like the reading column) | **inline quote** | `DualNodeSection.tsx` → `HlSpan`-styled `.hl` | `.dual-quote`, `.hl` |
+| the dim `2.1₁` citation id at the head of an inline row (parent number + subscript index; click selects the annotation) | **inline id** | `DualNodeSection.tsx` (`index` from `lib/tree/dual.ts`) | `.dual-inline-id` |
 
 ### Library drawer (left)
 

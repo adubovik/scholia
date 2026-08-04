@@ -40,7 +40,20 @@ describe("buildDual", () => {
     expect(kid.note).toBe("colour + animal");
     expect(kid.source).toBe("quick brown");
     expect(kid.color).toBe("pink");
-    expect(kid.number).toBe(""); // inline rows nest, no number
+    expect(kid.number).toBe("A"); // inline rows carry the parent's number as a citation prefix
+    expect(kid.index).toBe(1); // 1-based position among the node's inline annotations
+  });
+
+  it("numbers a node's inline annotations 1..n in reading order for its fake citation id", () => {
+    const tree = [node({
+      id: "a", text: "one two three four five", startOffset: 0,
+      annotations: [
+        inline({ id: "second", startOffset: 8, endOffset: 13 }), // "three" — later in text
+        inline({ id: "first", startOffset: 0, endOffset: 3 }), // "one" — earlier, sorts ahead
+      ],
+    })];
+    const [d] = buildDual(tree, nums("a"));
+    expect(d.children.map((c) => [c.id, c.index])).toEqual([["first", 1], ["second", 2]]);
   });
 
   it("does NOT prune — the full tree is returned, pruning is visibleDual's job", () => {
