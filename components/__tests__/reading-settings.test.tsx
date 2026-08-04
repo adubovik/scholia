@@ -21,25 +21,26 @@ describe("ReadingSettings", () => {
     expect(screen.getAllByRole("slider")).toHaveLength(5);
   });
 
-  it("renders eight tick marks per slider", () => {
+  it("renders seven tick marks per slider", () => {
     const { container } = openSheet();
-    // 5 controls × 8 steps
-    expect(container.querySelectorAll(".aa-tick")).toHaveLength(40);
-    expect(screen.getByRole("slider", { name: "Size" })).toHaveProperty("max", "7");
+    // 5 controls × 7 steps
+    expect(container.querySelectorAll(".aa-tick")).toHaveLength(35);
+    expect(screen.getByRole("slider", { name: "Size" })).toHaveProperty("max", "6");
   });
 
   it("applies a slider change to the CSS var and persists it", () => {
     openSheet();
-    fireEvent.change(screen.getByRole("slider", { name: "Size" }), { target: { value: "7" } });
-    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.4375rem");
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).size).toBe(7);
+    fireEvent.change(screen.getByRole("slider", { name: "Size" }), { target: { value: "6" } });
+    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.25rem");
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).size).toBe(6);
   });
 
-  it("resets to defaults and clears storage", () => {
+  it("resets to defaults (the slider centres) and clears storage", () => {
     openSheet();
-    fireEvent.change(screen.getByRole("slider", { name: "Size" }), { target: { value: "4" } });
+    fireEvent.change(screen.getByRole("slider", { name: "Size" }), { target: { value: "5" } });
     fireEvent.click(screen.getByRole("button", { name: "Reset to defaults" }));
-    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.1875rem");
+    // default size index 3 (centre) → "1.0625rem"
+    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.0625rem");
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 

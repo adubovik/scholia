@@ -13,17 +13,17 @@ beforeEach(() => {
 });
 
 describe("stepsToVars", () => {
-  it("maps default indices to the current literals", () => {
+  it("maps default indices (each slider's centre) to the tuned literals", () => {
     expect(stepsToVars(DEFAULT_INDICES)).toEqual({
-      "--reading-font-size": "1.1875rem",
-      "--reading-line-height": "1.72",
+      "--reading-font-size": "1.0625rem",
+      "--reading-line-height": "1.4",
       "--reading-word-spacing": "0em",
-      "--reading-block-gap": "0.5rem",
+      "--reading-block-gap": "0rem",
       "--reading-measure": "44rem",
     });
   });
   it("maps the top size index to the largest step", () => {
-    expect(stepsToVars({ ...DEFAULT_INDICES, size: 7 })["--reading-font-size"]).toBe("1.4375rem");
+    expect(stepsToVars({ ...DEFAULT_INDICES, size: 6 })["--reading-font-size"]).toBe("1.25rem");
   });
 });
 
@@ -54,10 +54,10 @@ describe("storage round-trip", () => {
 
 describe("preloadScript", () => {
   it("applies stored vars to documentElement", () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...DEFAULT_INDICES, size: 7 }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...DEFAULT_INDICES, size: 6 }));
     // eslint-disable-next-line no-eval
     eval(preloadScript());
-    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.4375rem");
+    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.25rem");
   });
   it("references the storage key", () => {
     expect(preloadScript()).toContain(STORAGE_KEY);
@@ -77,8 +77,8 @@ describe("preloadScript", () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...DEFAULT_INDICES, size: 1.5 }));
     // eslint-disable-next-line no-eval
     eval(preloadScript());
-    // default size index 3 → "1.1875rem"; must not be "undefined"
-    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.1875rem");
+    // default size index 3 → "1.0625rem"; must not be "undefined"
+    expect(document.documentElement.style.getPropertyValue("--reading-font-size")).toBe("1.0625rem");
   });
 });
 

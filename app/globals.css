@@ -25,11 +25,13 @@
   /* type */
   --serif: var(--font-serif), Georgia, Cambria, "Times New Roman", serif;
   --mono:  var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
-  /* reading surface — live-tunable via the Aa display sheet */
-  --reading-font-size:    1.1875rem;
-  --reading-line-height:  1.72;
+  /* reading surface — live-tunable via the Aa display sheet. These fallbacks mirror
+     each slider's centre (default) step in lib/reading/prefs.ts; the pre-paint script
+     overrides them from stored prefs before paint. */
+  --reading-font-size:    1.0625rem;
+  --reading-line-height:  1.4;
   --reading-word-spacing: 0em;
-  --reading-block-gap:    1.15rem;  /* tightened from 1.6rem; uniform at all depths */
+  --reading-block-gap:    0rem;
   --reading-measure:      44rem;
 }
 
