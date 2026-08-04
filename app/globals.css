@@ -1268,7 +1268,9 @@ body {
 .dual-block { position: relative; border-radius: 6px; padding: 0.2rem 0.45rem 0.05rem; margin: -0.2rem -0.45rem -0.05rem; }
 .dual-block--active {
   background: var(--select);
-  box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+  /* Bottom edge is a solid dark line (was a white emboss lip) so a selected row
+     reads as clearly picked out, not just softly washed. */
+  box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -2px 0 var(--ink);
 }
 .dual-note {
   font-family: var(--serif);
