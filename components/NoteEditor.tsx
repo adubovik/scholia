@@ -34,6 +34,7 @@ export function NoteEditor({
   const [tags, setTags] = useState<string[]>(initialTags);
   const [color, setColor] = useState<string | null>(initialColor);
   const [busy, setBusy] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false); // arm delete before it fires
 
   async function save() { setBusy(true); await onSave({ note, tags, color }); setBusy(false); }
   async function del() { setBusy(true); await onDelete(); setBusy(false); }
@@ -72,7 +73,18 @@ export function NoteEditor({
       <div className="note-actions">
         <button className="btn" disabled={busy} onClick={save}>Save</button>
         <button className="link-btn" disabled={busy} onClick={onCancel}>Cancel</button>
-        {canDelete && <button className="link-btn link-btn--danger" disabled={busy} onClick={del}>Delete note</button>}
+        {canDelete &&
+          (confirmDel ? (
+            <span className="note-confirm">
+              Delete note?
+              <button className="link-btn link-btn--danger" disabled={busy} onClick={del}>Yes</button>
+              <button className="link-btn" disabled={busy} onClick={() => setConfirmDel(false)}>No</button>
+            </span>
+          ) : (
+            <button className="link-btn link-btn--danger" disabled={busy} onClick={() => setConfirmDel(true)}>
+              Delete
+            </button>
+          ))}
       </div>
     </div>
   );

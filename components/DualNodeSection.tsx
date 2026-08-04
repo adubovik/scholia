@@ -57,6 +57,7 @@ export function DualNodeSection({
     (editingId !== null && editingId === node.noteId) ||
     (!isInline && composeNodeId === node.nodeId);
   const [override, setOverride] = useState<boolean | null>(null);
+  const [confirmDel, setConfirmDel] = useState(false); // arm the bin before it deletes
   const editing = canEdit && (override ?? shouldEdit);
 
   function close() {
@@ -121,12 +122,23 @@ export function DualNodeSection({
   );
 
   const controls = canEdit && (
-    <span className="dual-controls">
-      <EditControl label={hasNote ? "Edit note" : "Add note"} onClick={() => setOverride(true)} />
-      {/* Inline rows always get a delete: it clears the note, or removes a note-less
-          highlight (which otherwise had no delete affordance here). */}
-      {(hasNote || isInline) && (
-        <RemoveControl label={hasNote ? "Delete note" : "Delete highlight"} onClick={remove} />
+    <span className={confirmDel ? "dual-controls dual-controls--confirm" : "dual-controls"}>
+      {confirmDel ? (
+        // Armed: a check confirms, an ✕ backs out — so a stray bin click can't destroy
+        // a note. Stays visible (--confirm) even off-hover until the choice is made.
+        <>
+          <ConfirmControl label="Confirm delete" onClick={() => { setConfirmDel(false); remove(); }} />
+          <CancelControl label="Cancel" onClick={() => setConfirmDel(false)} />
+        </>
+      ) : (
+        <>
+          <EditControl label={hasNote ? "Edit note" : "Add note"} onClick={() => setOverride(true)} />
+          {/* Inline rows always get a delete: it clears the note, or removes a note-less
+              highlight (which otherwise had no delete affordance here). */}
+          {(hasNote || isInline) && (
+            <RemoveControl label={hasNote ? "Delete note" : "Delete highlight"} onClick={() => setConfirmDel(true)} />
+          )}
+        </>
       )}
     </span>
   );
@@ -237,6 +249,26 @@ function RemoveControl({ label, onClick }: { label: string; onClick: () => void 
     <button className="dual-ctl dual-ctl--danger" aria-label={label} title={label} onClick={onClick}>
       <svg width="12" height="12" viewBox="0 0 12 13" fill="none" stroke="currentColor" strokeWidth="1.1" style={{ display: "block" }}>
         <path d="M1 3.2h10M4.2 3.2V1.8h3.6v1.4M2.4 3.2l0.7 8.3h5.8l0.7-8.3M4.7 5.4v4M7.3 5.4v4" />
+      </svg>
+    </button>
+  );
+}
+
+function ConfirmControl({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button className="dual-ctl dual-ctl--danger" aria-label={label} title={label} onClick={onClick}>
+      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ display: "block" }}>
+        <path d="M2.5 7.5l3 3 6-7.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  );
+}
+
+function CancelControl({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button className="dual-ctl" aria-label={label} title={label} onClick={onClick}>
+      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ display: "block" }}>
+        <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" strokeLinecap="round" />
       </svg>
     </button>
   );
