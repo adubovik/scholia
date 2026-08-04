@@ -30,7 +30,7 @@ function HlSpan({
 
   return (
     <span
-      className="hl"
+      className={activeId ? "hl hl--selected" : "hl"}
       data-source-id={sourceId}
       data-char-start={seg.charStart}
       data-ann-id={ids.join(" ")}

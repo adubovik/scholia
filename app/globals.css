@@ -375,11 +375,12 @@ body {
   padding-top: 0;
   padding-bottom: 0;
 }
-/* A selected inline annotation in the annotation panel: dark underline accent on the
-   highlighted phrase itself, so selection reads on the coloured span, not a wash over
-   the whole row. The border space is already reserved above → no reflow. Only
-   DualNodeSection adds this class, so the reading column is untouched; the second
-   selector out-specifies the underline-mode colour so the accent wins in both modes. */
+/* A selected inline annotation: dark underline accent on the highlighted phrase
+   itself. Both panels use it (DualNodeSection + reading-column HlSpan) so selection
+   looks the same in each — in the annotation panel it replaces the whole-row wash, in
+   the reading column it marks the active highlight. The border space is already
+   reserved above → no reflow; the second selector out-specifies the underline-mode
+   colour so the accent wins in both display modes. */
 .hl--selected,
 :root[data-hl-mode="underline"] .hl--selected {
   border-bottom-color: var(--ink);
