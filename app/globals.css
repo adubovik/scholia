@@ -884,10 +884,12 @@ body {
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  margin: 0 0 2.5rem;
+  margin: 0 0 1.25rem;
   padding-bottom: 0.9rem;
   border-bottom: 1px solid var(--rule);
 }
+.reading-titlegroup { min-width: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.reading-author { font-family: var(--serif); font-style: italic; font-size: 0.92rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reading-head-actions { display: flex; align-items: center; gap: 0.9rem; flex: 0 0 auto; }
 .reading-headbtn {
   background: none;
@@ -1399,7 +1401,8 @@ body {
 
 /* Annotation-tree filter row (chips + glyph toggle), above the tree in either slot.
    Overrides the drawer-specific padding of .notes-filters so it sits flush. */
-.annot-filters { padding: 0 0 0.7rem; margin-bottom: 0.9rem; }
+/* Equal breathing room above (reading-head margin) and below (this padding). */
+.annot-filters { padding: 0 0 1.25rem; margin-bottom: 0.9rem; }
 
 /* A panel living in the drawer (reading prose when swapped, annotations by default):
    scroll area + a slightly tighter reading measure so book-width prose fits the panel. */

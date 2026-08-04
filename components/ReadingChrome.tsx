@@ -39,7 +39,10 @@ export function ReadingChrome({
     <main className="page page--read reading-main" data-mode={mode} style={style}>
       {meta && (
         <div className="reading-head">
-          <h1 className="reading-title">{title}</h1>
+          <div className="reading-titlegroup">
+            <h1 className="reading-title">{title}</h1>
+            {meta.author && <div className="reading-author">{meta.author}</div>}
+          </div>
           <div className="reading-head-actions">
             {onToggleMode && (
               <button
