@@ -147,7 +147,10 @@ export function DualNodeSection({
       </div>
 
       <div className="node-body">
-        <div className={active ? "dual-block dual-block--active" : "dual-block"}>
+        {/* Node rows wash the whole block when selected; inline rows leave the block
+            plain and accent their highlighted span instead (see hl--selected below),
+            so selecting a highlight reads on the phrase, not the entire row. */}
+        <div className={active && !isInline ? "dual-block dual-block--active" : "dual-block"}>
           {editing ? (
             <NoteEditor
               kind={node.kind}
@@ -180,7 +183,7 @@ export function DualNodeSection({
                 {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--inline" />}
                 {metaEl}
                 <span
-                  className="hl"
+                  className={active ? "hl hl--selected" : "hl"}
                   style={node.color ? ({ "--seg-hl": `var(--hl-${node.color})` } as CSSProperties) : undefined}
                   onClick={() => openAnnotation(node.id, null)}
                 >

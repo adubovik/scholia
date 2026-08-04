@@ -375,6 +375,15 @@ body {
   padding-top: 0;
   padding-bottom: 0;
 }
+/* A selected inline annotation in the annotation panel: dark underline accent on the
+   highlighted phrase itself, so selection reads on the coloured span, not a wash over
+   the whole row. The border space is already reserved above → no reflow. Only
+   DualNodeSection adds this class, so the reading column is untouched; the second
+   selector out-specifies the underline-mode colour so the accent wins in both modes. */
+.hl--selected,
+:root[data-hl-mode="underline"] .hl--selected {
+  border-bottom-color: var(--ink);
+}
 
 /* ── Tree ────────────────────────────────────────────────── */
 /* align-items: baseline keeps the toggle glyph on the first text line's
@@ -1268,9 +1277,7 @@ body {
 .dual-block { position: relative; border-radius: 6px; padding: 0.2rem 0.45rem 0.05rem; margin: -0.2rem -0.45rem -0.05rem; }
 .dual-block--active {
   background: var(--select);
-  /* Bottom edge is a solid dark line (was a white emboss lip) so a selected row
-     reads as clearly picked out, not just softly washed. */
-  box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -2px 0 var(--ink);
+  box-shadow: inset 0 1px 2px rgba(28, 26, 21, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
 }
 .dual-note {
   font-family: var(--serif);
