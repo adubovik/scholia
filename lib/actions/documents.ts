@@ -11,6 +11,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { authorize } from "@/lib/auth/authorize";
 import { normalizeText, paragraphize } from "@/lib/import/paragraphs";
 import { planNodes } from "@/lib/tree/plan";
+import { validateTree, treeToPlanned, type AiNode } from "@/lib/tree/ai-structure";
 
 export async function createDocument(input: {
   title: string;
@@ -20,6 +21,10 @@ export async function createDocument(input: {
   url?: string;
   text: string;
   headingLevels?: (number | null)[];
+  /** A preview-approved AI structure tree (from `previewAiStructure`). When set,
+   * the tree is validated + mapped instead of running the rule-based planNodes.
+   * No AI call happens here — the key was used only during preview. */
+  aiTree?: AiNode[];
 }): Promise<string> {
   const user = await requireMember();
   const normalized = normalizeText(input.text);
@@ -45,11 +50,16 @@ export async function createDocument(input: {
       ),
     );
 
-    const planned = planNodes(
-      paras.map((p) => ({ start: p.start, end: p.end, text: p.text })),
-      () => crypto.randomUUID(),
-      input.headingLevels,
-    );
+    // Re-validate the preview-approved tree against this exact text (paragraph
+    // indices must line up) before mapping — throws before any DB write.
+    const paraInputs = paras.map((p) => ({ start: p.start, end: p.end, text: p.text }));
+    let planned;
+    if (input.aiTree) {
+      validateTree(input.aiTree, paraInputs.length);
+      planned = treeToPlanned(input.aiTree, paraInputs, () => crypto.randomUUID());
+    } else {
+      planned = planNodes(paraInputs, () => crypto.randomUUID(), input.headingLevels);
+    }
     statements.push(
       db.insert(nodes).values(
         planned.map((n) => ({

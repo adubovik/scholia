@@ -2,6 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createDocument } from "@/lib/actions/documents";
 import { extractHtml } from "@/lib/actions/extract";
+import { previewAiStructure, type AiPreviewResult } from "@/lib/actions/ai-preview";
+import { AI_MODEL } from "@/lib/tree/ai-model";
+import { TreePreviewModal } from "./TreePreviewModal";
 
 /** The "add a text to the library" form — paste / file / URL funnel into one
  * { title, author, text } commit. Hosted by NewDocModal (the standalone /new route
@@ -14,6 +17,18 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // AI structure detection (BYOK). The key is transient: kept in sessionStorage
+  // (this tab only) for convenience and sent to the server action per-import;
+  // never persisted server-side, never logged.
+  const [useAi, setUseAi] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  // The AI preview (proposed tree + dropped lines + token usage) awaiting Accept.
+  // Pinned to the text it was computed from, so editing the textarea invalidates it.
+  const [preview, setPreview] = useState<{ text: string; result: AiPreviewResult } | null>(null);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration mirror from sessionStorage
+    setApiKey(sessionStorage.getItem("openai_key") ?? "");
+  }, []);
   const fileRef = useRef<HTMLInputElement>(null);
   // dragenter/dragleave fire per child element; count depth so the overlay only
   // clears when the pointer truly leaves the canvas, not on inner boundaries.
@@ -57,18 +72,23 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
   }
 
   async function fetchUrl() {
-    if (!url.trim()) return;
+    const raw = url.trim();
+    if (!raw) return;
+    // Accept a scheme-less paste ("www.gutenberg.org/…") — assume https and
+    // reflect it back into the field so the stored source URL is complete too.
+    const normalized = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+    if (normalized !== url) setUrl(normalized);
     setBusy(true);
     setError(null);
     try {
       const res = await fetch("/api/import", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: normalized }),
       });
       if (!res.ok) throw new Error((await res.json()).error ?? "Import failed");
       const { title: t, text: extracted, headingLevels } = await res.json();
-      structured.current = { text: extracted, headingLevels, url: url.trim() };
+      structured.current = { text: extracted, headingLevels, url: normalized };
       setText(extracted);
       setTitle((cur) => cur || t || "");
     } catch (e) {
@@ -99,6 +119,37 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
     }
   }
 
+  async function doPreview() {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await previewAiStructure({ text, aiKey: apiKey.trim() });
+      setPreview({ text, result });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function acceptPreview() {
+    if (!preview) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const id = await createDocument({
+        title: title.trim(),
+        author: author.trim(),
+        text: preview.text,
+        aiTree: preview.result.tree,
+      });
+      onDone(id);
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(false);
+    }
+  }
+
   function onDrop(e: React.DragEvent) {
     e.preventDefault();
     dragDepth.current = 0;
@@ -108,7 +159,13 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
   }
 
   // Title and author are both required (author matches the library-row subtitle).
-  const canImport = Boolean(title.trim() && author.trim() && text.trim());
+  // With AI on, a key is required too.
+  const canImport = Boolean(
+    title.trim() && author.trim() && text.trim() && (!useAi || apiKey.trim()),
+  );
+  // The preview is only valid while the text still matches what it was built from;
+  // editing the textarea silently invalidates it (no effect needed).
+  const showPreview = preview !== null && preview.text === text;
 
   return (
     <>
@@ -181,13 +238,60 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
         </button>
       </div>
 
+      <label className="ai-toggle">
+        <input
+          type="checkbox"
+          checked={useAi}
+          onChange={(e) => setUseAi(e.target.checked)}
+        />
+        <span>Use AI to detect structure <span className="muted">(OpenAI · {AI_MODEL})</span></span>
+      </label>
+      {useAi && (
+        <>
+          <input
+            id="doc-openai-key"
+            className="input"
+            type="password"
+            autoComplete="off"
+            placeholder="OpenAI API key (sk-…)"
+            value={apiKey}
+            onChange={(e) => {
+              setApiKey(e.target.value);
+              sessionStorage.setItem("openai_key", e.target.value);
+            }}
+          />
+          <p className="muted ai-key-note">
+            Not saved to the server — used once for this import, then discarded.
+            Remembered only in this browser tab.
+          </p>
+        </>
+      )}
+
       <div className="import-actions">
-        <button type="button" className="btn" disabled={busy || !canImport} onClick={doImport}>
-          Import
+        <button
+          type="button"
+          className="btn"
+          disabled={busy || !canImport}
+          onClick={useAi ? doPreview : doImport}
+        >
+          {useAi ? "Preview with AI" : "Import"}
         </button>
-        {busy && <span className="muted">Working…</span>}
+        {busy && <span className="muted">{useAi ? "Detecting structure with AI…" : "Working…"}</span>}
       </div>
-      {error && <p className="error">{error}</p>}
+      {error && !showPreview && <p className="error">{error}</p>}
+
+      {showPreview && (
+        <TreePreviewModal
+          result={preview!.result}
+          busy={busy}
+          error={error}
+          onAccept={acceptPreview}
+          onCancel={() => {
+            setPreview(null);
+            setError(null);
+          }}
+        />
+      )}
     </>
   );
 }

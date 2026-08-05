@@ -104,6 +104,8 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the `＋` button | **new-text button** | `LibraryDrawer.tsx` | `.library-new` |
 | the "Add to the library" dialog | **new-doc modal** | `NewDocModal.tsx` | `.newdoc-sheet` |
 | the title / author / paste / URL fields in it | **import form** | `ImportForm.tsx` | `.source`, `.url-row` |
+| the "Use AI to detect structure" checkbox + key field in it | **AI toggle** | `ImportForm.tsx` (BYOK key in `sessionStorage`) | `.ai-toggle`, `.ai-key-note` |
+| the "AI-detected structure" confirm dialog (tree preview + removed lines + tokens, Accept/Cancel) | **tree preview modal** | `TreePreviewModal.tsx` | `.tprev-sheet`, `.tprev-line`, `.tprev-dropped` |
 | the sliders button next to `＋` | **invite sheet** | `InviteSettings.tsx` (glyph: `SettingsIcon.tsx`) | `.invite-dialog` |
 
 ---
