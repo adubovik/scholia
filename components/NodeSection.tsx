@@ -4,7 +4,7 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
 import type { TreeNode } from "@/lib/tree/build";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
-import { NodeContextMenu, NodeNumber, ChildCount } from "./NodeMenu";
+import { NodeContextMenu, NodeNumber, ChildCount, NumText } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, usePanelCentred, useActiveNode } from "./NotesContext";
 import { glyphsInTags } from "@/lib/annotations/glyphs";
@@ -35,12 +35,14 @@ export function NodeSection({
   canEdit,
   documentId,
   numbers,
+  numbersShort,
 }: {
   node: TreeNode;
   depth: number;
   canEdit: boolean;
   documentId: string;
-  numbers: Map<string, string>;
+  numbers: Map<string, string>; // full compound id path (IV.Prop.LXI)
+  numbersShort: Map<string, string>; // own segment (LXI); toggle picks which shows
 }) {
   const { toggle, setMany } = useCollapse();
   const { openAnnotation, toggleAnnotation, composeNode } = useNotesActions();
@@ -49,19 +51,27 @@ export function NodeSection({
   const collapsed = useCollapsed(node.id);
   const hasChildren = node.children.length > 0;
   const hasText = Boolean(node.text);
-  // A heading node's whole range IS its title (import stores the heading text as
-  // both): the title renders in the head, so rendering the passage too would
-  // duplicate it. Its prose lives in the children, not its own body.
-  const isHeading = node.title !== null && node.title.trim() === node.text.trim();
-  // Collapse governs the node's own body text AND its children. Headings carry no
-  // body of their own, so they're collapsible only when they have children.
-  const collapsible = hasChildren || (hasText && !isHeading);
+  // A "container" renders as a head (its id + own remaining text on their own line),
+  // not as a run-in paragraph. Two ways to be one: it has structural children, or —
+  // legacy import — its whole range IS its title (heading stored as both title+text).
+  // For AI-imported nodes the `cut` already stripped the id from the text, so a
+  // division like "PART I" keeps just its subtitle ("CONCERNING GOD.") as own text,
+  // shown in the head next to the id.
+  const isHeadingByTitle = node.title !== null && node.title.trim() === node.text.trim();
+  const isContainer = hasChildren || isHeadingByTitle;
+  // What renders beside the id in the head: the legacy title, else a container's own
+  // leftover text (division subtitle). Leaf paragraphs render their text as a passage.
+  const headTitle = node.title ?? (hasChildren && hasText ? node.text : null);
+  // Collapse governs the node's own body text AND its children. Containers carry no
+  // passage of their own, so they're collapsible only when they have children.
+  const collapsible = hasChildren || (hasText && !isContainer);
 
-  // Hierarchical section number (1, 2.1, 3.1.1) derived from tree position. A body
-  // paragraph shows it as a run-in prefix; a heading/container shows it in a head.
+  // Compound id path (IV.Prop.LXI full / LXI short — the toggle picks). A leaf
+  // paragraph shows it as a run-in prefix; a container shows it in a head.
   const num = numbers.get(node.id) ?? "";
-  const runIn = hasText && !isHeading;
-  const showHead = !runIn; // heading or bodyless container → number (+ title) on its own line
+  const short = numbersShort.get(node.id) ?? num;
+  const runIn = hasText && !isContainer;
+  const showHead = !runIn; // container or bodyless → number (+ title) on its own line
 
   // Collapsed preview: first sentence + "…" when content is actually hidden.
   const preview = hasText ? firstSentence(node.text) : "";
@@ -95,6 +105,7 @@ export function NodeSection({
     (showMenu || hasNote ? (
       <NodeNumber
         number={num}
+        numberShort={short}
         childCount={node.children.length}
         annotated={hasNote}
         runIn={runIn}
@@ -105,27 +116,27 @@ export function NodeSection({
       />
     ) : (
       <span className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}>
-        {num}
+        <NumText full={num} short={short} />
         <ChildCount n={node.children.length} />
       </span>
     ));
   const plainNumberEl = num && (
     <span className="node-num-id node-num-id--runin" data-annotated={hasNote || undefined}>
-      {num}
+      <NumText full={num} short={short} />
       <ChildCount n={node.children.length} />
     </span>
   );
 
   const self: ReactNode = (
     <>
-      {showHead && (num || node.title) && (
+      {showHead && (num || headTitle) && (
         <div className="node-head">
           {numberEl}
-          {node.title && <span className="node-title">{node.title}</span>}
+          {headTitle && <span className="node-title">{headTitle}</span>}
         </div>
       )}
 
-      {hasText && !isHeading &&
+      {hasText && !isContainer &&
         (collapsed ? (
           <button className="node-preview" onClick={() => setMany([node.id], false)}>
             {plainNumberEl}
@@ -180,6 +191,7 @@ export function NodeSection({
                 canEdit={canEdit}
                 documentId={documentId}
                 numbers={numbers}
+                numbersShort={numbersShort}
               />
             ))}
           </div>

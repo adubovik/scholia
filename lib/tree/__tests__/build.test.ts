@@ -7,9 +7,9 @@ const SRC = "Root text. Child text.";
 describe("buildTree", () => {
   it("nests children under parents, ordered by position, with resolved text", () => {
     const nodes: NodeRow[] = [
-      { id: "b", parentId: "a", position: 1, label: "1.2", title: null },
-      { id: "a", parentId: null, position: 0, label: "1", title: null },
-      { id: "c", parentId: "a", position: 0, label: "1.1", title: null },
+      { id: "b", parentId: "a", position: 1, label: "1.2", alias: null, title: null },
+      { id: "a", parentId: null, position: 0, label: "1", alias: null, title: null },
+      { id: "c", parentId: "a", position: 0, label: "1.1", alias: null, title: null },
     ];
     const ranges: NodeRange[] = [
       { nodeId: "a", sourceId: "s1", startOffset: 0, endOffset: 10 },   // "Root text."
@@ -28,8 +28,8 @@ describe("buildTree", () => {
 
   it("orders multiple roots by position", () => {
     const nodes: NodeRow[] = [
-      { id: "y", parentId: null, position: 1, label: "2", title: null },
-      { id: "x", parentId: null, position: 0, label: "1", title: null },
+      { id: "y", parentId: null, position: 1, label: "2", alias: null, title: null },
+      { id: "x", parentId: null, position: 0, label: "1", alias: null, title: null },
     ];
     const tree = buildTree(nodes, [], SRC);
     expect(tree.map((n) => n.id)).toEqual(["x", "y"]);
@@ -39,8 +39,8 @@ describe("buildTree", () => {
 
 it("attaches only the annotations intersecting each node's range", () => {
   const nodes: NodeRow[] = [
-    { id: "a", parentId: null, position: 0, label: null, title: null },
-    { id: "b", parentId: null, position: 1, label: null, title: null },
+    { id: "a", parentId: null, position: 0, label: null, alias: null, title: null },
+    { id: "b", parentId: null, position: 1, label: null, alias: null, title: null },
   ];
   const ranges: NodeRange[] = [
     { nodeId: "a", sourceId: "s1", startOffset: 0, endOffset: 10 },
@@ -59,8 +59,8 @@ it("attaches only the annotations intersecting each node's range", () => {
 
 it("attaches each node's own note by nodeId, leaving others null", () => {
   const nodes: NodeRow[] = [
-    { id: "a", parentId: null, position: 0, label: null, title: null },
-    { id: "b", parentId: null, position: 1, label: null, title: null },
+    { id: "a", parentId: null, position: 0, label: null, alias: null, title: null },
+    { id: "b", parentId: null, position: 1, label: null, alias: null, title: null },
   ];
   const ranges: NodeRange[] = [
     { nodeId: "a", sourceId: "s1", startOffset: 0, endOffset: 10 },

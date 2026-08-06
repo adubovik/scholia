@@ -12,7 +12,7 @@ const nodeAnn = (over: Partial<NodeAnnotationView>): NodeAnnotationView => ({
   createdAt: "2026-01-01T00:00:00Z", ...over,
 });
 const node = (over: Partial<TreeNode>): TreeNode => ({
-  id: "a", label: null, title: null, text: "", sourceId: "s", startOffset: 0,
+  id: "a", label: null, alias: null, title: null, text: "", sourceId: "s", startOffset: 0,
   annotations: [], nodeAnnotation: null, children: [], ...over,
 });
 const nums = (...ids: string[]) => new Map(ids.map((id) => [id, id.toUpperCase()]));

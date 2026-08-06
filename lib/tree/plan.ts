@@ -11,7 +11,8 @@ export interface PlannedNode {
   id: string;
   parentId: string | null;
   position: number;
-  label: string | null;
+  label: string | null; // the node's OWN id segment ("XI", "Definitions", "3"); null ⇒ positional at render
+  alias: string | null; // short token ancestors lend to a descendant's path ("Def"); null ⇒ same as label
   title: string | null;
   paragraphIndex: number;
   startOffset: number;
@@ -46,9 +47,12 @@ export function planNodes(
     return numbered.map((r) => {
       const parentId = r.parentLabel ? idByLabel.get(r.parentLabel)! : null;
       const p = paras[r.paragraphIndex];
+      // Store the node's OWN segment ("2.1" → "1"); the path renderer rebuilds the
+      // dotted number from ancestors. Labels are single-dot-guaranteed (numbering.ts).
+      const own = r.label.slice(r.label.lastIndexOf(".") + 1);
       return {
         id: ids[r.paragraphIndex], parentId, position: nextPosition(parentId),
-        label: r.label, title: null, paragraphIndex: r.paragraphIndex,
+        label: own, alias: null, title: null, paragraphIndex: r.paragraphIndex,
         startOffset: p.start + r.proseStart, endOffset: p.end,
       };
     });
@@ -61,7 +65,7 @@ export function planNodes(
       const p = paras[r.paragraphIndex];
       return {
         id: ids[r.paragraphIndex], parentId, position: nextPosition(parentId),
-        label: null, title: r.isHeading ? p.text : null,
+        label: null, alias: null, title: r.isHeading ? p.text : null,
         paragraphIndex: r.paragraphIndex, startOffset: p.start, endOffset: p.end,
       };
     });
@@ -69,6 +73,6 @@ export function planNodes(
 
   return paras.map((p, i) => ({
     id: ids[i], parentId: null, position: nextPosition(null),
-    label: null, title: null, paragraphIndex: i, startOffset: p.start, endOffset: p.end,
+    label: null, alias: null, title: null, paragraphIndex: i, startOffset: p.start, endOffset: p.end,
   }));
 }

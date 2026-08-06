@@ -20,8 +20,8 @@ export interface NoteEntry {
  * (the "whole passage" comment), then its inline highlights sorted by position —
  * matching the reading order a highlight appears in the prose. This is the order
  * the drawer scrolls through and the count shown in the header. `numbers` maps a
- * node id to its hierarchical section number (see numberSections) so each card
- * carries the same blue/red identifier the prose shows.
+ * node id to its compound id path (see idPaths) so each card carries the same
+ * blue/red identifier the prose shows.
  */
 export function flattenEntries(tree: TreeNode[], numbers: Map<string, string>): NoteEntry[] {
   const out: NoteEntry[] = [];

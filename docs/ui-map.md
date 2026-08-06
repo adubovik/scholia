@@ -62,10 +62,11 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the icon button left of `Aa` that swaps text↔annotation | **mode toggle** (switches to **annotation-first view**) | `ReadingChrome.tsx` (state in `ReadingWorkspace.tsx`) | `.reading-modebtn` |
 | the `Aa` button / text size controls | **display sheet** (trigger: **Aa button**) | `ReadingSettings.tsx` | `.aa-sheet`, `.aa-row` |
 | the Filled/Underline toggle in that sheet | **marks toggle** | `ReadingSettings.tsx` | `.aa-modrow`, `.aa-seg` |
+| the LXI / IV.Prop.LXI toggle in that sheet | **section-ids toggle** (short vs full compound id) | `ReadingSettings.tsx` (pref `IdMode` in `lib/reading/prefs.ts`) | `.aa-seg-id`, `:root[data-id-mode]` |
 | the sliders button next to `Aa` / where export lives / edit title+author / the source URL | **document info sheet** | `DocInfo.tsx` (glyph: `SettingsIcon.tsx`) | `.doc-sheet`, `.settings-icon` |
 | the bare count pill top-right (just `12`) | **notes button** | `ReadingChrome.tsx` | `.reading-notesbtn` |
 | one paragraph or heading of the text | **node** | `NodeSection.tsx` | `.node`, `.node-body` |
-| the `1`, `2.1`, `3.1.1` markers | **section number** | `NodeMenu.tsx` → `NodeNumber` | `.node-num-id` |
+| the `1`, `2.1`, `LXI`, `IV.Prop.LXI` markers | **section number** (compound id: ancestor aliases + own id, from `lib/tree/number.ts::idPaths`; both short+full render, toggle picks — see **section-ids toggle**) | `NodeMenu.tsx` → `NodeNumber`/`NumText` | `.node-num-id`, `.node-num-full`/`.node-num-short` |
 | …the one sitting *inside* the paragraph | **run-in section number** | same | `.node-num-id--runin` |
 | the ▾ / ▸ arrow that folds a section | **collapse toggle** | `NodeSection.tsx` | `.node-toggle` |
 | the one-line "…" summary when folded | **collapsed preview** | `NodeSection.tsx` | `.node-preview` |
@@ -145,9 +146,9 @@ Most "it doesn't react right" bugs are in a context, not a component.
 | the note editor doesn't grow with the text, or grows without limit | `MarkdownTextarea.tsx` (JS height) + `.note-textarea` `max-height` (CSS cap) |
 | folding/unfolding sections, Collapse/Expand children | `components/CollapseContext.tsx` |
 | reading column doesn't shift when a drawer opens | `ReadingChrome.tsx` (`--shift-left` / `--shift-right`, `data-mode`) |
-| text size / line height / column width | `lib/reading/prefs.ts` + the pre-paint script in `app/layout.tsx` |
+| text size / line height / column width / highlight marks / section-id short↔long | `lib/reading/prefs.ts` + the pre-paint script in `app/layout.tsx` |
 | highlight renders in the wrong place, overlaps look wrong | `lib/annotations/spans.ts::splitSpans` — the load-bearing one |
-| section numbers wrong | `lib/tree/number.ts` |
+| section numbers / compound ids wrong (path, alias, short vs full) | `lib/tree/number.ts::idPaths` (ids come from `nodes.label`/`nodes.alias`, set at import by `lib/tree/ai-structure.ts` / `plan.ts`) |
 | Markdown shortcuts in the note editor (Cmd+B, paste-to-link) | `components/MarkdownTextarea.tsx` |
 
 `NotesContext` deliberately splits into three: **actions** (never changes — the prose tree consumes only this), **state** (drawer/filter — only drawer + chrome subscribe), and an **external store** for "which annotation is selected" so a single highlight re-renders alone. If you add a re-render, check which of the three you subscribed to.

@@ -105,14 +105,16 @@ describe("MenuItems", () => {
 // The section number: left-click highlights the note (if any); the menu is right-
 // click only. Editor keyboard shortcuts stay bound to the focused number.
 const numberButton = (over: Partial<React.ComponentProps<typeof NodeNumber>> = {}) => (
-  <NodeNumber nodeId="n1" number="2.1" childCount={0} annotated={false} canEdit {...over} />
+  <NodeNumber nodeId="n1" number="2.1" numberShort="1" childCount={0} annotated={false} canEdit {...over} />
 );
 
 describe("NodeNumber", () => {
-  it("renders the section number as a labelled button", () => {
+  it("renders both id forms in a labelled button (CSS shows one)", () => {
     render(numberButton());
     const btn = screen.getByRole("button", { name: "Section actions" });
-    expect(btn.textContent).toBe("2.1");
+    // Both forms render; the toggle (CSS) picks. Full = compound, short = own segment.
+    expect(btn.querySelector(".node-num-full")?.textContent).toBe("2.1");
+    expect(btn.querySelector(".node-num-short")?.textContent).toBe("1");
   });
 
   it("left-click highlights the note (and labels it so) when the node has one", () => {
@@ -149,7 +151,7 @@ describe("NodeNumber", () => {
 // Minimal heading node (isHeading → no SourcePassage render) keeps the graph light.
 function node(over: Partial<TreeNode> = {}): TreeNode {
   return {
-    id: "n1", label: null, title: "Title", text: "Title",
+    id: "n1", label: null, alias: null, title: "Title", text: "Title",
     sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
     children: [], ...over,
   };
@@ -157,11 +159,12 @@ function node(over: Partial<TreeNode> = {}): TreeNode {
 const ann = { id: "a1", nodeId: "n1", note: "hi", tags: [], authorId: "u1", createdAt: new Date().toISOString() };
 
 const NUMS = new Map([["n1", "2"], ["c1", "2.1"]]);
+const NUMS_SHORT = new Map([["n1", "2"], ["c1", "1"]]);
 function renderNode(node: TreeNode, canEdit: boolean) {
   return render(
     <NotesProvider entries={[]} sections={{}}>
       <CollapseProvider>
-        <NodeSection node={node} depth={0} canEdit={canEdit} documentId="d1" numbers={NUMS} />
+        <NodeSection node={node} depth={0} canEdit={canEdit} documentId="d1" numbers={NUMS} numbersShort={NUMS_SHORT} />
       </CollapseProvider>
     </NotesProvider>,
   );
@@ -171,15 +174,16 @@ function renderNode(node: TreeNode, canEdit: boolean) {
 // door when there's a menu to open, a plain identifier otherwise.
 describe("NodeSection identifier", () => {
   it("shows a plain number (no menu) for a viewer on a childless, un-annotated node", () => {
-    renderNode(node(), false);
+    const { container } = renderNode(node(), false);
     expect(screen.queryByRole("button", { name: "Section actions" })).toBeNull();
-    // The heading node still shows its number "2".
-    expect(screen.getByText("2")).toBeDefined();
+    // The heading node still shows its number "2" (own segment, in the short form).
+    expect(container.querySelector(".node-num-id .node-num-full")?.textContent).toBe("2");
   });
 
   it("turns the number red (data-annotated) when the node carries a note", () => {
     renderNode(node({ nodeAnnotation: ann }), false);
-    expect(screen.getByText("2").getAttribute("data-annotated")).toBe("true");
+    // A note but no menu → the number is a "Highlight note" button carrying data-annotated.
+    expect(screen.getByRole("button", { name: "Highlight note" }).getAttribute("data-annotated")).toBe("true");
   });
 
   it("makes the number a menu trigger for editors", () => {

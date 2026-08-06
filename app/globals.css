@@ -904,6 +904,16 @@ body {
 .aa-seg-btn[aria-pressed="true"] .aa-seg-sample { color: var(--ink); font-weight: 500; }
 .aa-seg-btn[data-mode="filled"] .aa-seg-sample { background: var(--hl-yellow); color: var(--ink); }
 .aa-seg-btn[data-mode="underline"] .aa-seg-sample { border-bottom-color: var(--hl-yellow); }
+/* Section-id samples read as real citations: serif + tabular figures, mixed case
+   (so "IV.Prop.LXI" keeps its alias casing), no upper-casing/tracking. */
+.aa-seg-id {
+  font-family: var(--serif);
+  font-size: 0.8rem;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+.aa-seg-btn[aria-pressed="true"] .aa-seg-id { color: var(--id-node); }
 
 /* Radix Dialog.Content is a sibling of the overlay, not a child — so it must
    position itself. (ReadingSettings nests its sheet inside the backdrop and
@@ -1072,6 +1082,12 @@ body {
 }
 .node-num-id--runin { margin-right: 0.5em; }
 .node-num-id:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
+/* The id's two forms (NumText) both render; the Display-settings "Section ids"
+   toggle picks one. Default = short (own segment, "LXI"); data-id-mode="long" swaps
+   to the full compound path ("IV.Prop.LXI"). */
+.node-num-full { display: none; }
+:root[data-id-mode="long"] .node-num-short { display: none; }
+:root[data-id-mode="long"] .node-num-full { display: inline; }
 
 /* In-note cross-reference (§2.2): blue, tabular, behaves as a link to the section. */
 .xref {

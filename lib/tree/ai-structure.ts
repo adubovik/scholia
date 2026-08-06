@@ -35,8 +35,8 @@ export function buildAnchored(paras: ParaInput[]): string {
   );
 }
 
-// Book-agnostic prompt (mirrors .scratchpad/prompts/general-json.md, plus the
-// duplicated-heading fix found while testing Nietzsche).
+// Book-agnostic prompt (mirrors .scratchpad/prompts/general-json.md — the id/alias/cut
+// identity system, with the Good/Bad worked examples).
 const PROMPT = `You recover the structure ALREADY IN a book from an anchored text: numbered lines (anchors), physical line N == anchor N, one paragraph per line clipped to ~160 chars. Recover only the book's own divisions — never invent semantic grouping.
 
 FIND THE HIERARCHY (infer depth from the text; every book differs):
@@ -44,21 +44,32 @@ FIND THE HIERARCHY (infer depth from the text; every book differs):
 - Mid level: numbered or titled sub-units — sections "1.", aphorisms, chapters, propositions/definitions/axioms, dialogue turns, entries.
 - Leaf: editorial notes/footnotes.
 Assign level by actual nesting (a numbered item inside "PART II" is a child of that part; a note after a proposition is a child of that proposition).
+TOP LEVEL must list real divisions — never a single root. If the book opens with one title/author line wrapping everything, DROP it; the top-level array holds the actual divisions (Preface, Intro, Part I, …). A top-level array of length 1 is wrong.
 
 KEEP vs DROP:
-- DROP (omit the anchor): Project Gutenberg header/footer/license, "Produced by…"/transcriber lines, title-page byline ("by"), standalone author name, author sign-offs, running-header artifacts (a line mashing two heading titles), a heading line immediately repeated on the next line (drop the repeat), and link-list tables of contents.
+- DROP (omit the anchor): Project Gutenberg header/footer/license, "Produced by…"/transcriber lines, title-page byline ("by"), standalone author name, author sign-offs, running-header artifacts (a line mashing two heading titles), a heading line immediately repeated on the next line (drop the repeat), and tables of contents / indexes / first-line link-list indexes (fluff — drop them).
 - KEEP as their own section: substantial editor/translator introductions, prefaces, dedications (nest their sub-parts too).
 - KEEP notes: editorial footnotes/notes stay, re-parented as a LEAF CHILD of the unit they annotate (nearest preceding kept unit). Never drop them.
 - When unsure whether a line is fluff, KEEP it as content (do not delete real text).
 
 COMPACT OUTPUT: emit a node ONLY for a real structural unit (a heading/division, a numbered/titled item, or a note). Consecutive plain prose paragraphs belonging to one unit go into that unit's body:[first,last] range — do NOT emit one node per prose paragraph.
 
-HARD RULES: anchors only; strictly increasing across the whole tree; never repeat an anchor. body = [first,last] inclusive content anchors a node owns directly (before its children).
+IDENTITY (id / alias / cut) — every node carries an identity from its own heading text, so the app can address it as a compound path <ancestor>.<…>.<self> (e.g. I.Ax.I = Part I → Axioms → Axiom I) without re-printing the number already in the prose:
+- id — the node's canonical name, taken from the text's OWN enumerator when it has one; NEVER an invented counter. "PROP. XI. God…"→"XI"; "I. By that…"→"I"; "56. He who…"→"56"; "PART I. CONCERNING GOD."→"PART I"; "DEFINITIONS."→"Definitions"; "Note I.—As…"→"NI". Only a kept node with NO enumerator/caption gets a positional index "1","2",… among its siblings. ids are UNIQUE among siblings and contain NO dot.
+- alias — the SHORT token an ancestor lends to a descendant's path. "Definitions"→"Def", "Axioms"→"Ax", "Propositions"→"Prop", "PART I"→"I", "THE SECOND BOOK"→id "Book II" alias "II". Set alias equal to id (or null) when there's nothing to shorten (numerals/romans).
+- cut — the exact leading substring of THIS node's heading text to strip so the id is not echoed in the prose. Must be a literal prefix. Prefix cut: "PROP. XI. God…" cut "PROP. XI." → shows "God…". Whole-line cut: "DEFINITIONS." cut "DEFINITIONS." → shows nothing (a pure caption / container). null when there's no redundant prefix.
 
-OUTPUT: an object { "nodes": [ … ] } in reading order. Each node is { "h": <anchor>, "title": "<short label>", "body": [<first>,<last>] | null, "children": [ … ] | null }.
-- title: short (heading text, or "§7", "Book II", "Prop. 14").
-- body: [first,last] inclusive when the node owns content lines directly, else null.
-- children: nested nodes, else null.`;
+GOOD  "PROP. XI. God, or substance…" → {"h":57,"id":"XI","cut":"PROP. XI.","body":[58,65]}   shows "God…"
+BAD   same line → {"h":57,"id":"11"}   (invented "11" duplicates the "XI" still in the prose; no cut)
+GOOD  "DEFINITIONS." → {"h":7,"id":"Definitions","alias":"Def","cut":"DEFINITIONS.","children":[{"h":8,"id":"I","cut":"I."},{"h":9,"id":"II","cut":"II."}]}
+BAD   "DEFINITIONS." → {"h":7,"id":"1"}   (positional "1" ignores the caption; children can't inherit a "Def" alias)
+GOOD  "Note I.—As finite existence involves…" → {"h":45,"id":"NI","cut":"Note I.—"}   shows "As finite existence…"
+GOOD  "1. From my grandfather Verus…" → {"h":37,"id":"1","cut":"1."}
+BAD   "1. From my grandfather…" → {"h":37,"id":"3"}   (a fresh counter, not the text's own "1")
+
+HARD RULES: anchors only; strictly increasing across the whole tree; never repeat an anchor. body = [first,last] inclusive content anchors a node owns directly (before its children). cut is a literal prefix of h's own text. ids unique among siblings, no dots. Top-level length ≥ 2.
+
+OUTPUT: an object { "nodes": [ … ] } in reading order. Each node is { "h": <anchor>, "id": "<seg>", "alias": "<short>" | null, "cut": "<prefix>" | null, "body": [<first>,<last>] | null, "children": [ … ] | null }.`;
 
 // OpenAI Structured Outputs schema (strict): guarantees a parseable, recursively
 // nested tree. Root must be an object; strict mode requires every property listed
@@ -79,11 +90,13 @@ const RESPONSE_FORMAT = {
           additionalProperties: false,
           properties: {
             h: { type: "integer" },
-            title: { type: "string" },
+            id: { type: "string" },
+            alias: { type: ["string", "null"] },
+            cut: { type: ["string", "null"] },
             body: { type: ["array", "null"], items: { type: "integer" } },
             children: { type: ["array", "null"], items: { $ref: "#/$defs/node" } },
           },
-          required: ["h", "title", "body", "children"],
+          required: ["h", "id", "alias", "cut", "body", "children"],
         },
       },
     },
@@ -92,9 +105,19 @@ const RESPONSE_FORMAT = {
 
 export interface AiNode {
   h: number;
-  title?: string;
+  id?: string; // canonical own-id from the text's enumerator ("XI", "PART I", "Definitions", "NI")
+  alias?: string | null; // short token ancestors lend to a descendant's path ("Def", "Ax", "I")
+  cut?: string | null; // literal prefix of h's text to strip so the id isn't echoed
   body?: [number, number] | number[] | null;
   children?: AiNode[] | null;
+}
+
+/** How much of paragraph `text` a node's `cut` removes: the prefix + trailing whitespace. */
+function cutLength(text: string, cut: string | null | undefined): number {
+  if (!cut || !text.startsWith(cut)) return 0; // not a prefix ⇒ don't shift (graceful)
+  let n = cut.length;
+  while (n < text.length && /\s/.test(text[n])) n++;
+  return n;
 }
 
 /** A node owns direct content lines only when body is a well-formed [first,last]. */
@@ -228,19 +251,26 @@ export function treeToPlanned(
     posByParent.set(key, n + 1);
     return n;
   };
-  const emit = (anchor: number, parentId: string | null, title: string | null): string => {
+  const emit = (
+    anchor: number, parentId: string | null,
+    label: string | null, alias: string | null, cut: string | null,
+  ): string => {
     const p = paras[anchor - 1];
     const id = newId();
     out.push({
-      id, parentId, position: nextPos(parentId), label: null, title,
-      paragraphIndex: anchor - 1, startOffset: p.start, endOffset: p.end,
+      id, parentId, position: nextPos(parentId), label, alias, title: null,
+      paragraphIndex: anchor - 1,
+      startOffset: p.start + cutLength(p.text, cut), // shift past the cut prefix (like proseStart)
+      endOffset: p.end,
     });
     return id;
   };
   const walk = (n: AiNode, parentId: string | null) => {
-    const hId = emit(n.h, parentId, n.title?.trim() || null);
+    // heading node: own-id → label, alias, cut applied to its passage
+    const hId = emit(n.h, parentId, n.id?.trim() || null, n.alias?.trim() || null, n.cut ?? null);
+    // body paragraphs (folded prose) become label-less child nodes → positional id at render
     const b = bodyRange(n);
-    if (b) for (let a = b[0]; a <= b[1]; a++) if (a !== n.h) emit(a, hId, null);
+    if (b) for (let a = b[0]; a <= b[1]; a++) if (a !== n.h) emit(a, hId, null, null, null);
     for (const c of n.children ?? []) walk(c, hId);
   };
   for (const n of nodes) walk(n, null);
@@ -270,9 +300,10 @@ export function buildPreview(nodes: AiNode[], paras: ParaInput[]): PreviewLine[]
   const byAnchor = new Map<number, PreviewLine>();
   const walk = (n: AiNode, depth: number) => {
     const full = paras[n.h - 1]?.text ?? "";
-    const title = n.title?.trim() || null;
-    const isHeading = !!title && title === full.replace(/\s+/g, " ").trim();
-    byAnchor.set(n.h, { depth, kind: isHeading ? "heading" : "text", title, text: clip(full) });
+    const id = n.id?.trim() || null;
+    const remaining = full.slice(cutLength(full, n.cut)); // what survives after the cut prefix
+    const isHeading = remaining.trim() === ""; // pure caption / container (nothing left to show)
+    byAnchor.set(n.h, { depth, kind: isHeading ? "heading" : "text", title: id, text: clip(remaining) });
     const b = bodyRange(n);
     if (b) for (let a = b[0]; a <= b[1]; a++) if (a !== n.h) byAnchor.set(a, { depth: depth + 1, kind: "text", title: null, text: clip(paras[a - 1]?.text ?? "") });
     for (const c of n.children ?? []) walk(c, depth + 1);

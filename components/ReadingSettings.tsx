@@ -5,13 +5,21 @@ import {
   CONTROLS, DEFAULT_INDICES, stepsToVars,
   readStoredIndices, writeStoredIndices, clearStoredIndices,
   DEFAULT_HL_MODE, applyHlMode, readStoredHlMode, writeStoredHlMode,
-  type PrefKey, type PrefIndices, type HlMode,
+  DEFAULT_ID_MODE, applyIdMode, readStoredIdMode, writeStoredIdMode,
+  type PrefKey, type PrefIndices, type HlMode, type IdMode,
 } from "@/lib/reading/prefs";
 
 // Highlight display-mode options, in display order.
 const HL_MODES: { value: HlMode; label: string }[] = [
   { value: "filled", label: "Filled" },
   { value: "underline", label: "Underline" },
+];
+
+// Section-id display options — the label doubles as a real sample of the citation
+// each mode shows (short = the node's own id, long = the full compound path).
+const ID_MODES: { value: IdMode; label: string }[] = [
+  { value: "short", label: "LXI" },
+  { value: "long", label: "IV.Prop.LXI" },
 ];
 
 // Display order + end-cap glyphs (small→large / tight→loose). Labels double as
@@ -35,6 +43,7 @@ export function ReadingSettings({ triggerClassName = "reading-aa" }: { triggerCl
   const [open, setOpen] = useState(false);
   const [indices, setIndices] = useState<PrefIndices>(DEFAULT_INDICES);
   const [hlMode, setHlMode] = useState<HlMode>(DEFAULT_HL_MODE);
+  const [idMode, setIdMode] = useState<IdMode>(DEFAULT_ID_MODE);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -45,6 +54,7 @@ export function ReadingSettings({ triggerClassName = "reading-aa" }: { triggerCl
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration mirror, see above
     setIndices(readStoredIndices());
     setHlMode(readStoredHlMode());
+    setIdMode(readStoredIdMode());
   }, []);
 
   function close() {
@@ -65,11 +75,18 @@ export function ReadingSettings({ triggerClassName = "reading-aa" }: { triggerCl
     writeStoredHlMode(mode);
   }
 
+  function setIds(mode: IdMode) {
+    setIdMode(mode);
+    applyIdMode(mode);
+    writeStoredIdMode(mode);
+  }
+
   function reset() {
     setIndices(DEFAULT_INDICES);
     applyVars(DEFAULT_INDICES);
     clearStoredIndices();
     setMode(DEFAULT_HL_MODE);
+    setIds(DEFAULT_ID_MODE);
   }
 
   useEffect(() => {
@@ -179,6 +196,25 @@ export function ReadingSettings({ triggerClassName = "reading-aa" }: { triggerCl
                   >
                     {/* the label doubles as a live sample of the mode it selects */}
                     <span className="aa-seg-sample">{label}</span>
+                  </button>
+                ))}
+              </span>
+            </div>
+
+            <div className="aa-modrow">
+              <span className="aa-label">Section ids</span>
+              <span className="aa-seg" role="group" aria-label="Section id display">
+                {ID_MODES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className="aa-seg-btn"
+                    data-mode={value}
+                    aria-pressed={idMode === value}
+                    onClick={() => setIds(value)}
+                  >
+                    {/* the label is a real sample of the citation this mode shows */}
+                    <span className="aa-seg-sample aa-seg-id">{label}</span>
                   </button>
                 ))}
               </span>

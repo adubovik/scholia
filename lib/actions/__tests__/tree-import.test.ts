@@ -40,9 +40,10 @@ describe("import builds nodes", () => {
     created.push(id);
 
     const got = await getDocument(id);
+    // label = the node's OWN segment (idPaths rebuilds "1.1" from ancestors)
     expect(got!.tree.map((n) => n.label)).toEqual(["1", "2"]);
     const one = got!.tree[0];
-    expect(one.children.map((n) => n.label)).toEqual(["1.1"]);
+    expect(one.children.map((n) => n.label)).toEqual(["1"]); // "1.1" → own segment "1"
     // range starts past the label → prose has no leading number
     expect(one.children[0].text).toBe("The world is the totality of facts.");
     expect(one.text).toBe("The world is all that is the case.");

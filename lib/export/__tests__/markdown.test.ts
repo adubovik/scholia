@@ -10,7 +10,7 @@ const nodeAnn = (note: string, tags: string[] = []): NodeAnnotationView =>
   ({ id: "na", nodeId: "a", note, tags, authorId: "u", createdAt: "2026-01-01T00:00:00.000Z" });
 
 const n = (id: string, text: string, over: Partial<TreeNode> = {}): TreeNode => ({
-  id, label: null, title: null, text, sourceId: "s", startOffset: 0,
+  id, label: null, alias: null, title: null, text, sourceId: "s", startOffset: 0,
   annotations: [], nodeAnnotation: null, children: [], ...over,
 });
 

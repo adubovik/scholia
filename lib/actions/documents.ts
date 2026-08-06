@@ -63,7 +63,7 @@ export async function createDocument(input: {
     statements.push(
       db.insert(nodes).values(
         planned.map((n) => ({
-          id: n.id, documentId: docId, parentId: n.parentId, position: n.position, label: n.label, title: n.title,
+          id: n.id, documentId: docId, parentId: n.parentId, position: n.position, label: n.label, alias: n.alias, title: n.title,
         })),
       ),
       db.insert(nodeSourceRanges).values(

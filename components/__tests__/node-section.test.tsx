@@ -8,41 +8,43 @@ import type { TreeNode } from "@/lib/tree/build";
 // NodeSection reads collapse + notes actions from providers, and its SourcePassage
 // reads notes actions too — both wrappers are required.
 const NUMS = new Map([["a", "1"], ["b", "1.1"], ["x", "1"], ["h", "1"], ["p", "1.1"]]);
+// short = own segment; the reading column carries both (toggle picks which shows).
+const NUMS_SHORT = new Map([["a", "1"], ["b", "1"], ["x", "1"], ["h", "1"], ["p", "1"]]);
 const renderNode = (n: TreeNode) =>
   render(
     <NotesProvider entries={[]} sections={{}}>
       <CollapseProvider>
-        <NodeSection node={n} depth={0} canEdit={false} documentId="d1" numbers={NUMS} />
+        <NodeSection node={n} depth={0} canEdit={false} documentId="d1" numbers={NUMS} numbersShort={NUMS_SHORT} />
       </CollapseProvider>
     </NotesProvider>,
   );
 
 const node: TreeNode = {
-  id: "a", label: "1", title: null, text: "Parent prose.", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
-  children: [{ id: "b", label: "1.1", title: null, text: "Child prose.", sourceId: "s1", startOffset: 100, annotations: [], nodeAnnotation: null, children: [] }],
+  id: "a", label: "1", alias: null, title: null, text: "Parent prose.", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
+  children: [{ id: "b", label: "1.1", alias: null, title: null, text: "Child prose.", sourceId: "s1", startOffset: 100, annotations: [], nodeAnnotation: null, children: [] }],
 };
 
 const leaf: TreeNode = {
-  id: "x", label: null, title: null, text: "First one. Second two.", sourceId: "s1",
+  id: "x", label: null, alias: null, title: null, text: "First one. Second two.", sourceId: "s1",
   startOffset: 0, annotations: [], nodeAnnotation: null, children: [],
 };
 
 // A heading node: its title equals its own range text (import stores the heading
 // as both), with prose nested as a child.
 const heading: TreeNode = {
-  id: "h", label: null, title: "CHAPTER I", text: "CHAPTER I", sourceId: "s1", startOffset: 0,
+  id: "h", label: null, alias: null, title: "CHAPTER I", text: "CHAPTER I", sourceId: "s1", startOffset: 0,
   annotations: [], nodeAnnotation: null,
-  children: [{ id: "p", label: null, title: null, text: "Chapter one prose.", sourceId: "s1", startOffset: 20, annotations: [], nodeAnnotation: null, children: [] }],
+  children: [{ id: "p", label: null, alias: null, title: null, text: "Chapter one prose.", sourceId: "s1", startOffset: 20, annotations: [], nodeAnnotation: null, children: [] }],
 };
 
 // Three direct children (each with a child of its own, to prove the count is direct
 // children only and not the whole subtree).
 const many: TreeNode = {
-  id: "a", label: "1", title: null, text: "", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
+  id: "a", label: "1", alias: null, title: null, text: "", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
   children: ["b", "c", "d"].map((id) => ({
-    id, label: null, title: null, text: `${id} prose.`, sourceId: "s1", startOffset: 100,
+    id, label: null, alias: null, title: null, text: `${id} prose.`, sourceId: "s1", startOffset: 100,
     annotations: [], nodeAnnotation: null,
-    children: [{ id: `${id}1`, label: null, title: null, text: "grandchild.", sourceId: "s1", startOffset: 200, annotations: [], nodeAnnotation: null, children: [] }],
+    children: [{ id: `${id}1`, label: null, alias: null, title: null, text: "grandchild.", sourceId: "s1", startOffset: 200, annotations: [], nodeAnnotation: null, children: [] }],
   })),
 };
 

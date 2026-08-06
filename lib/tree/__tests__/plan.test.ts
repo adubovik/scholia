@@ -34,10 +34,11 @@ describe("planNodes", () => {
     const input = paras("1 A.", "1.1 B.", "1.2 C.", "2 D.");
     const nodes = planNodes(input, counter());
     const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
-    // ids follow paragraph order: n0="1", n1="1.1", n2="1.2", n3="2"
+    // label is the node's OWN segment (the path renderer rebuilds "1.1" from ancestors):
+    // "1"→"1", "1.1"→"1", "1.2"→"2", "2"→"2".
     expect(byId["n0"]).toMatchObject({ label: "1", parentId: null, position: 0 });
-    expect(byId["n1"]).toMatchObject({ label: "1.1", parentId: "n0", position: 0 });
-    expect(byId["n2"]).toMatchObject({ label: "1.2", parentId: "n0", position: 1 });
+    expect(byId["n1"]).toMatchObject({ label: "1", parentId: "n0", position: 0 });
+    expect(byId["n2"]).toMatchObject({ label: "2", parentId: "n0", position: 1 });
     expect(byId["n3"]).toMatchObject({ label: "2", parentId: null, position: 1 });
     // "1.1 B." → prose starts at offset 4 within the paragraph
     expect(byId["n1"].startOffset).toBe(input[1].start + 4);

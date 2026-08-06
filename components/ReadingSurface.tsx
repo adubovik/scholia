@@ -1,7 +1,7 @@
 import { ReadingWorkspace } from "./ReadingWorkspace";
 import { type LibraryDoc } from "./LibraryDrawer";
 import { flattenEntries } from "@/lib/annotations/entries";
-import { numberSections } from "@/lib/tree/number";
+import { idPaths } from "@/lib/tree/number";
 import { buildDual } from "@/lib/tree/dual";
 import type { InviteView } from "@/lib/data/invites";
 import type { TreeNode } from "@/lib/tree/build";
@@ -38,7 +38,10 @@ export function ReadingSurface({
   invites: InviteView[];
 }) {
   const tree = document?.tree ?? [];
-  const { byId: numbers } = numberSections(tree);
+  // Compound id paths. `numbers` = the full citation (IV.Prop.LXI) used everywhere a
+  // static label is needed (entries, annotation panel, export); `numbersShort` = the
+  // own segment (LXI). The reading column carries both and the toggle picks one.
+  const { full: numbers, short: numbersShort } = idPaths(tree);
   const entries = flattenEntries(tree, numbers);
   // Annotation-first lens: the annotations arranged along the document's hierarchy,
   // numbered off the reading tree so the two panels agree.
@@ -57,7 +60,7 @@ export function ReadingSurface({
 
   return (
     <ReadingWorkspace
-      reading={{ tree, numbers, entries, allIds: allNodeIds(tree) }}
+      reading={{ tree, numbers, numbersShort, entries, allIds: allNodeIds(tree) }}
       dual={{ tree: dualTree }}
       meta={meta ?? undefined}
       title={document?.title}

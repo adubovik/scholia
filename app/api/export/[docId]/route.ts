@@ -1,5 +1,5 @@
 import { getDocument } from "@/lib/data/documents";
-import { numberSections } from "@/lib/tree/number";
+import { idPaths } from "@/lib/tree/number";
 import { toMarkdown, filenameStem } from "@/lib/export/markdown";
 
 /**
@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ doc
   const data = await getDocument(docId);
   if (!data || !data.source) return new Response("Not found", { status: 404 });
 
-  const md = toMarkdown(data.doc.title, data.tree, numberSections(data.tree).byId);
+  const md = toMarkdown(data.doc.title, data.tree, idPaths(data.tree).full);
   const stem = filenameStem(data.doc.title);
   // Untrusted title in a header: the ASCII fallback drops anything non-printable
   // (header injection), and filename* carries the real name.

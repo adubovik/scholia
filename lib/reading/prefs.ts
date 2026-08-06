@@ -42,6 +42,39 @@ export function applyHlMode(mode: HlMode): void {
   else el.removeAttribute("data-hl-mode");
 }
 
+// Section-id display mode. Every node renders BOTH its short id (own segment, "LXI")
+// and full path ("IV.Prop.LXI"); CSS shows one per this root attribute. Same shape as
+// HlMode: "short" is the default (no attribute → zero pre-paint work), only "long" is
+// materialised as data-id-mode="long".
+export type IdMode = "short" | "long";
+export const ID_MODE_KEY = "scholia:id-mode";
+export const DEFAULT_ID_MODE: IdMode = "short";
+
+export function readStoredIdMode(): IdMode {
+  if (typeof localStorage === "undefined") return DEFAULT_ID_MODE;
+  try {
+    return localStorage.getItem(ID_MODE_KEY) === "long" ? "long" : DEFAULT_ID_MODE;
+  } catch {
+    return DEFAULT_ID_MODE;
+  }
+}
+
+export function writeStoredIdMode(mode: IdMode): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    if (mode === DEFAULT_ID_MODE) localStorage.removeItem(ID_MODE_KEY);
+    else localStorage.setItem(ID_MODE_KEY, mode);
+  } catch {
+    /* private-mode / quota — preferences are best-effort */
+  }
+}
+
+export function applyIdMode(mode: IdMode): void {
+  const el = document.documentElement;
+  if (mode === "long") el.setAttribute("data-id-mode", "long");
+  else el.removeAttribute("data-id-mode");
+}
+
 // steps are pre-formatted CSS values (line-height is unitless) so mapping is a
 // plain lookup. 7 steps per control (a tick per step in the UI) — odd, so the
 // middle step is a true centre. Index `default` is that centre (3), tuned to the
@@ -122,5 +155,6 @@ export function preloadScript(): string {
     `for(var k in C){var c=C[k],i=p&&typeof p[k]==="number"&&p[k]>=0&&p[k]<c.s.length&&Math.floor(p[k])===p[k]?p[k]:c.d;` +
     `d.style.setProperty(c.v,c.s[i]);}` +
     `if(localStorage.getItem(${JSON.stringify(HL_MODE_KEY)})==="underline")d.setAttribute("data-hl-mode","underline");` +
+    `if(localStorage.getItem(${JSON.stringify(ID_MODE_KEY)})==="long")d.setAttribute("data-id-mode","long");` +
     `}catch(e){}})();`;
 }

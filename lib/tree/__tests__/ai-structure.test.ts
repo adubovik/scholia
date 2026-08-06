@@ -19,12 +19,14 @@ const paras: ParaInput[] = [
 ];
 
 const tree: AiNode[] = [
-  { h: 1, title: "DEDICATION", body: [1, 2], children: null },
+  { h: 1, id: "Dedication", alias: null, cut: "DEDICATION", body: [1, 2], children: null },
   {
     h: 4,
-    title: "PREFACE",
+    id: "Preface",
+    alias: null,
+    cut: "PREFACE",
     body: [4, 5],
-    children: [{ h: 6, title: "§1", body: null, children: null }],
+    children: [{ h: 6, id: "1", alias: null, cut: "1.", body: null, children: null }],
   },
 ];
 
@@ -34,13 +36,13 @@ describe("validateTree", () => {
   });
   it("rejects an out-of-order tree", () => {
     const bad: AiNode[] = [
-      { h: 4, title: "B", body: null, children: null },
-      { h: 2, title: "A", body: null, children: null },
+      { h: 4, id: "B", body: null, children: null },
+      { h: 2, id: "A", body: null, children: null },
     ];
     expect(() => validateTree(bad, paras.length)).toThrow(/increasing/);
   });
   it("rejects an out-of-range anchor", () => {
-    expect(() => validateTree([{ h: 99, title: "x", body: null, children: null }], paras.length)).toThrow(/range/);
+    expect(() => validateTree([{ h: 99, id: "x", body: null, children: null }], paras.length)).toThrow(/range/);
   });
 });
 
@@ -57,9 +59,11 @@ describe("treeToPlanned", () => {
     expect(byIdx.get(5)!.parentId).toBe(byIdx.get(3)!.id); // §1 under PREFACE
     expect(byIdx.get(0)!.parentId).toBeNull();
     expect(byIdx.get(3)!.parentId).toBeNull();
-    // offsets come straight from the paragraph
-    expect(byIdx.get(0)!.startOffset).toBe(0);
-    expect(byIdx.get(5)!.title).toBe("§1");
+    // id lands in label; a body paragraph (no cut) keeps the paragraph's own start
+    expect(byIdx.get(5)!.label).toBe("1");
+    expect(byIdx.get(1)!.startOffset).toBe(11); // body para, no cut → paragraph start
+    // cut shifts the start past the prefix + its trailing space ("1. " = 3 chars)
+    expect(byIdx.get(5)!.startOffset).toBe(51 + 3);
   });
 });
 
@@ -67,11 +71,11 @@ describe("buildPreview", () => {
   it("returns one reading-order line per paragraph, marking dropped + truncating", () => {
     const lines = buildPreview(tree, paras);
     expect(lines).toHaveLength(paras.length);
-    expect(lines[0].kind).toBe("heading"); // DEDICATION (title == text)
+    expect(lines[0].kind).toBe("heading"); // DEDICATION: whole-line cut leaves nothing
     expect(lines[1].kind).toBe("text");
     expect(lines[1].depth).toBe(1); // body nested under its heading
     expect(lines[2].kind).toBe("dropped"); // anchor 3
-    expect(lines[5].title).toBe("§1");
+    expect(lines[5].title).toBe("1"); // preview shows the id as the label
     expect(lines.filter((l) => l.kind === "dropped")).toHaveLength(1);
     // long line clipped to ~160 chars + ellipsis
     expect(lines[1].text.endsWith("…")).toBe(true);

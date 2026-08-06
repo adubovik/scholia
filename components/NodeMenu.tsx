@@ -134,12 +134,26 @@ export function ChildCount({ n }: { n: number }) {
   return n > 1 ? <span className="node-num-count">·{n}</span> : null;
 }
 
+// The section identifier's two forms, both rendered; CSS shows one per the
+// Display-settings "Section ids" toggle (:root[data-id-mode]). Rendering both (vs
+// client re-render on toggle) keeps it SSR + pre-paint, like the Marks toggle.
+// `full` = IV.Prop.LXI (ancestor aliases + own id); `short` = LXI (own id).
+export function NumText({ full, short }: { full: string; short: string }) {
+  return (
+    <>
+      <span className="node-num-full">{full}</span>
+      <span className="node-num-short">{short}</span>
+    </>
+  );
+}
+
 // The section identifier. Left-click highlights the node's note (if it has one);
 // the node menu now lives on right-click only (NodeContextMenu wraps this). Editor
 // keyboard shortcuts stay bound here so a focused number can still move/indent.
 // `annotated` flips it red; `runIn` styles it as an inline paragraph prefix.
 export function NodeNumber({
   number,
+  numberShort,
   childCount,
   annotated,
   runIn,
@@ -148,7 +162,8 @@ export function NodeNumber({
   glyphs = [],
   onHighlightNote,
 }: {
-  number: string;
+  number: string; // full compound id (IV.Prop.LXI)
+  numberShort: string; // own segment (LXI)
   childCount: number;
   annotated: boolean;
   runIn?: boolean;
@@ -166,7 +181,7 @@ export function NodeNumber({
       onClick={onHighlightNote}
       onKeyDown={onHintKeyDown(nodeId, canEdit)}
     >
-      {number}
+      <NumText full={number} short={numberShort} />
       <ChildCount n={childCount} />
       {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--inline" />}
     </button>

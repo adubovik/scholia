@@ -63,7 +63,8 @@ export const nodes = pgTable(
     documentId: uuid("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
     parentId: uuid("parent_id"), // self-ref, app-enforced (matches documents.clonedFrom pattern)
     position: integer("position").notNull(),
-    label: text("label"),
+    label: text("label"), // the node's OWN id segment ("XI", "Definitions", "3"); null ⇒ positional at render
+    alias: text("alias"), // short token ancestors lend to a descendant's path ("Def"); null ⇒ same as label
     title: text("title"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

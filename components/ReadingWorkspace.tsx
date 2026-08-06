@@ -38,7 +38,7 @@ export function ReadingWorkspace({
   invites,
   initialLeftOpen,
 }: {
-  reading: { tree: TreeNode[]; numbers: Map<string, string>; entries: NoteEntry[]; allIds: string[] };
+  reading: { tree: TreeNode[]; numbers: Map<string, string>; numbersShort: Map<string, string>; entries: NoteEntry[]; allIds: string[] };
   dual: { tree: DualNode[] };
   meta?: DocMeta;
   title?: string;
@@ -74,12 +74,12 @@ export function ReadingWorkspace({
         {centre && canEdit ? (
           <RootMenu allIds={reading.allIds}>
             {reading.tree.map((n) => (
-              <NodeSection key={n.id} node={n} depth={0} canEdit={canEdit} documentId={documentId!} numbers={reading.numbers} />
+              <NodeSection key={n.id} node={n} depth={0} canEdit={canEdit} documentId={documentId!} numbers={reading.numbers} numbersShort={reading.numbersShort} />
             ))}
           </RootMenu>
         ) : (
           reading.tree.map((n) => (
-            <NodeSection key={n.id} node={n} depth={0} canEdit={false} documentId={documentId!} numbers={reading.numbers} />
+            <NodeSection key={n.id} node={n} depth={0} canEdit={false} documentId={documentId!} numbers={reading.numbers} numbersShort={reading.numbersShort} />
           ))
         )}
       </CollapseProvider>

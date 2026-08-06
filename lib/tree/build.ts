@@ -5,6 +5,7 @@ export interface NodeRow {
   parentId: string | null;
   position: number;
   label: string | null;
+  alias: string | null;
   title: string | null;
 }
 
@@ -18,6 +19,7 @@ export interface NodeRange {
 export interface TreeNode {
   id: string;
   label: string | null;
+  alias: string | null;
   title: string | null;
   text: string;
   sourceId: string;
@@ -49,6 +51,7 @@ export function buildTree(
     byId.set(n.id, {
       id: n.id,
       label: n.label,
+      alias: n.alias,
       title: n.title,
       text: r ? sourceText.slice(r.startOffset, r.endOffset) : "",
       sourceId: r?.sourceId ?? "",
