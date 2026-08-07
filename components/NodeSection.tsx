@@ -51,27 +51,24 @@ export function NodeSection({
   const collapsed = useCollapsed(node.id);
   const hasChildren = node.children.length > 0;
   const hasText = Boolean(node.text);
-  // A "container" renders as a head (its id + own remaining text on their own line),
-  // not as a run-in paragraph. Two ways to be one: it has structural children, or —
-  // legacy import — its whole range IS its title (heading stored as both title+text).
-  // For AI-imported nodes the `cut` already stripped the id from the text, so a
-  // division like "PART I" keeps just its subtitle ("CONCERNING GOD.") as own text,
-  // shown in the head next to the id.
+  // A node's own body text ALWAYS renders as a run-in passage — same serif, reading
+  // size, justification and flow as a childless leaf — whether or not it has children.
+  // (A paragraph that merely carries a footnote child must still read as prose, not as
+  // an indented head.) The one exception is a legacy heading whose whole range IS its
+  // title (stored as both title+text): that shows as a head line, not as prose.
   const isHeadingByTitle = node.title !== null && node.title.trim() === node.text.trim();
-  const isContainer = hasChildren || isHeadingByTitle;
-  // What renders beside the id in the head: the legacy title, else a container's own
-  // leftover text (division subtitle). Leaf paragraphs render their text as a passage.
-  const headTitle = node.title ?? (hasChildren && hasText ? node.text : null);
-  // Collapse governs the node's own body text AND its children. Containers carry no
-  // passage of their own, so they're collapsible only when they have children.
-  const collapsible = hasChildren || (hasText && !isContainer);
+  const runIn = hasText && !isHeadingByTitle;
+  const showHead = !runIn; // heading, or a bodyless structural container → id (+ title) on its own line
+  // The head, when shown, carries only the legacy title beside the id; a node's own
+  // prose never sits in the head now — it flows below as a passage via runIn.
+  const headTitle = node.title ?? null;
+  // Foldable when there's a passage to fold and/or a subtree to hide.
+  const collapsible = runIn || hasChildren;
 
-  // Compound id path (IV.Prop.LXI full / LXI short — the toggle picks). A leaf
-  // paragraph shows it as a run-in prefix; a container shows it in a head.
+  // Compound id path (IV.Prop.LXI full / LXI short — the toggle picks). A run-in
+  // passage shows it as a prefix; a head shows it on its own line.
   const num = numbers.get(node.id) ?? "";
   const short = numbersShort.get(node.id) ?? num;
-  const runIn = hasText && !isContainer;
-  const showHead = !runIn; // container or bodyless → number (+ title) on its own line
 
   // Collapsed preview: first sentence + "…" when content is actually hidden.
   const preview = hasText ? firstSentence(node.text) : "";
@@ -136,7 +133,7 @@ export function NodeSection({
         </div>
       )}
 
-      {hasText && !isContainer &&
+      {runIn &&
         (collapsed ? (
           <button className="node-preview" onClick={() => setMany([node.id], false)}>
             {plainNumberEl}

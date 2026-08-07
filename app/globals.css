@@ -512,7 +512,9 @@ body {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  /* No margin-bottom: the gap to the first child comes from .node-children's
+     margin-top (the block gap), so a head sits on the same vertical rhythm as every
+     other block — head→child spacing equals child→child and node→node spacing. */
   font-family: var(--mono);
   color: var(--muted);
 }
@@ -534,11 +536,15 @@ body {
   letter-spacing: 0.05em;
   font-variant-numeric: tabular-nums;
 }
+/* A container node's own leftover text (a paragraph that has a footnote/child, or a
+   division subtitle). Reads as body prose, not apparatus: same serif + reading size
+   as .reading-p, regardless of whether the node is a parent — only the id number
+   beside it stays mono. */
 .node-title {
-  font-family: var(--mono);
+  font-family: var(--serif);
   color: var(--ink);
-  font-size: 0.82rem;
-  letter-spacing: 0.02em;
+  font-size: var(--reading-font-size);
+  line-height: var(--reading-line-height);
 }
 .node-children {
   border-left: 1px solid var(--rule);
