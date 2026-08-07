@@ -456,10 +456,12 @@ body {
   border-bottom-color: var(--seg-hl);
   /* the rule IS the mark here — no chip to extrude, so drop the volume shadow, and
      drop the vertical padding so the rule stays on the text (horizontal padding stays,
-     insetting the rule ends slightly). */
+     insetting the rule ends slightly). Square the ends: the chip's border-radius would
+     otherwise curl the two ends of the rule. */
   box-shadow: none;
   padding-top: 0;
   padding-bottom: 0;
+  border-radius: 0;
 }
 /* A selected inline annotation: dark underline accent on the highlighted phrase
    itself. Both panels use it (DualNodeSection + reading-column HlSpan) so selection
@@ -475,10 +477,15 @@ body {
   border-bottom-color: color-mix(in srgb, var(--seg-hl), black 25%);
   box-shadow: 0 1px 4px rgba(28, 26, 21, 0.16);
 }
-/* Underline mode: the rule is the only cue (no chip to lift), so keep it full ink. The
-   more general underline selector above already zeros the box-shadow here. */
+/* Underline mode selects to the SAME look as filled mode: a selected highlight always
+   reads as the raised, tinted chip. Restore the fill, padding, rounded corners, darkened
+   underline and lift that the general underline rule above strips off. */
 :root[data-hl-mode="underline"] .hl--selected {
-  border-bottom-color: var(--ink);
+  background: var(--seg-hl);
+  border-bottom-color: color-mix(in srgb, var(--seg-hl), black 25%);
+  box-shadow: 0 1px 4px rgba(28, 26, 21, 0.16);
+  padding: 0.12em 0.15em;
+  border-radius: 3px;
 }
 
 /* ── Tree ────────────────────────────────────────────────── */
