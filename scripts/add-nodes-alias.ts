@@ -8,11 +8,14 @@
  * + IF NOT EXISTS, so it is safe and idempotent on the shared DB.
  */
 import { config } from "dotenv";
-import { neon } from "@neondatabase/serverless";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
 config({ path: ".env.local" });
 
-const listCols = (sql: ReturnType<typeof neon>) => sql`
+// neon(url) resolves to the concrete NeonQueryFunction<false, false>; typing the
+// param as the widened ReturnType<typeof neon> (<boolean, boolean>) makes the call
+// unassignable and loses the row type (.map/.some). Use the concrete instance type.
+const listCols = (sql: NeonQueryFunction<false, false>) => sql`
   SELECT column_name FROM information_schema.columns
   WHERE table_name = 'nodes' AND column_name IN ('label', 'alias', 'title')
   ORDER BY column_name`;
