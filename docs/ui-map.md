@@ -105,6 +105,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the whole left panel | **library drawer** | `LibraryDrawer.tsx` | `.library-drawer` |
 | one text in the list | **library row** | `LibraryDrawer.tsx` | `.library-row` |
 | the `＋` button | **new-text button** | `LibraryDrawer.tsx` | `.library-new` |
+| the small `Demo` pill beside the Scholia wordmark (only on `/demo`) | **Demo badge** | `LibraryDrawer.tsx` (`usePathname`) | `.library-brand-badge` |
 | the "Add to the library" dialog | **new-doc modal** | `NewDocModal.tsx` | `.newdoc-sheet` |
 | the title / author / paste / URL fields in it | **import form** | `ImportForm.tsx` | `.source`, `.url-row` |
 | the "Use AI to detect structure" checkbox + key field in it | **AI toggle** | `ImportForm.tsx` (BYOK key in `sessionStorage`) | `.ai-toggle`, `.ai-key-note` |
@@ -172,6 +173,7 @@ Two standing hazards:
 |---|---|---|
 | `/` | `app/page.tsx` | reading surface, no document, library open |
 | `/d/[docId]` | `app/d/[docId]/page.tsx` | reading surface with a document |
+| `/demo` | `app/demo/page.tsx` | public, **no auth / no DB**: one in-memory sample doc rendered `canEdit={false}`. Every feature is pre-seeded (tree, coloured/overlapping highlights, node + inline notes, glyphs, tags, §xrefs). Owner chrome (edit/delete/export in `DocInfo`; the library `/d/[id]` link) is route-gated off here. Brand shows the **Demo badge**. |
 | `/welcome` | `app/welcome/page.tsx` | "you need an invite" wall |
 | `/invite/[token]` | `app/invite/[token]/page.tsx` | redeems an invite, redirects home |
 | `/sign-in`, `/sign-up` | `app/sign-*/` | Clerk |

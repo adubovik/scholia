@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { isDevAuth } from "@/lib/auth/mode";
 
-const isPublic = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/api/webhooks(.*)"]);
+const isPublic = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/api/webhooks(.*)", "/demo(.*)"]);
 
 // In dev-bypass mode, skip Clerk entirely (the ternary short-circuits, so
 // clerkMiddleware() is never invoked and no keys are required).

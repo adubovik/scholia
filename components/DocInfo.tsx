@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { deleteDocument, updateDocument } from "@/lib/actions/documents";
 import { SettingsIcon } from "./SettingsIcon";
 
@@ -48,6 +49,10 @@ export function DocInfo({ meta }: { meta: DocMeta }) {
   const [authorDraft, setAuthorDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const exportUrl = `/api/export/${meta.documentId}`;
+  // ponytail: the demo is storage-free, so its owner-only actions (edit/delete/export)
+  // have no backing row — hide them. Route-gated; promote to a canEdit prop if a second
+  // read-only surface appears. The info grid (dates, source, stats) stays.
+  const readOnly = usePathname() === "/demo";
 
   function startEdit() {
     setTitleDraft(meta.title);
@@ -129,7 +134,7 @@ export function DocInfo({ meta }: { meta: DocMeta }) {
                 )}
               </div>
               <div className="doc-sheet-headbtns">
-                {!editing && (
+                {!editing && !readOnly && (
                   <button className="glyph" aria-label="Edit title and author" title="Edit" onClick={startEdit}>✎</button>
                 )}
                 <button className="glyph" aria-label="Close" onClick={() => setOpen(false)}>✕</button>
@@ -168,22 +173,26 @@ export function DocInfo({ meta }: { meta: DocMeta }) {
               </div>
             </div>
 
-            <div className="doc-export">
-              <div className="doc-export-label">Export markdown</div>
-              <div className="doc-export-btns">
-                <button className="doc-btn" onClick={onCopy}>
-                  <CopyIcon />
-                  {copied === "ok" ? "Copied" : copied === "fail" ? "Copy failed" : "Copy to clipboard"}
-                </button>
-                <a className="doc-btn" href={exportUrl} download>
-                  <DownloadIcon />
-                  Save .md file
-                </a>
+            {!readOnly && (
+              <div className="doc-export">
+                <div className="doc-export-label">Export markdown</div>
+                <div className="doc-export-btns">
+                  <button className="doc-btn" onClick={onCopy}>
+                    <CopyIcon />
+                    {copied === "ok" ? "Copied" : copied === "fail" ? "Copy failed" : "Copy to clipboard"}
+                  </button>
+                  <a className="doc-btn" href={exportUrl} download>
+                    <DownloadIcon />
+                    Save .md file
+                  </a>
+                </div>
+                <p className="doc-export-hint">Every annotated block, with its highlights and notes.</p>
               </div>
-              <p className="doc-export-hint">Every annotated block, with its highlights and notes.</p>
-            </div>
+            )}
 
-            <button className="doc-delete" disabled={busy} onClick={onDelete}>Delete document</button>
+            {!readOnly && (
+              <button className="doc-delete" disabled={busy} onClick={onDelete}>Delete document</button>
+            )}
           </div>
         </div>
       )}

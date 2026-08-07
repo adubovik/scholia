@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { InviteSettings } from "./InviteSettings";
 import { NewDocModal } from "./NewDocModal";
 import { useNotesActions, useNotesState } from "./NotesContext";
@@ -33,6 +34,9 @@ export function LibraryDrawer({
   const { leftOpen, leftWidth, ready } = useNotesState();
   const { toggleLeft, closeLeft, setLeftWidth } = useNotesActions();
   const [newOpen, setNewOpen] = useState(false);
+  // ponytail: route-gated demo chrome (badge + storage-free link). Promote to a prop
+  // if a second demo-like, DB-less surface ever appears.
+  const isDemo = usePathname() === "/demo";
 
   // Edge handle: click (when closed) toggles; drag (when open) resizes — mirror of the
   // right drawer, measured from the left viewport edge.
@@ -65,7 +69,7 @@ export function LibraryDrawer({
         <div className="library-head">
           <div className="library-brand-row">
             <div>
-              <div className="library-brand">Scholia</div>
+              <div className="library-brand">Scholia{isDemo && <span className="library-brand-badge">Demo</span>}</div>
               <div className="library-tagline">Close reading &amp; marginal annotation.</div>
             </div>
             <button className="glyph" aria-label="Close" onClick={closeLeft}>✕</button>
@@ -80,7 +84,7 @@ export function LibraryDrawer({
           {docs.map((d) => (
             <Link
               key={d.id}
-              href={`/d/${d.id}`}
+              href={isDemo ? "/demo" : `/d/${d.id}`}
               className={d.id === currentId ? "library-row library-row--current" : "library-row"}
             >
               <span className="library-row-main">

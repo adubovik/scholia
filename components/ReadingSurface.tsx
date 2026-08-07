@@ -30,12 +30,14 @@ export function ReadingSurface({
   docs,
   canInvite,
   invites,
+  initialLeftOpen,
 }: {
   document?: ReadingDoc;
   canEdit: boolean;
   docs: LibraryDoc[];
   canInvite: boolean;
   invites: InviteView[];
+  initialLeftOpen?: boolean; // override the default (open only on the home surface)
 }) {
   const tree = document?.tree ?? [];
   // Compound id paths. `numbers` = the full citation (IV.Prop.LXI) used everywhere a
@@ -73,7 +75,7 @@ export function ReadingSurface({
       currentId={document?.documentId ?? null}
       canInvite={canInvite}
       invites={invites}
-      initialLeftOpen={!document}
+      initialLeftOpen={initialLeftOpen ?? !document}
     />
   );
 }
