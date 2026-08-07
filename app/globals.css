@@ -438,7 +438,7 @@ body {
    between them. A selected highlight still overrides `background` inline (item 9). */
 .hl {
   cursor: pointer;
-  transition: background 0.4s;
+  transition: background 0.4s, box-shadow 0.2s;
   background: var(--seg-hl);
   /* Clip the tint to the padding box: otherwise it bleeds under the reserved 2px
      bottom border and reads bottom-heavy. With this, top and bottom padding are equal. */
@@ -446,16 +446,18 @@ body {
   border-bottom: 2px solid transparent;
   padding: 0.12em 0.15em;
   border-radius: 3px;
-  /* clone so a highlight wrapping to a second line keeps padding + rounded corners
-     on each fragment, not just the run's very start/end. */
+  /* clone so a highlight wrapping to a second line keeps padding, rounded corners, and
+     (when selected) the bevel + drop shadow on each fragment, not just the run's very start/end. */
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 :root[data-hl-mode="underline"] .hl {
   background: transparent;
   border-bottom-color: var(--seg-hl);
-  /* the rule IS the mark here — drop the vertical padding so it stays on the text
-     (horizontal padding stays, insetting the rule ends slightly). */
+  /* the rule IS the mark here — no chip to extrude, so drop the volume shadow, and
+     drop the vertical padding so the rule stays on the text (horizontal padding stays,
+     insetting the rule ends slightly). */
+  box-shadow: none;
   padding-top: 0;
   padding-bottom: 0;
 }
@@ -465,7 +467,16 @@ body {
    the reading column it marks the active highlight. The border space is already
    reserved above → no reflow; the second selector out-specifies the underline-mode
    colour so the accent wins in both display modes. */
-.hl--selected,
+/* Filled mode: the selected chip sits flat but lifted — one soft drop shadow, no bevel,
+   so it reads as a raised card rather than a domed button. The underline is the
+   highlight's own fill taken a shade darker, so it reads as the mark's colour deepening,
+   not a black rule. */
+.hl--selected {
+  border-bottom-color: color-mix(in srgb, var(--seg-hl), black 25%);
+  box-shadow: 0 1px 4px rgba(28, 26, 21, 0.16);
+}
+/* Underline mode: the rule is the only cue (no chip to lift), so keep it full ink. The
+   more general underline selector above already zeros the box-shadow here. */
 :root[data-hl-mode="underline"] .hl--selected {
   border-bottom-color: var(--ink);
 }
