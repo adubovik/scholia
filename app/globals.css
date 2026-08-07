@@ -1210,6 +1210,14 @@ body {
 }
 @media (min-width: 861px) { .notes-backdrop { display: none; } }
 
+/* Suppress every drawer/column slide until the restored open-state has painted
+   (data-ready flips true a frame later). Without this a reload animates the drawer
+   in from off-screen and nudges the column across. */
+.notes-drawer:not([data-ready="true"]),
+.library-drawer:not([data-ready="true"]),
+.notes-edge:not([data-ready="true"]),
+.reading-main:not([data-ready="true"]) { transition: none !important; }
+
 /* Edge grip: a thin hover strip at the viewport edge. Closed → click toggles;
    open (right drawer) → drag resizes. */
 .notes-edge {
@@ -1548,7 +1556,6 @@ body {
   top: 0;
   left: 0;
   bottom: 0;
-  width: 300px;
   z-index: 62;
   background: var(--paper);
   border-right: 1px solid var(--rule);
@@ -1753,7 +1760,7 @@ body {
   }
   .notes-drawer[data-open="true"] { transform: translateY(0); }
   .library-drawer {
-    width: 100%;
+    width: 100% !important; /* beat the inline resize width — mobile is a top sheet */
     bottom: auto;
     height: 82vh;
     border-right: none;

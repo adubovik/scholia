@@ -5,6 +5,7 @@ import Link from "next/link";
 import { InviteSettings } from "./InviteSettings";
 import { NewDocModal } from "./NewDocModal";
 import { useNotesActions, useNotesState } from "./NotesContext";
+import { makeEdgeHandler } from "./useEdgeDrag";
 import type { InviteView } from "@/lib/data/invites";
 
 export interface LibraryDoc {
@@ -29,9 +30,20 @@ export function LibraryDrawer({
   canInvite: boolean;
   invites: InviteView[];
 }) {
-  const { leftOpen } = useNotesState();
-  const { toggleLeft, closeLeft } = useNotesActions();
+  const { leftOpen, leftWidth, ready } = useNotesState();
+  const { toggleLeft, closeLeft, setLeftWidth } = useNotesActions();
   const [newOpen, setNewOpen] = useState(false);
+
+  // Edge handle: click (when closed) toggles; drag (when open) resizes — mirror of the
+  // right drawer, measured from the left viewport edge.
+  const onHandleDown = makeEdgeHandler({
+    side: "left",
+    open: leftOpen,
+    minW: 260,
+    onResize: setLeftWidth,
+    onClose: closeLeft,
+    onToggle: toggleLeft,
+  });
 
   return (
     <>
@@ -42,13 +54,14 @@ export function LibraryDrawer({
       <button
         className="notes-edge notes-edge--left"
         aria-label="Toggle library"
-        style={{ left: leftOpen ? 300 : 0 }}
-        onClick={toggleLeft}
+        data-ready={ready}
+        style={{ left: leftOpen ? leftWidth : 0, cursor: leftOpen ? "col-resize" : "pointer" }}
+        onPointerDown={onHandleDown}
       >
         <span className="notes-edge-grip" />
       </button>
 
-      <aside className="library-drawer" data-open={leftOpen} aria-hidden={!leftOpen}>
+      <aside className="library-drawer" data-open={leftOpen} data-ready={ready} style={{ width: leftWidth }} aria-hidden={!leftOpen}>
         <div className="library-head">
           <div className="library-brand-row">
             <div>

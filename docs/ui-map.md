@@ -85,7 +85,7 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | If you'd say… | **Call it** | File | CSS |
 |---|---|---|---|
 | the whole right panel | **right drawer** | `SideDrawer.tsx` | `.notes-drawer` |
-| the thin strip you drag to resize it | **edge tab** / **drawer handle** | `SideDrawer.tsx` → `onHandleDown` | `.notes-edge` |
+| the thin strip you drag to resize it | **edge tab** / **drawer handle** | `SideDrawer.tsx` / `LibraryDrawer.tsx` → `makeEdgeHandler` (`useEdgeDrag.ts`) | `.notes-edge` |
 | the annotations (filter row + tree) inside it | **annotation panel** | `AnnotationPanel.tsx` | `.annot-panel` |
 | one annotation row | **dual block** | `DualNodeSection.tsx` | `.dual-block`, `.dual-note` |
 | the rendered note prose (markdown) | **note markdown** | `NoteMarkdown.tsx` (used by `DualNodeSection`) | `.dual-note` children |
@@ -119,7 +119,7 @@ The three most common sources of "we're talking about different things":
 
 - **Two sliders icons.** Both use the shared `SettingsIcon` (a "tune" glyph, formerly ⚙). Reading header = **document info sheet** (`DocInfo`); library drawer = **invite sheet** (`InviteSettings`). Neither is the **display sheet** — that's the `Aa` button.
 - **Two kinds of "note".** A **highlight** (`inline_annotations`) is anchored to a character range inside a paragraph and shows a coloured underline. A **node note** (`node_annotations`) is attached to a whole paragraph/section and shows only as a red section number. Both appear as rows in the annotation tree (a highlight nests under its node), so "my note" is ambiguous — say *highlight* or *node note*.
-- **Two edge tabs.** Both use `.notes-edge`. The left one only toggles; the right one toggles **and** drag-resizes.
+- **Two edge tabs.** Both use `.notes-edge` and share one pointer handler (`components/useEdgeDrag.ts::makeEdgeHandler`): a click toggles, a drag while open resizes (left grows rightward, right grows leftward). Widths live in `NotesContext` (`leftWidth` / `panelWidth`).
 - **Glyphs ARE tags.** The three preset marks (≡ summary, ? question, ! insight) aren't a separate column — they're `":summary"`/`":question"`/`":insight"` system tags inside an annotation's `tags`. `lib/annotations/glyphs.ts` splits a tag list into display (`#`) tags and glyphs. So "tags" spans both: the `#tag` chips exclude glyph tags, and the glyph pill/marker render the glyph tags. Adding the tag is what turns on the mark.
 
 ---

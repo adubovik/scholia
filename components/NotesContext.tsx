@@ -47,6 +47,7 @@ export interface NotesActions {
   toggleLeft: () => void;
   closeLeft: () => void;
   setPanelWidth: (w: number) => void;
+  setLeftWidth: (w: number) => void;
   setFilterTag: (tag: string | null) => void;
   /** Toggle a preset-glyph filter section; ANDs with the tag filter. */
   toggleFilterGlyph: (glyph: string) => void;
@@ -62,6 +63,10 @@ export interface NotesState {
   composeNodeId: string | null;
   editingId: string | null; // card whose editor should be open (see openAnnotation)
   panelWidth: number;
+  leftWidth: number;
+  // False until the restored open-state has painted; drawer transitions are suppressed
+  // while false so a reload/nav doesn't animate the drawer in from off-screen.
+  ready: boolean;
   filterTag: string | null;
   filterGlyphs: string[]; // active preset-glyph filters (AND); [] = no glyph filter
 }
@@ -73,9 +78,11 @@ interface ActiveStore {
   set: (annId: string | null, nodeId: string | null) => void;
 }
 
-// Each route mounts its own NotesProvider, so the library-drawer state is stashed
-// in sessionStorage to survive navigation (open on home → click a doc → stays open).
+// Each route mounts its own NotesProvider, so the drawer open-state is stashed in
+// sessionStorage to survive navigation and reload (open on home → click a doc / reload
+// → stays open).
 const LEFT_KEY = "scholia:leftOpen";
+const DRAWER_KEY = "scholia:drawerOpen";
 
 const ActionsCtx = createContext<NotesActions | null>(null);
 const StateCtx = createContext<NotesState | null>(null);
@@ -156,6 +163,8 @@ export function NotesProvider({
     composeNodeId: null,
     editingId: null,
     panelWidth: 480,
+    leftWidth: 300,
+    ready: false,
     filterTag: null,
     filterGlyphs: [],
   });
@@ -177,17 +186,37 @@ export function NotesProvider({
   }, [sections]);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(LEFT_KEY);
+    const storedLeft = sessionStorage.getItem(LEFT_KEY);
+    const storedDrawer = sessionStorage.getItem(DRAWER_KEY);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- post-mount viewport + storage read
     setState((s) => ({
       ...s,
       panelWidth: Math.round(window.innerWidth / 2),
       // Home forces the library open; elsewhere restore the last choice so
       // navigating from the drawer doesn't slam it shut.
-      leftOpen: initialLeftOpen ? true : stored === "1",
+      leftOpen: initialLeftOpen ? true : storedLeft === "1",
+      drawerOpen: storedDrawer === "1",
     }));
     if (initialLeftOpen) sessionStorage.setItem(LEFT_KEY, "1");
+    // Let the restored open-state paint before enabling transitions, so the drawers
+    // snap to their remembered position instead of sliding in. Two frames: one to paint
+    // the restore, one to turn transitions back on without re-triggering them.
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setState((s) => ({ ...s, ready: true })));
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
   }, [initialLeftOpen]);
+
+  // Persist the right drawer's open-state once past the initial restore, so a reload
+  // brings it back. Covers every path that opens it (toggle, highlight click, compose).
+  useEffect(() => {
+    if (!state.ready) return;
+    sessionStorage.setItem(DRAWER_KEY, state.drawerOpen ? "1" : "0");
+  }, [state.drawerOpen, state.ready]);
 
   const [actions] = useState<NotesActions>(() => ({
     openAnnotation: (annId, nodeId, edit = false) => {
@@ -243,6 +272,7 @@ export function NotesProvider({
       setState((s) => ({ ...s, leftOpen: false }));
     },
     setPanelWidth: (w) => setState((s) => ({ ...s, panelWidth: w })),
+    setLeftWidth: (w) => setState((s) => ({ ...s, leftWidth: w })),
     setFilterTag: (tag) => setState((s) => ({ ...s, filterTag: s.filterTag === tag ? null : tag })),
     toggleFilterGlyph: (glyph) =>
       setState((s) => ({
