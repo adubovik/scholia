@@ -1042,10 +1042,13 @@ body {
     margin-left: var(--shift-left);
     margin-right: var(--shift-right);
   }
-  /* Left library: same-width column, just nudged right to stay centred in what's
-     left of the viewport (half the drawer width). */
+  /* Left library: column stays at its measure width, nudged right to stay centred in
+     what's left of the viewport (half the drawer width). Cap the width to that gap so a
+     wide column (up to Width=100%) fills the freed space instead of sliding under the
+     drawer and off the right edge — at narrow measures the min() is a no-op. */
   .reading-main[data-mode="left"] {
     left: calc(var(--shift-left) / 2);
+    max-width: min(var(--reading-measure, 44rem), calc(100% - var(--shift-left)));
   }
 }
 
@@ -1399,6 +1402,7 @@ body {
   font-family: var(--serif);
   font-size: var(--reading-font-size);
   line-height: var(--reading-line-height);
+  word-spacing: var(--reading-word-spacing);
   color: var(--ink);
   text-wrap: pretty;
 }
@@ -1429,6 +1433,7 @@ body {
   font-family: var(--serif);
   font-size: var(--reading-font-size);
   line-height: var(--reading-line-height);
+  word-spacing: var(--reading-word-spacing);
   color: var(--faint);
   white-space: nowrap;
   overflow: hidden;
@@ -1513,11 +1518,10 @@ body {
 .annot-filters { padding: 0 0 1.25rem; margin-bottom: 0.9rem; }
 
 /* A panel living in the drawer (reading prose when swapped, annotations by default):
-   scroll area + a slightly tighter reading measure so book-width prose fits the panel. */
+   just a scroll area. Display settings (size/line/word/block) inherit from :root so the
+   drawer tree matches the centred tree; only width differs (the drawer sets its own). */
 .drawer-scroll {
   padding: 0.6rem 1.25rem 1.5rem;
-  --reading-font-size: 0.98rem;
-  --reading-line-height: 1.5;
 }
 .drawer-scroll .reading-p { text-align: left; hyphens: none; }
 

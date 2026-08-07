@@ -86,7 +86,7 @@ export const CONTROLS: Record<PrefKey, { cssVar: string; steps: string[]; defaul
   line:  { cssVar: "--reading-line-height",  steps: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7"], default: 3 },
   word:  { cssVar: "--reading-word-spacing", steps: ["-0.06em", "-0.04em", "-0.02em", "0em", "0.04em", "0.08em", "0.12em"], default: 3 },
   block: { cssVar: "--reading-block-gap",    steps: ["-0.2rem", "-0.12rem", "-0.05rem", "0rem", "0.5rem", "1rem", "1.6rem"], default: 3 },
-  width: { cssVar: "--reading-measure",      steps: ["30rem", "36rem", "40rem", "44rem", "50rem", "56rem", "62rem"], default: 3 },
+  width: { cssVar: "--reading-measure",      steps: ["30rem", "36rem", "40rem", "44rem", "50rem", "56rem", "100%"], default: 3 },
 };
 
 const KEYS = Object.keys(CONTROLS) as PrefKey[];
