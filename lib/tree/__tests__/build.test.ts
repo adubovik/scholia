@@ -47,8 +47,8 @@ it("attaches only the annotations intersecting each node's range", () => {
     { nodeId: "b", sourceId: "s1", startOffset: 11, endOffset: 22 },
   ];
   const anns: InlineAnnotationView[] = [
-    { id: "x", startOffset: 2, endOffset: 6, color: "yellow", note: null, tags: [], authorId: "u" },  // in a
-    { id: "y", startOffset: 12, endOffset: 15, color: "pink", note: null, tags: [], authorId: "u" },  // in b
+    { id: "x", startOffset: 2, endOffset: 6, color: "yellow", note: null, tags: [], authorId: "u", createdAt: "2024-01-01T00:00:00.000Z" },  // in a
+    { id: "y", startOffset: 12, endOffset: 15, color: "pink", note: null, tags: [], authorId: "u", createdAt: "2024-01-01T00:00:00.000Z" },  // in b
   ];
   const tree = buildTree(nodes, ranges, "Root text. Child text.", anns);
   expect(tree[0].annotations.map((a) => a.id)).toEqual(["x"]);
@@ -67,7 +67,7 @@ it("attaches each node's own note by nodeId, leaving others null", () => {
     { nodeId: "b", sourceId: "s1", startOffset: 11, endOffset: 22 },
   ];
   const nodeAnns: NodeAnnotationView[] = [
-    { id: "n1", nodeId: "a", note: "on a", tags: [], authorId: "u" },
+    { id: "n1", nodeId: "a", note: "on a", tags: [], authorId: "u", createdAt: "2024-01-01T00:00:00.000Z" },
   ];
   const tree = buildTree(nodes, ranges, "Root text. Child text.", [], nodeAnns);
   expect(tree[0].nodeAnnotation?.note).toBe("on a");

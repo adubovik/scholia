@@ -3,7 +3,7 @@ import { render, fireEvent } from "@testing-library/react";
 import { SelectionPopover } from "@/components/SelectionPopover";
 import { NotesProvider } from "@/components/NotesContext";
 
-const create = vi.fn(async () => "new-id");
+const create = vi.fn<(...a: unknown[]) => Promise<string>>(async () => "new-id");
 vi.mock("@/lib/actions/annotations", () => ({ createInlineAnnotation: (...a: unknown[]) => create(...a) }));
 
 // SelectionPopover opens the drawer on the new highlight, so it needs the provider.

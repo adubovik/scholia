@@ -3,7 +3,7 @@ import { splitSpans } from "@/lib/annotations/spans";
 import type { InlineAnnotationView } from "@/lib/annotations/types";
 
 function ann(id: string, startOffset: number, endOffset: number, color: InlineAnnotationView["color"] = "yellow"): InlineAnnotationView {
-  return { id, startOffset, endOffset, color, note: null, tags: [], authorId: "u" };
+  return { id, startOffset, endOffset, color, note: null, tags: [], authorId: "u", createdAt: "2024-01-01T00:00:00.000Z" };
 }
 
 describe("splitSpans", () => {

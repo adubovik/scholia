@@ -4,7 +4,7 @@ import { InviteSettings } from "@/components/InviteSettings";
 import type { InviteView } from "@/lib/data/invites";
 
 const createInvite = vi.fn(async () => ({ token: "tok-123" }));
-const revokeInvite = vi.fn(async () => {});
+const revokeInvite = vi.fn<(id: string) => Promise<void>>(async () => {});
 vi.mock("@/lib/actions/invites", () => ({
   createInvite: () => createInvite(),
   revokeInvite: (id: string) => revokeInvite(id),
