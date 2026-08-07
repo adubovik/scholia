@@ -79,6 +79,32 @@ export function buildDual(tree: TreeNode[], numbers: Map<string, string>): DualN
   return tree.map((n) => toDual(n, numbers));
 }
 
+/** A §-reference target: the block to scroll/select, plus the inline highlight to
+ * light up (null for a plain block reference). */
+export interface SectionTarget {
+  annId: string | null;
+  nodeId: string;
+}
+
+/** Index the dual tree for §-links in note prose: `number` → its block (e.g. "1.1"),
+ * and `number_index` → an inline highlight (e.g. "1.1_1"), mirroring the 1.1 / 1.1₁
+ * labels the panel shows. Same numbers as the reading tree, so references agree with
+ * what the reader sees. */
+export function sectionIndex(nodes: DualNode[]): Record<string, SectionTarget> {
+  const out: Record<string, SectionTarget> = {};
+  const walk = (list: DualNode[]) => {
+    for (const d of list) {
+      if (d.number) {
+        if (d.kind === "inline") out[`${d.number}_${d.index}`] = { annId: d.noteId, nodeId: d.nodeId };
+        else out[d.number] = { annId: null, nodeId: d.nodeId };
+      }
+      walk(d.children);
+    }
+  };
+  walk(nodes);
+  return out;
+}
+
 /** Does this row carry an annotation of its own? An inline row is itself a highlight;
  * a node counts only if it has a note. Note-less nodes are skeletons. */
 function ownAnnotated(d: DualNode): boolean {

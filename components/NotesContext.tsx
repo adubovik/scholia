@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { NoteEntry } from "@/lib/annotations/entries";
+import type { SectionTarget } from "@/lib/tree/dual";
 
 // Three contexts, split by re-render cost.
 //  • ActionsCtx — a value that never changes; the prose tree consumes only this,
@@ -38,8 +39,9 @@ export interface NotesActions {
   stopEditing: () => void;
   /** Drawer card → scroll the prose to the annotation, mark active. */
   locate: (entry: NoteEntry) => void;
-  /** §cross-reference → scroll the prose to a section by its number. */
-  scrollToSection: (num: string) => void;
+  /** §cross-reference → scroll the prose to a block ("1.1") or inline highlight
+   * ("1.1_1") by its reference key, and select it. */
+  scrollToSection: (ref: string) => void;
   toggleDrawer: () => void;
   closeDrawer: () => void;
   toggleLeft: () => void;
@@ -54,7 +56,7 @@ export interface NotesActions {
 
 export interface NotesState {
   entries: NoteEntry[];
-  sections: Record<string, string>; // section number → node id (for §link validation)
+  sections: Record<string, SectionTarget>; // §reference key → block/highlight target
   drawerOpen: boolean;
   leftOpen: boolean;
   composeNodeId: string | null;
@@ -144,7 +146,7 @@ export function NotesProvider({
   children,
 }: {
   entries: NoteEntry[];
-  sections: Record<string, string>; // section number → node id, for §links
+  sections: Record<string, SectionTarget>; // §reference key → block/highlight target
   initialLeftOpen?: boolean; // home (no document open) starts with the library showing
   children: ReactNode;
 }) {
@@ -166,6 +168,13 @@ export function NotesProvider({
   useEffect(() => {
     openRef.current = state.drawerOpen;
   }, [state.drawerOpen]);
+
+  // Same trick for the §-reference index: the actions are built once (useState), but
+  // `sections` changes when the document revalidates, so read it live from a ref.
+  const sectionsRef = useRef(sections);
+  useEffect(() => {
+    sectionsRef.current = sections;
+  }, [sections]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem(LEFT_KEY);
@@ -212,12 +221,14 @@ export function NotesProvider({
       const el = document.querySelector<HTMLElement>(sel);
       if (el) scrollProseTo(el);
     },
-    scrollToSection: (num) => {
-      const nodeId = sections[num];
-      if (!nodeId) return;
-      active.set(null, nodeId);
-      const el = document.querySelector<HTMLElement>(`[data-node-id="${nodeId}"]`);
-      if (el) scrollProseTo(el);
+    scrollToSection: (ref) => {
+      const target = sectionsRef.current[ref];
+      if (!target) return;
+      // Inline ref → select only the highlight (node id null), exactly like clicking the
+      // span, so its whole text block isn't embossed too. Block ref → select the node.
+      const nodeId = target.annId ? null : target.nodeId;
+      active.set(target.annId, nodeId);
+      scrollPanels(target.annId, nodeId);
     },
     toggleDrawer: () => setState((s) => ({ ...s, drawerOpen: !s.drawerOpen })),
     closeDrawer: () => setState((s) => ({ ...s, drawerOpen: false })),

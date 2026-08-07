@@ -5,6 +5,8 @@ import { htmlToSource } from "@/lib/import/html";
 import { createDocument } from "@/lib/actions/documents";
 import { COLORS } from "@/lib/annotations/types";
 import { GLYPHS, glyphTag } from "@/lib/annotations/glyphs";
+import { buildTree } from "@/lib/tree/build";
+import { idPaths } from "@/lib/tree/number";
 import { withSpinner } from "./seed-progress";
 
 const BOOK_URL = "https://www.gutenberg.org/files/5827/5827-h/5827-h.htm";
@@ -85,6 +87,16 @@ async function main() {
         .limit(3)
     : [];
 
+  // Reading numbers for the seeded blocks, computed off the same tree the reader sees,
+  // so a §-reference in a note resolves to a real block whatever the doc's labelling.
+  const nodeRows = await db
+    .select({ id: nodes.id, parentId: nodes.parentId, position: nodes.position, label: nodes.label, alias: nodes.alias, title: nodes.title })
+    .from(nodes)
+    .where(eq(nodes.documentId, docId))
+    .orderBy(nodes.position);
+  const { full: numbers } = idPaths(buildTree(nodeRows, [], ""));
+  const refOf = (id: string) => numbers.get(id) ?? "";
+
   // Rotate colours, glyphs, and #tags across the demo annotations so every display
   // feature has live data: all four highlight colours, all three preset glyphs, a
   // handful of tags, and one note-less highlight (the "dim span, add a note" case).
@@ -96,11 +108,20 @@ async function main() {
   for (let i = 0; i < prose.length; i++) {
     const n = prose[i];
     // A node note with a #tag and a preset glyph (":summary" / ":question" / ":insight").
+    // The first note also carries §-references — a block (§1.1) and an inline highlight
+    // (§1.1_1) — so the note-prose reference parser has live data to exercise. The block
+    // ref points at the next paragraph (or self, if it's the only one); the inline ref at
+    // this paragraph's first highlight, added just below.
+    const blockRef = refOf(prose[Math.min(i + 1, prose.length - 1)].id);
+    const note =
+      i === 0
+        ? `Seeded node note on paragraph 1. Cross-references: the argument resumes at §${blockRef}, and compare the highlighted phrase §${refOf(n.id)}_1.`
+        : `Seeded node note on paragraph ${i + 1}.`;
     await db.insert(nodeAnnotations).values({
       documentId: docId,
       nodeId: n.id,
       authorId: DEV_USER,
-      note: `Seeded node note on paragraph ${i + 1}.`,
+      note,
       tags: [nextTag(), glyphTag(GLYPHS[i % GLYPHS.length])],
     });
     const [range] = await db.select().from(nodeSourceRanges).where(eq(nodeSourceRanges.nodeId, n.id));

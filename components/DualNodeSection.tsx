@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import type { DualNode } from "@/lib/tree/dual";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { NoteEditor } from "./NoteEditor";
+import { NoteMarkdown } from "./NoteMarkdown";
 import { GlyphPill } from "./GlyphPill";
 import { displayTags, glyphsInTags } from "@/lib/annotations/glyphs";
 import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/annotations";
@@ -205,7 +204,7 @@ export function DualNodeSection({
                   {node.source}
                 </span>
               </div>
-              {hasNote && <ReactMarkdown remarkPlugins={[remarkGfm]}>{node.note}</ReactMarkdown>}
+              {hasNote && <NoteMarkdown note={node.note} />}
               {controls}
             </div>
           ) : (
@@ -213,7 +212,7 @@ export function DualNodeSection({
               {numberEl}
               {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--lead" />}
               {metaEl}
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{node.note}</ReactMarkdown>
+              <NoteMarkdown note={node.note} />
               {controls}
             </div>
           )}

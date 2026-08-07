@@ -2,7 +2,7 @@ import { ReadingWorkspace } from "./ReadingWorkspace";
 import { type LibraryDoc } from "./LibraryDrawer";
 import { flattenEntries } from "@/lib/annotations/entries";
 import { idPaths } from "@/lib/tree/number";
-import { buildDual } from "@/lib/tree/dual";
+import { buildDual, sectionIndex } from "@/lib/tree/dual";
 import type { InviteView } from "@/lib/data/invites";
 import type { TreeNode } from "@/lib/tree/build";
 
@@ -46,6 +46,8 @@ export function ReadingSurface({
   // Annotation-first lens: the annotations arranged along the document's hierarchy,
   // numbered off the reading tree so the two panels agree.
   const dualTree = buildDual(tree, numbers);
+  // §-reference index for note prose: "1.1" → its block, "1.1_1" → an inline highlight.
+  const sections = sectionIndex(dualTree);
   const meta = document && {
     documentId: document.documentId,
     title: document.title,
@@ -62,6 +64,7 @@ export function ReadingSurface({
     <ReadingWorkspace
       reading={{ tree, numbers, numbersShort, entries, allIds: allNodeIds(tree) }}
       dual={{ tree: dualTree }}
+      sections={sections}
       meta={meta ?? undefined}
       title={document?.title}
       documentId={document?.documentId}

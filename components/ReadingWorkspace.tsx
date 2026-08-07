@@ -14,7 +14,7 @@ import type { DocMeta } from "./DocInfo";
 import type { NoteEntry } from "@/lib/annotations/entries";
 import type { InviteView } from "@/lib/data/invites";
 import type { TreeNode } from "@/lib/tree/build";
-import type { DualNode } from "@/lib/tree/dual";
+import type { DualNode, SectionTarget } from "@/lib/tree/dual";
 
 const DUAL_KEY = "scholia:dualMode";
 
@@ -28,6 +28,7 @@ const DUAL_KEY = "scholia:dualMode";
 export function ReadingWorkspace({
   reading,
   dual,
+  sections,
   meta,
   title,
   documentId,
@@ -40,6 +41,7 @@ export function ReadingWorkspace({
 }: {
   reading: { tree: TreeNode[]; numbers: Map<string, string>; numbersShort: Map<string, string>; entries: NoteEntry[]; allIds: string[] };
   dual: { tree: DualNode[] };
+  sections: Record<string, SectionTarget>;
   meta?: DocMeta;
   title?: string;
   documentId?: string;
@@ -90,7 +92,7 @@ export function ReadingWorkspace({
   const annotationPanel = <AnnotationPanel nodes={dual.tree} canEdit={canEdit} documentId={documentId!} />;
 
   return (
-    <NotesProvider entries={reading.entries} sections={{}} initialLeftOpen={initialLeftOpen}>
+    <NotesProvider entries={reading.entries} sections={sections} initialLeftOpen={initialLeftOpen}>
       <LibraryDrawer docs={docs} currentId={currentId} canInvite={canInvite} invites={invites} />
 
       {hasDoc ? (
