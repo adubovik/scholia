@@ -1824,11 +1824,18 @@ body {
    spec draws between layers — and the reading column's own typography, so a
    translation reads as prose, not as a note about prose. */
 .layer-bands { margin-top: 0.5rem; }
+/* The tint is decoration and nothing else: it must not move a single line. Padding +
+   equal negative margin (the .node-self / .dual-block trick) bleeds the wash past the
+   prose at zero layout cost, at the 0.3rem horizontal bleed those two settled on —
+   0.55 reached into the collapse-toggle column and touched the ▾. Vertically there is
+   no bleed at all: --reading-block-gap goes to 0 at the tightest density, so any
+   vertical bleed makes the next node's tint paint over this one's descenders. The
+   line-height's own half-leading is the breathing room. */
 .layer-band {
   position: relative;
-  border-radius: 7px;
-  padding: 0.45rem 0.55rem 0.4rem;
-  margin: 0 -0.55rem;
+  border-radius: 5px;
+  padding: 0 0.3rem;
+  margin: 0 -0.3rem;
   font-family: var(--serif);
   font-size: var(--reading-font-size);
   line-height: var(--reading-line-height);
@@ -1847,9 +1854,11 @@ body {
 .layer-band[data-layer-color="clay"]  { background: var(--layer-clay); }
 /* Stacked views read as ONE block: the group rounds at its outer corners only, and
    the hairline the spec draws between layers falls inside it. The change of tint is
-   the other half of that separation. */
+   the other half of that separation. The rule is an inset shadow, not a border, so it
+   costs no height either; between two bands the text boxes simply meet, exactly as
+   two paragraphs would. */
 .layer-band:not(:first-child) {
-  border-top: 1px solid var(--rule);
+  box-shadow: inset 0 1px 0 var(--rule);
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
