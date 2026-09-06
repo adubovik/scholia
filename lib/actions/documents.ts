@@ -25,6 +25,9 @@ export async function createDocument(input: {
    * the tree is validated + mapped instead of running the rule-based planNodes.
    * No AI call happens here — the key was used only during preview. */
   aiTree?: AiNode[];
+  /** Anchors (1-based paragraph numbers) the reader struck out in that preview.
+   * They keep their place in the immutable source text but get no node. */
+  drop?: number[];
 }): Promise<string> {
   const user = await requireMember();
   const normalized = normalizeText(input.text);
@@ -56,10 +59,11 @@ export async function createDocument(input: {
     let planned;
     if (input.aiTree) {
       validateTree(input.aiTree, paraInputs.length);
-      planned = treeToPlanned(input.aiTree, paraInputs, () => crypto.randomUUID());
+      planned = treeToPlanned(input.aiTree, paraInputs, () => crypto.randomUUID(), new Set(input.drop));
     } else {
       planned = planNodes(paraInputs, () => crypto.randomUUID(), input.headingLevels);
     }
+    if (planned.length === 0) throw new Error("Nothing left to import — every paragraph was removed");
     statements.push(
       db.insert(nodes).values(
         planned.map((n) => ({

@@ -31,9 +31,18 @@ function cleanTitle(raw: string): string {
   return raw.split(/\s+[|–—\-]\s+/)[0].trim();
 }
 
-/** Walk h1–h6 + p in document order into raw blocks (h1 skipped: it is the title). */
-function collectRawBlocks(rootHtml: string): { blocks: RawBlock[]; firstH1?: string } {
-  const { document } = parseHTML(`<body>${rootHtml}</body>`);
+/**
+ * Walk h1–h6 + p in document order into raw blocks. By default h1 is skipped (on
+ * a web page it is the title); `keepH1` is for per-file sources like an epub
+ * chapter, where every file legitimately carries its own h1 heading.
+ */
+function collectRawBlocks(
+  rootHtml: string,
+  keepH1 = false,
+): { blocks: RawBlock[]; firstH1?: string } {
+  // A <br> is a visual line break; without this, textContent mashes the words on
+  // either side together ("CHAPTER 1<br/>THE ELIMINATION…" → "CHAPTER 1THE …").
+  const { document } = parseHTML(`<body>${rootHtml.replace(/<br\s*\/?>/gi, " ")}</body>`);
   const root = document.querySelector("article") ?? document;
   const blocks: RawBlock[] = [];
   let firstH1: string | undefined;
@@ -48,7 +57,7 @@ function collectRawBlocks(rootHtml: string): { blocks: RawBlock[]; firstH1?: str
       const level = Number(tag[1]);
       if (level === 1) {
         firstH1 ??= text;
-        continue;
+        if (!keepH1) continue;
       }
       blocks.push({ kind: "heading", level, text, linkish: false });
     } else {
@@ -95,6 +104,24 @@ function stripTocClusters(blocks: RawBlock[]): RawBlock[] {
   return blocks.filter((_, idx) => !drop[idx]);
 }
 
+/** Shared tail of both extractors: drop TOC/byline cruft, then shed the DOM signal. */
+function finishBlocks(raw: RawBlock[]): Block[] {
+  return stripTocClusters(stripHeadingCruft(raw)).map((b) =>
+    b.kind === "heading"
+      ? { kind: "heading", level: b.level, text: b.text }
+      : { kind: "paragraph", text: b.text },
+  );
+}
+
+/**
+ * Blocks from one already-clean document body (an epub chapter). Unlike
+ * `htmlToBlocks` there is no Readability pass — an epub file *is* the article, and
+ * Readability drops short ones — and h1 is kept, since each file has its own.
+ */
+export function documentToBlocks(bodyHtml: string): Block[] {
+  return finishBlocks(collectRawBlocks(bodyHtml, true).blocks);
+}
+
 /** Server-only: extract a clean title + ordered content blocks from arbitrary HTML. */
 export function htmlToBlocks(html: string): ExtractedDoc {
   const { document } = parseHTML(html);
@@ -102,12 +129,7 @@ export function htmlToBlocks(html: string): ExtractedDoc {
   const contentHtml = article?.content ?? html;
 
   const { blocks: raw, firstH1 } = collectRawBlocks(contentHtml);
-  const kept = stripTocClusters(stripHeadingCruft(raw));
-  const blocks: Block[] = kept.map((b) =>
-    b.kind === "heading"
-      ? { kind: "heading", level: b.level, text: b.text }
-      : { kind: "paragraph", text: b.text },
-  );
+  const blocks = finishBlocks(raw);
 
   const rawTitle = article?.title ?? firstH1;
   return { title: rawTitle ? cleanTitle(rawTitle) : undefined, blocks };

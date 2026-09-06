@@ -237,11 +237,18 @@ export function validateTree(nodes: AiNode[], count: number): void {
   }
 }
 
-/** Map a validated AI tree onto PlannedNode[] (one node per kept paragraph). */
+/**
+ * Map a validated AI tree onto PlannedNode[] (one node per kept paragraph).
+ * `drop` holds anchors the reader struck out in the preview: those paragraphs
+ * get no node, and a struck heading's surviving children re-parent onto its own
+ * parent (the preview strikes a whole subtree at once, so this is only reached
+ * for the roots of the strike).
+ */
 export function treeToPlanned(
   nodes: AiNode[],
   paras: ParaInput[],
   newId: () => string,
+  drop: ReadonlySet<number> = new Set(),
 ): PlannedNode[] {
   const out: PlannedNode[] = [];
   const posByParent = new Map<string | null, number>();
@@ -267,10 +274,12 @@ export function treeToPlanned(
   };
   const walk = (n: AiNode, parentId: string | null) => {
     // heading node: own-id → label, alias, cut applied to its passage
-    const hId = emit(n.h, parentId, n.id?.trim() || null, n.alias?.trim() || null, n.cut ?? null);
+    const hId = drop.has(n.h)
+      ? parentId
+      : emit(n.h, parentId, n.id?.trim() || null, n.alias?.trim() || null, n.cut ?? null);
     // body paragraphs (folded prose) become label-less child nodes → positional id at render
     const b = bodyRange(n);
-    if (b) for (let a = b[0]; a <= b[1]; a++) if (a !== n.h) emit(a, hId, null, null, null);
+    if (b) for (let a = b[0]; a <= b[1]; a++) if (a !== n.h && !drop.has(a)) emit(a, hId, null, null, null);
     for (const c of n.children ?? []) walk(c, hId);
   };
   for (const n of nodes) walk(n, null);
@@ -280,6 +289,8 @@ export function treeToPlanned(
 // ── Preview (for the confirm-before-create modal) ─────────────────────────────
 
 export interface PreviewLine {
+  anchor: number; // 1-based paragraph number this line shows
+  last: number; // last anchor of the subtree rooted here (=== anchor for a leaf)
   depth: number;
   kind: "heading" | "text" | "dropped";
   title: string | null;
@@ -298,15 +309,20 @@ const clip = (s: string) => {
  */
 export function buildPreview(nodes: AiNode[], paras: ParaInput[]): PreviewLine[] {
   const byAnchor = new Map<number, PreviewLine>();
-  const walk = (n: AiNode, depth: number) => {
+  /** Returns the last anchor this node's subtree reaches, so a heading line knows
+   * the whole span striking it out would remove (anchors ascend in reading order). */
+  const walk = (n: AiNode, depth: number): number => {
     const full = paras[n.h - 1]?.text ?? "";
     const id = n.id?.trim() || null;
     const remaining = full.slice(cutLength(full, n.cut)); // what survives after the cut prefix
     const isHeading = remaining.trim() === ""; // pure caption / container (nothing left to show)
-    byAnchor.set(n.h, { depth, kind: isHeading ? "heading" : "text", title: id, text: clip(remaining) });
+    const line: PreviewLine = { anchor: n.h, last: n.h, depth, kind: isHeading ? "heading" : "text", title: id, text: clip(remaining) };
+    byAnchor.set(n.h, line);
     const b = bodyRange(n);
-    if (b) for (let a = b[0]; a <= b[1]; a++) if (a !== n.h) byAnchor.set(a, { depth: depth + 1, kind: "text", title: null, text: clip(paras[a - 1]?.text ?? "") });
-    for (const c of n.children ?? []) walk(c, depth + 1);
+    if (b) for (let a = b[0]; a <= b[1]; a++) if (a !== n.h) byAnchor.set(a, { anchor: a, last: a, depth: depth + 1, kind: "text", title: null, text: clip(paras[a - 1]?.text ?? "") });
+    if (b) line.last = Math.max(line.last, b[1]);
+    for (const c of n.children ?? []) line.last = Math.max(line.last, walk(c, depth + 1));
+    return line.last;
   };
   for (const n of nodes) walk(n, 0);
 
@@ -318,7 +334,7 @@ export function buildPreview(nodes: AiNode[], paras: ParaInput[]): PreviewLine[]
       out.push(kept);
       lastDepth = kept.depth;
     } else {
-      out.push({ depth: lastDepth, kind: "dropped", title: null, text: clip(paras[a - 1].text) });
+      out.push({ anchor: a, last: a, depth: lastDepth, kind: "dropped", title: null, text: clip(paras[a - 1].text) });
     }
   }
   return out;

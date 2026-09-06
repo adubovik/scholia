@@ -65,6 +65,16 @@ describe("treeToPlanned", () => {
     // cut shifts the start past the prefix + its trailing space ("1. " = 3 chars)
     expect(byIdx.get(5)!.startOffset).toBe(51 + 3);
   });
+
+  it("drops struck anchors and re-parents a struck heading's survivors upward", () => {
+    let seq = 0;
+    // Strike PREFACE itself (anchor 4) but not its prose (5) or §1 (6).
+    const planned = treeToPlanned(tree, paras, () => `n${seq++}`, new Set([4]));
+    expect(planned.map((p) => p.paragraphIndex)).toEqual([0, 1, 4, 5]);
+    const byIdx = new Map(planned.map((p) => [p.paragraphIndex, p]));
+    expect(byIdx.get(4)!.parentId).toBeNull(); // PREFACE was top-level → survivors root
+    expect(byIdx.get(5)!.parentId).toBeNull();
+  });
 });
 
 describe("buildPreview", () => {
@@ -80,6 +90,15 @@ describe("buildPreview", () => {
     // long line clipped to ~160 chars + ellipsis
     expect(lines[1].text.endsWith("…")).toBe(true);
     expect(lines[1].text.length).toBeLessThan(170);
+  });
+
+  it("carries each line's anchor and the last anchor of its subtree", () => {
+    const lines = buildPreview(tree, paras);
+    expect(lines.map((l) => l.anchor)).toEqual([1, 2, 3, 4, 5, 6]);
+    // Striking PREFACE (anchor 4) must take its body (5) and its child §1 (6).
+    expect(lines[3].last).toBe(6);
+    expect(lines[0].last).toBe(2); // DEDICATION + its one body paragraph
+    expect(lines[2].last).toBe(3); // a dropped line stands alone
   });
 });
 

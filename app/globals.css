@@ -253,17 +253,37 @@ body {
   padding: 0.6rem 0.4rem;
   background: color-mix(in srgb, var(--paper) 88%, var(--ink));
 }
+.tprev-hint { font-size: 0.82rem; margin: 0 0 0.6rem; }
 .tprev-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
   font-family: var(--serif);
   font-size: 0.9rem;
   line-height: 1.5;
   padding-top: 0.12rem;
   padding-bottom: 0.12rem;
-  padding-right: 0.5rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding-right: 0.35rem;
 }
+/* The text half truncates; the strike button keeps its width beside it. */
+.tprev-body { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tprev-cut {
+  flex: none;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.tprev-line:hover .tprev-cut,
+.tprev-cut:focus-visible { opacity: 1; }
+.tprev-cut:hover { color: var(--error); }
+/* A struck line's undo stays visible — nothing else marks it as the reader's own. */
+.tprev-dropped .tprev-cut { opacity: 1; color: var(--error); }
 .tprev-heading { font-weight: 600; color: var(--ink); margin-top: 0.35rem; }
 .tprev-title { font-weight: 600; color: var(--accent, #2b5c9a); margin-right: 0.4rem; }
 .tprev-text { color: var(--ink); }

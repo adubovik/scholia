@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { createDocument } from "@/lib/actions/documents";
-import { extractHtml } from "@/lib/actions/extract";
+import { extractHtml, extractEpub } from "@/lib/actions/extract";
 import { previewAiStructure, type AiPreviewResult } from "@/lib/actions/ai-preview";
 import { AI_MODEL } from "@/lib/tree/ai-model";
 import { TreePreviewModal } from "./TreePreviewModal";
@@ -53,7 +53,16 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
     setError(null);
     const base = file.name.replace(/\.[^.]+$/, "");
     try {
-      if (/\.html?$/i.test(file.name)) {
+      if (/\.epub$/i.test(file.name)) {
+        setBusy(true);
+        const form = new FormData();
+        form.append("file", file);
+        const { title: t, author: a, text: extracted, headingLevels } = await extractEpub(form);
+        structured.current = { text: extracted, headingLevels };
+        setText(extracted);
+        setTitle((cur) => cur || t || base);
+        if (a) setAuthor((cur) => cur || a);
+      } else if (/\.html?$/i.test(file.name)) {
         setBusy(true);
         const { title: t, text: extracted, headingLevels } = await extractHtml(await file.text());
         structured.current = { text: extracted, headingLevels };
@@ -132,7 +141,7 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
     }
   }
 
-  async function acceptPreview() {
+  async function acceptPreview(drop: number[]) {
     if (!preview) return;
     setBusy(true);
     setError(null);
@@ -142,6 +151,7 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
         author: author.trim(),
         text: preview.text,
         aiTree: preview.result.tree,
+        drop,
       });
       onDone(id);
     } catch (e) {
@@ -211,13 +221,13 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
           onChange={(e) => setText(e.target.value)}
         />
         <button type="button" className="source-browse" onClick={() => fileRef.current?.click()}>
-          Drop a file here, or <span className="source-browse-link">browse</span>
+          Drop a file here (.txt, .md, .html, .epub), or <span className="source-browse-link">browse</span>
         </button>
         <div className="source-overlay">Release to import</div>
         <input
           ref={fileRef}
           type="file"
-          accept=".txt,.md,.html,.htm"
+          accept=".txt,.md,.html,.htm,.epub"
           hidden
           onChange={(e) => e.target.files?.[0] && loadFile(e.target.files[0])}
         />
