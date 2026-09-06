@@ -10,27 +10,27 @@ import { useLayers } from "./LayerContext";
  * panel is centred. Multi-select: each chip toggles its band on or off, so you can
  * read two renditions side by side or the original alone.
  *
- * Annotation-first drops the "original" chip: that slot is the node's note (or a
- * rundown of its text), which is the whole point of that view — there is no original
- * prose to switch off. Nothing renders until a document actually has a view; the
- * flow that makes the first one is the node menu's "Create a view…".
+ * The same chips in both modes, including "original": the reading panel is on screen
+ * either way — centred, or in the drawer behind the annotation tree — so the switch
+ * that hides its source prose is just as live there. (It governs that panel only; the
+ * annotation tree has no original prose to switch off, and hands its rows to the first
+ * band regardless.) Nothing renders until a document actually has a view; the flow
+ * that makes the first one is the node menu's "Create a view…".
  */
-export function LayerBar({ dualMode, canEdit }: { dualMode: boolean; canEdit: boolean }) {
+export function LayerBar({ canEdit }: { canEdit: boolean }) {
   const { layers, selected, showOriginal, toggleLayer, toggleOriginal, openSheet } = useLayers();
   if (layers.length === 0) return null;
   const on = new Set(selected.map((l) => l.id));
 
   return (
     <div className="layer-bar" role="group" aria-label="Views">
-      {!dualMode && (
-        <button
-          className={showOriginal ? "layer-chip layer-chip--on" : "layer-chip"}
-          aria-pressed={showOriginal}
-          onClick={toggleOriginal}
-        >
-          original
-        </button>
-      )}
+      <button
+        className={showOriginal ? "layer-chip layer-chip--on" : "layer-chip"}
+        aria-pressed={showOriginal}
+        onClick={toggleOriginal}
+      >
+        original
+      </button>
       {layers.map((l) =>
         canEdit ? (
           <ChipMenu key={l.id} layer={l}>

@@ -107,7 +107,7 @@ export function ReadingWorkspace({
             <ReadingChrome title={title} meta={meta} dualMode={dualMode} onToggleMode={toggleMode}>
               <CentredPanel>
                 {/* The view selector rides above whichever panel is centred. */}
-                <LayerBar dualMode={dualMode} canEdit={canEdit} />
+                <LayerBar canEdit={canEdit} />
                 {dualMode ? annotationPanel : readingPanel(true)}
               </CentredPanel>
             </ReadingChrome>
