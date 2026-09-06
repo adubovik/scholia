@@ -29,6 +29,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ docId
         documentId: data.doc.id,
         createdAt: data.doc.createdAt.toISOString(),
         updatedAt: data.doc.updatedAt.toISOString(),
+        layers: data.layers,
       }}
       canEdit
       docs={docs.map((d) => ({

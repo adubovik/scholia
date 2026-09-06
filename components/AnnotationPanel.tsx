@@ -5,6 +5,7 @@ import { CollapseProvider } from "./CollapseContext";
 import { DualNodeSection } from "./DualNodeSection";
 import { GlyphToggle } from "./GlyphPill";
 import { useNotesActions, useNotesState } from "./NotesContext";
+import { useLayersOptional } from "./LayerContext";
 import { visibleDual, dualTags, type DualNode } from "@/lib/tree/dual";
 
 /**
@@ -17,11 +18,20 @@ export function AnnotationPanel({ nodes, canEdit, documentId }: { nodes: DualNod
   const { filterTag, filterGlyphs, composeNodeId } = useNotesState();
   const { setFilterTag, toggleFilterGlyph, clearFilters } = useNotesActions();
 
+  // Selected views both add rows (a node with only a translation earns one) and take
+  // them away (deselect the view and it prunes back out).
+  const layerCtx = useLayersOptional();
+  const layerIds = useMemo(() => layerCtx?.selected.map((l) => l.id) ?? [], [layerCtx?.selected]);
+  const composeLayerNode = layerCtx?.composing?.nodeId ?? null;
+
   const { tags, anyGlyphs } = useMemo(() => dualTags(nodes), [nodes]);
-  const forceIds = useMemo(() => new Set(composeNodeId ? [composeNodeId] : []), [composeNodeId]);
+  const forceIds = useMemo(
+    () => new Set([composeNodeId, composeLayerNode].filter((x): x is string => x !== null)),
+    [composeNodeId, composeLayerNode],
+  );
   const visible = useMemo(
-    () => visibleDual(nodes, { filterTag, filterGlyphs, forceIds }),
-    [nodes, filterTag, filterGlyphs, forceIds],
+    () => visibleDual(nodes, { filterTag, filterGlyphs, forceIds, layerIds }),
+    [nodes, filterTag, filterGlyphs, forceIds, layerIds],
   );
   const filtersActive = filterTag !== null || filterGlyphs.length > 0;
 

@@ -21,7 +21,7 @@ export function NoteEditor({
   onCancel,
   onDelete,
 }: {
-  kind: "node" | "inline";
+  kind: "node" | "inline" | "layer";
   note: string;
   tags: string[];
   color: string | null;
@@ -44,30 +44,32 @@ export function NoteEditor({
       {/* Metadata on one row above the body, in the order a note reads (glyph → #tags →
          colour). Single line so toggling any of them never grows the editor vertically —
          the always-present glyph pill fixes the row height, so the body stays put. */}
-      <div className="dual-meta-row">
-        <div className="note-glyphs">
-          <GlyphToggle active={glyphsInTags(tags)} onToggle={(g) => setTags(toggleGlyphTag(tags, g))} />
-        </div>
-        <TagEditor tags={tags} onChange={setTags} />
-        {kind === "inline" && (
-          <div className="note-colors">
-            {COLORS.map((c) => (
-              <button
-                key={c}
-                className={c === color ? "swatch swatch--active" : "swatch"}
-                aria-label={`Recolor ${c}`}
-                style={{ background: `var(--hl-${c})` }}
-                onClick={() => setColor(c)}
-              />
-            ))}
+      {kind !== "layer" && (
+        <div className="dual-meta-row">
+          <div className="note-glyphs">
+            <GlyphToggle active={glyphsInTags(tags)} onToggle={(g) => setTags(toggleGlyphTag(tags, g))} />
           </div>
-        )}
-      </div>
+          <TagEditor tags={tags} onChange={setTags} />
+          {kind === "inline" && (
+            <div className="note-colors">
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  className={c === color ? "swatch swatch--active" : "swatch"}
+                  aria-label={`Recolor ${c}`}
+                  style={{ background: `var(--hl-${c})` }}
+                  onClick={() => setColor(c)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <MarkdownTextarea
         className="textarea note-textarea"
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Note (Markdown)…"
+        placeholder={kind === "layer" ? "This passage in this view (Markdown)…" : "Note (Markdown)…"}
         autoFocus
       />
       <div className="note-actions">

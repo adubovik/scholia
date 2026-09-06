@@ -1,3 +1,4 @@
+import type { LayerNoteView } from "@/lib/annotations/types";
 import type { TreeNode } from "./build";
 import { displayTags, glyphTag, glyphsInTags } from "@/lib/annotations/glyphs";
 
@@ -31,6 +32,7 @@ export interface DualNode {
   color: string | null; // inline highlight colour (inline rows only)
   source: string; // original text: the node's text, or the highlighted span
   title: string | null; // structural heading title (node only)
+  layerNotes: LayerNoteView[]; // this node's text in each alternative view (node only)
   children: DualNode[];
 }
 
@@ -55,6 +57,7 @@ function toDual(n: TreeNode, numbers: Map<string, string>): DualNode {
         color: a.color,
         source: n.text.slice(s, e),
         title: null,
+        layerNotes: [],
         children: [],
       };
     });
@@ -70,6 +73,7 @@ function toDual(n: TreeNode, numbers: Map<string, string>): DualNode {
     color: null,
     source: n.text,
     title: n.title,
+    layerNotes: n.layerNotes,
     children: [...inlineKids, ...n.children.map((c) => toDual(c, numbers))],
   };
 }
@@ -111,16 +115,22 @@ function ownAnnotated(d: DualNode): boolean {
   return d.kind === "inline" || d.noteId !== null;
 }
 
-function matches(d: DualNode, filterTag: string | null, filterGlyphs: string[]): boolean {
-  if (!ownAnnotated(d)) return false;
-  if (filterTag && !d.tags.includes(filterTag)) return false;
-  return filterGlyphs.every((g) => d.tags.includes(glyphTag(g)));
+function matches(d: DualNode, f: DualFilter): boolean {
+  // A note-less node still earns a row when it has text in a *selected* view — so
+  // deselecting that view in the bar prunes it back out of the tree. Tag/glyph
+  // filters still apply on top: a layer-only row carries no tags, so any active
+  // filter drops it.
+  const inSelectedLayer = d.layerNotes.some((n) => f.layerIds?.includes(n.layerId));
+  if (!ownAnnotated(d) && !inSelectedLayer) return false;
+  if (f.filterTag && !d.tags.includes(f.filterTag)) return false;
+  return f.filterGlyphs.every((g) => d.tags.includes(glyphTag(g)));
 }
 
 export interface DualFilter {
   filterTag: string | null;
   filterGlyphs: string[];
   forceIds?: Set<string>; // ids to keep visible regardless (an open compose target)
+  layerIds?: string[]; // views selected in the layer bar; their texts keep a row alive
 }
 
 /**
@@ -134,7 +144,7 @@ export function visibleDual(nodes: DualNode[], f: DualFilter): DualNode[] {
   const walk = (list: DualNode[]): DualNode[] =>
     list.flatMap((d) => {
       const kids = walk(d.children);
-      if (matches(d, f.filterTag, f.filterGlyphs) || force.has(d.id) || kids.length > 0) {
+      if (matches(d, f) || force.has(d.id) || kids.length > 0) {
         return [{ ...d, children: kids }];
       }
       return [];

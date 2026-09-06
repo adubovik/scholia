@@ -7,6 +7,9 @@ import { SelectionPopover } from "./SelectionPopover";
 import { CollapseProvider } from "./CollapseContext";
 import { RootMenu } from "./NodeMenu";
 import { NotesProvider, CentredPanel } from "./NotesContext";
+import { LayerProvider } from "./LayerContext";
+import { LayerBar } from "./LayerBar";
+import { LayerModal } from "./LayerModal";
 import { SideDrawer } from "./SideDrawer";
 import { LibraryDrawer, type LibraryDoc } from "./LibraryDrawer";
 import { ReadingChrome } from "./ReadingChrome";
@@ -15,6 +18,7 @@ import type { NoteEntry } from "@/lib/annotations/entries";
 import type { InviteView } from "@/lib/data/invites";
 import type { TreeNode } from "@/lib/tree/build";
 import type { DualNode, SectionTarget } from "@/lib/tree/dual";
+import type { LayerView } from "@/lib/annotations/types";
 
 const DUAL_KEY = "scholia:dualMode";
 
@@ -38,6 +42,7 @@ export function ReadingWorkspace({
   canInvite,
   invites,
   initialLeftOpen,
+  layers,
 }: {
   reading: { tree: TreeNode[]; numbers: Map<string, string>; numbersShort: Map<string, string>; entries: NoteEntry[]; allIds: string[] };
   dual: { tree: DualNode[] };
@@ -51,6 +56,7 @@ export function ReadingWorkspace({
   canInvite: boolean;
   invites: InviteView[];
   initialLeftOpen: boolean;
+  layers: LayerView[]; // the document's alternative renditions (the view bar)
 }) {
   // Default reading-first (SSR-safe); mirror the stored choice after mount.
   const [dualMode, setDualMode] = useState(false);
@@ -93,27 +99,35 @@ export function ReadingWorkspace({
 
   return (
     <NotesProvider entries={reading.entries} sections={sections} initialLeftOpen={initialLeftOpen}>
-      <LibraryDrawer docs={docs} currentId={currentId} canInvite={canInvite} invites={invites} />
+      <LayerProvider layers={layers}>
+        <LibraryDrawer docs={docs} currentId={currentId} canInvite={canInvite} invites={invites} />
 
-      {hasDoc ? (
-        <>
-          <ReadingChrome title={title} meta={meta} dualMode={dualMode} onToggleMode={toggleMode}>
-            <CentredPanel>{dualMode ? annotationPanel : readingPanel(true)}</CentredPanel>
+        {hasDoc ? (
+          <>
+            <ReadingChrome title={title} meta={meta} dualMode={dualMode} onToggleMode={toggleMode}>
+              <CentredPanel>
+                {/* The view selector rides above whichever panel is centred. */}
+                <LayerBar dualMode={dualMode} canEdit={canEdit} />
+                {dualMode ? annotationPanel : readingPanel(true)}
+              </CentredPanel>
+            </ReadingChrome>
+
+            <SideDrawer title={dualMode ? "Original" : "Notes"}>
+              {dualMode ? readingPanel(false) : annotationPanel}
+            </SideDrawer>
+
+            <LayerModal documentId={documentId!} />
+          </>
+        ) : (
+          <ReadingChrome>
+            <div className="reading-blank">
+              <span className="reading-blank-fleuron" aria-hidden>❦</span>
+              <p className="reading-blank-line">No text open.</p>
+              <p className="reading-blank-hint">Pick a text from the library, or add a new one.</p>
+            </div>
           </ReadingChrome>
-
-          <SideDrawer title={dualMode ? "Original" : "Notes"}>
-            {dualMode ? readingPanel(false) : annotationPanel}
-          </SideDrawer>
-        </>
-      ) : (
-        <ReadingChrome>
-          <div className="reading-blank">
-            <span className="reading-blank-fleuron" aria-hidden>❦</span>
-            <p className="reading-blank-line">No text open.</p>
-            <p className="reading-blank-hint">Pick a text from the library, or add a new one.</p>
-          </div>
-        </ReadingChrome>
-      )}
+        )}
+      </LayerProvider>
     </NotesProvider>
   );
 }

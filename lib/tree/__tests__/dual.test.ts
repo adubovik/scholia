@@ -109,3 +109,33 @@ describe("dualTags", () => {
     expect(anyGlyphs).toBe(true);
   });
 });
+
+describe("visibleDual + views", () => {
+  const tree = [node({
+    id: "a", text: "Original.",
+    layerNotes: [{ id: "L1", nodeId: "a", layerId: "fr", note: "Original, en français." }],
+  })];
+
+  it("keeps a note-less node when one of its views is selected, drops it when deselected", () => {
+    const full = buildDual(tree, nums("a"));
+    expect(visibleDual(full, { ...noFilter, layerIds: ["fr"] })).toHaveLength(1);
+    expect(visibleDual(full, { ...noFilter, layerIds: ["de"] })).toHaveLength(0);
+    expect(visibleDual(full, noFilter)).toHaveLength(0);
+  });
+
+  it("still honours the tag filter — a view-only row carries no tags, so it prunes", () => {
+    const full = buildDual(tree, nums("a"));
+    expect(visibleDual(full, { filterTag: "greek", filterGlyphs: [], layerIds: ["fr"] })).toHaveLength(0);
+  });
+
+  it("carries each node's view texts onto its row, and never onto an inline child", () => {
+    const withAnn = [node({
+      id: "a", text: "Original.", startOffset: 0,
+      annotations: [inline({ id: "i1", startOffset: 0, endOffset: 8 })],
+      layerNotes: [{ id: "L1", nodeId: "a", layerId: "fr", note: "…en français." }],
+    })];
+    const [d] = buildDual(withAnn, nums("a"));
+    expect(d.layerNotes.map((l) => l.layerId)).toEqual(["fr"]);
+    expect(d.children[0].layerNotes).toEqual([]);
+  });
+});

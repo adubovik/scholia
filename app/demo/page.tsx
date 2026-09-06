@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ReadingSurface } from "@/components/ReadingSurface";
 import type { TreeNode } from "@/lib/tree/build";
-import type { Color, InlineAnnotationView, NodeAnnotationView } from "@/lib/annotations/types";
+import type { Color, InlineAnnotationView, LayerNoteView, LayerView, NodeAnnotationView } from "@/lib/annotations/types";
 
 export const metadata: Metadata = { title: "Scholia · Demo" };
 
@@ -39,6 +39,18 @@ function nodeNote(nodeId: string, note: string, tags: string[] = []): NodeAnnota
   return { id: `demo-note-${nodeId}`, nodeId, note, tags, authorId: DOC_ID, createdAt: AT };
 }
 
+// Two alternative renditions of the same passages — the feature the view bar selects.
+// Off until a chip is clicked, which is the tour: pick "paraphrase" and every seeded
+// node grows a tinted band under its original.
+const layers: LayerView[] = [
+  { id: "demo-layer-para", name: "paraphrase", color: "sand", position: 0 },
+  { id: "demo-layer-fr", name: "français", color: "mist", position: 1 },
+];
+
+function layerNote(nodeId: string, layerId: string, note: string): LayerNoteView {
+  return { id: `demo-${layerId}-${nodeId}`, nodeId, layerId, note };
+}
+
 function node(n: Partial<TreeNode> & { id: string }): TreeNode {
   return {
     label: null, alias: null, title: null, text: "", sourceId: SOURCE_ID, startOffset: 0,
@@ -65,6 +77,10 @@ const tree: TreeNode[] = [
     children: [
       node({
         id: "b2s1", label: "1", text: t21,
+        layerNotes: [
+          layerNote("b2s1", "demo-layer-para", "Expect awkward people today. They act badly out of ignorance, not malice — and nothing they do can touch what actually matters in you."),
+          layerNote("b2s1", "demo-layer-fr", "Dès le matin, dis-toi : je rencontrerai l'importun, l'ingrat, l'insolent, le fourbe, l'envieux, l'insociable. Tout cela leur arrive faute de savoir distinguer le bien du mal."),
+        ],
         // Node note: attaches to the whole block (red section number) with a ≡ summary glyph.
         nodeAnnotation: nodeNote(
           "b2s1",
@@ -88,6 +104,9 @@ const tree: TreeNode[] = [
       }),
       node({
         id: "b2s2", label: "2", text: t22,
+        layerNotes: [
+          layerNote("b2s2", "demo-layer-para", "Whatever I am, I'm flesh, breath, and a governing mind. Put the books down and live as though today were the last of it."),
+        ],
         annotations: [
           hl(t22, "a little flesh and breath, and the ruling part", {
             color: "green",
@@ -98,6 +117,9 @@ const tree: TreeNode[] = [
       }),
       node({
         id: "b2s3", label: "3", text: t23,
+        layerNotes: [
+          layerNote("b2s3", "demo-layer-fr", "Tout ce qui vient des dieux est plein de Providence ; ce qui vient de la fortune n'est pas séparé de la nature, ni sans lien avec ce que la Providence ordonne."),
+        ],
         annotations: [
           // Cross-references: §II.1 jumps to that block; §II.1_1 lights up its first highlight.
           hl(t23, "full of Providence", {
@@ -114,6 +136,9 @@ const tree: TreeNode[] = [
     children: [
       node({
         id: "b3s1", label: "1", text: t31,
+        layerNotes: [
+          layerNote("b3s1", "demo-layer-para", "Life shortens daily — and even a long one gives no guarantee the mind will still be up to using it."),
+        ],
         nodeAnnotation: nodeNote(
           "b3s1",
           "*Memento mori.* The turn from the quantity of time left to the quality of the mind that remains to use it.",
@@ -135,6 +160,7 @@ export default function DemoPage() {
         documentId: DOC_ID,
         createdAt: AT,
         updatedAt: AT,
+        layers,
       }}
       canEdit={false}
       docs={[{ id: DOC_ID, title: "Meditations", author: "Marcus Aurelius", nodeCount: 6, highlightCount: 5, noteCount: 2 }]}

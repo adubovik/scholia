@@ -2,8 +2,10 @@
 
 import type { ReactNode } from "react";
 import * as ContextMenu from "@radix-ui/react-context-menu";
+import type { LayerNoteView } from "@/lib/annotations/types";
 import { indentNode, outdentNode, moveNodeUp, moveNodeDown } from "@/lib/actions/tree";
 import { useCollapse } from "./CollapseContext";
+import { useLayersOptional } from "./LayerContext";
 import { GlyphPill } from "./GlyphPill";
 
 // The five node actions, shared verbatim by the right-click ContextMenu (row) and
@@ -15,6 +17,7 @@ type MenuProps = {
   canEdit: boolean;
   hasNote: boolean;
   hasChildren: boolean;
+  layerNotes?: LayerNoteView[]; // this node's text per view — picks "Add" vs "Edit"
   onOpenNote: () => void;
   onCollapseChildren: () => void;
   onExpandChildren: () => void;
@@ -36,10 +39,13 @@ function Key({ children }: { children: ReactNode }) {
 }
 
 export function MenuItems({
-  nodeId, canEdit, hasNote, hasChildren,
+  nodeId, canEdit, hasNote, hasChildren, layerNotes = [],
   onOpenNote, onCollapseChildren, onExpandChildren,
   Item, Separator,
 }: MenuProps & ItemParts) {
+  // Optional: the menu also renders on surfaces with no layer provider (tests, the
+  // static demo shell). Safe to read here — Radix mounts Content only while open.
+  const layers = useLayersOptional();
   return (
     <>
       {canEdit && (
@@ -74,6 +80,28 @@ export function MenuItems({
           <Separator className="node-menu-sep" />
           <Item className="node-menu-item" onSelect={onOpenNote}>
             <span className="node-menu-label">{hasNote ? "Edit note" : "Add note"}</span>
+          </Item>
+        </>
+      )}
+      {canEdit && layers && (
+        <>
+          <Separator className="node-menu-sep" />
+          {/* One entry per existing view, then the escape hatch that makes a new one —
+              so the second time you right-click, the views you already have lead. */}
+          {layers.layers.map((l) => (
+            <Item
+              key={l.id}
+              className="node-menu-item"
+              onSelect={() => layers.compose(nodeId, l.id)}
+            >
+              <span className="node-menu-label">
+                {layerNotes.some((n) => n.layerId === l.id) ? `Edit ${l.name}` : `Add ${l.name}`}
+              </span>
+              <span className="node-menu-dot" data-layer-color={l.color} aria-hidden />
+            </Item>
+          ))}
+          <Item className="node-menu-item" onSelect={() => layers.openSheet(null, nodeId)}>
+            <span className="node-menu-label">Create a view…</span>
           </Item>
         </>
       )}

@@ -76,6 +76,9 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the 4 colour dots after selecting text | **selection popover** | `SelectionPopover.tsx` | `.selection-popover` |
 | right-click menu on a paragraph | **node menu** | `NodeMenu.tsx` → `NodeContextMenu` | `.node-menu` |
 | right-click menu on empty space | **root menu** | `NodeMenu.tsx` → `RootMenu` | `.node-menu` |
+| the `(original\|summary\|french)` pill above the column | **view bar** (multi-select; picks which **views** show) | `LayerBar.tsx` (state in `LayerContext.tsx`) | `.layer-bar`, `.layer-chip` |
+| a tinted block of alternative text under a paragraph | **view band** (one **view**'s text for that node) | `LayerBands.tsx` | `.layer-band`, `.layer-band-name` |
+| the "Create a view" name+colour dialog | **view sheet** | `LayerModal.tsx` | `.layer-sheet`, `.layer-swatches` |
 | the "No text open ❦" screen | **blank surface** | `ReadingSurface.tsx` | `.reading-blank` |
 
 ### Right drawer + annotation panel
@@ -121,6 +124,8 @@ The three most common sources of "we're talking about different things":
 - **Two sliders icons.** Both use the shared `SettingsIcon` (a "tune" glyph, formerly ⚙). Reading header = **document info sheet** (`DocInfo`); library drawer = **invite sheet** (`InviteSettings`). Neither is the **display sheet** — that's the `Aa` button.
 - **Two kinds of "note".** A **highlight** (`inline_annotations`) is anchored to a character range inside a paragraph and shows a coloured underline. A **node note** (`node_annotations`) is attached to a whole paragraph/section and shows only as a red section number. Both appear as rows in the annotation tree (a highlight nests under its node), so "my note" is ambiguous — say *highlight* or *node note*.
 - **Two edge tabs.** Both use `.notes-edge` and share one pointer handler (`components/useEdgeDrag.ts::makeEdgeHandler`): a click toggles, a drag while open resizes (left grows rightward, right grows leftward). Widths live in `NotesContext` (`leftWidth` / `panelWidth`).
+- **"View" (UI) = "layer" (code).** Everything the user sees says *view* — "Create a view", the view bar. Everything in the code says `layer`: the `layers` table, `LayerView`, `LayerContext`, `layerNotes`, `--layer-sand`. (`…View` already means "shaped for rendering" here — `InlineAnnotationView`, `NodeAnnotationView` — so a type called `View` would have read as that.) Also distinct from **annotation-first view**, which is a *mode*, not a rendition: grep `dualMode` for the mode, `layers` for renditions.
+- **A view's text is a node annotation.** `node_annotations` rows with `layer_id` set ARE the view texts (`layer_id NULL` = the ordinary node note), sharing one table, one unique constraint (`UNIQUE NULLS NOT DISTINCT (node_id, author_id, layer_id)`) and one action (`upsertNodeAnnotation`). So "how many notes" queries must filter `layer_id IS NULL` — `listDocuments` does.
 - **Glyphs ARE tags.** The three preset marks (≡ summary, ? question, ! insight) aren't a separate column — they're `":summary"`/`":question"`/`":insight"` system tags inside an annotation's `tags`. `lib/annotations/glyphs.ts` splits a tag list into display (`#`) tags and glyphs. So "tags" spans both: the `#tag` chips exclude glyph tags, and the glyph pill/marker render the glyph tags. Adding the tag is what turns on the mark.
 
 ---
@@ -136,6 +141,16 @@ The **mode toggle** (left of `Aa`) **swaps the two panels' places**. Default (re
 - **Cross-panel select + scroll:** `openAnnotation(id, nodeId)` embosses the node in both panels (`useActiveNode`) and `scrollPanels` scrolls each panel to it — panels are tagged `data-panel="reading"|"annotation"` so the (colliding) node ids resolve within the right one.
 - Mode is client state in `ReadingWorkspace.tsx`, persisted to `localStorage["scholia:dualMode"]` (default off; mirrored after mount).
 
+## Views (alternative renditions)
+
+A **view** is a named second rendition of the same text — your own summary, a translation, another edition. Document-scoped (`layers` table); its per-node text is a `node_annotations` row carrying that `layer_id`.
+
+- **Making one:** right-click a node → **"Create a view…"** opens `LayerModal` (name + one of six pastels, `LAYER_COLORS`). After it saves, the new view is auto-selected and its editor opens on the node you right-clicked (`LayerContext.created`). Right-click that node again and the menu now lists **"Add ⟨name⟩" / "Edit ⟨name⟩"** above "Create a view…" (`NodeMenu.tsx::MenuItems`).
+- **Choosing what shows:** the **view bar** (`LayerBar.tsx`) is a multi-select pill above the centred panel, `(original|summary|french)`. Selection lives in `LayerContext` and persists to `localStorage["scholia:layers"]`. Default: original on, no alternatives. Right-click a chip → rename / delete the view. The bar renders **nothing** until a document has its first view; in annotation-first it drops the `original` chip (that slot is the note, and there is no original prose to switch off).
+- **Rendering:** `LayerBands.tsx` renders the selected views' text as tinted bands, each ruled off from what's above — under the passage in reading-first (`NodeSection`), under the note/skeleton in annotation-first (`DualNodeSection`). A view with no text for that node is skipped (no empty bands). **Bands take no highlights and no comments** — annotations anchor to source offsets, and a rendition is not the source; only the original passage has `SourcePassage`.
+- **Pruning:** in annotation-first, a selected view's text is enough to keep a note-less node in the tree — `visibleDual(..., {layerIds})`. Deselect the view in the bar and those rows prune back out. Tag/glyph filters still win: a view-only row has no tags.
+- **Why its own context.** `LayerContext` is separate from `NotesContext` on purpose: `NotesContext` is split three ways by re-render cost so the book-sized tree subscribes only to never-changing actions, whereas *every* band must repaint when a chip toggles. Folding layers into it would make opening the drawer re-render the whole document. **ponytail ceiling:** a band subscribes per node via plain context; if a very large document stutters on a chip toggle, move `selected` to an external store like `CollapseContext`.
+
 ## Where the behaviour lives
 
 Most "it doesn't react right" bugs are in a context, not a component.
@@ -148,6 +163,8 @@ Most "it doesn't react right" bugs are in a context, not a component.
 | a new note opens in the wrong place in the feed, or not in its editor | `NotesDrawer.tsx` (`at`, `compareSections`) + `NotesContext.tsx` (`editingId`) |
 | the note editor doesn't grow with the text, or grows without limit | `MarkdownTextarea.tsx` (JS height) + `.note-textarea` `max-height` (CSS cap) |
 | folding/unfolding sections, Collapse/Expand children | `components/CollapseContext.tsx` |
+| a view band won't show / won't hide; "Add ⟨view⟩" opens nothing; the view bar is empty | `components/LayerContext.tsx` (`selected`, `composing`, `sheet`) + `LayerBands.tsx` |
+| a view's text vanishes from the annotation tree when a chip is off | `lib/tree/dual.ts::visibleDual` (`layerIds`) — that pruning is deliberate |
 | reading column doesn't shift when a drawer opens | `ReadingChrome.tsx` (`--shift-left` / `--shift-right`, `data-mode`) |
 | text size / line height / column width / highlight marks / section-id short↔long | `lib/reading/prefs.ts` + the pre-paint script in `app/layout.tsx` |
 | highlight renders in the wrong place, overlaps look wrong | `lib/annotations/spans.ts::splitSpans` — the load-bearing one |
@@ -160,7 +177,7 @@ Most "it doesn't react right" bugs are in a context, not a component.
 
 All of it is one file, `app/globals.css`, in `/* ══ Section ══ */` blocks. Grep the banner, not a line number:
 
-`Reading header` · `Drawers (shared)` · `Notes drawer (right)` · `Library drawer (left)` · `Document info sheet` · `Drawers on mobile: bottom / top sheets`
+`Reading header` · `Preset glyph marks` · `Drawers (shared)` · `Notes drawer (right)` · `Annotation-first (dual) view` · `Library drawer (left)` · `Document info sheet` · `Views (alternative renditions)` · `Drawers on mobile: bottom / top sheets`
 
 Two standing hazards:
 
@@ -173,7 +190,7 @@ Two standing hazards:
 |---|---|---|
 | `/` | `app/page.tsx` | reading surface, no document, library open |
 | `/d/[docId]` | `app/d/[docId]/page.tsx` | reading surface with a document |
-| `/demo` | `app/demo/page.tsx` | public, **no auth / no DB**: one in-memory sample doc rendered `canEdit={false}`. Every feature is pre-seeded (tree, coloured/overlapping highlights, node + inline notes, glyphs, tags, §xrefs). Owner chrome (edit/delete/export in `DocInfo`; the library `/d/[id]` link) is route-gated off here. Brand shows the **Demo badge**. |
+| `/demo` | `app/demo/page.tsx` | public, **no auth / no DB**: one in-memory sample doc rendered `canEdit={false}`. Every feature is pre-seeded (tree, coloured/overlapping highlights, node + inline notes, glyphs, tags, §xrefs, two **views** — `paraphrase`, `français` — off until a chip is clicked). Owner chrome (edit/delete/export in `DocInfo`; the library `/d/[id]` link) is route-gated off here. Brand shows the **Demo badge**. |
 | `/welcome` | `app/welcome/page.tsx` | "you need an invite" wall |
 | `/invite/[token]` | `app/invite/[token]/page.tsx` | redeems an invite, redirects home |
 | `/sign-in`, `/sign-up` | `app/sign-*/` | Clerk |

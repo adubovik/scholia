@@ -4,6 +4,7 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
 import type { TreeNode } from "@/lib/tree/build";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
+import { LayerBands } from "./LayerBands";
 import { NodeContextMenu, NodeNumber, ChildCount, NumText } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, usePanelCentred, useActiveNode } from "./NotesContext";
@@ -88,6 +89,7 @@ export function NodeSection({
     canEdit,
     hasNote,
     hasChildren,
+    layerNotes: node.layerNotes,
     onOpenNote: openNote,
     onCollapseChildren: () => setMany(descendantIds(node), true),
     onExpandChildren: () => setMany(descendantIds(node), false),
@@ -151,6 +153,14 @@ export function NodeSection({
             prefix={runIn ? numberEl : undefined}
           />
         ))}
+
+      {/* The alternative renditions, stacked under the original and ruled off from it.
+          Inside the node's own menu region, so right-clicking a band still offers that
+          view's "Edit …" — but with no highlight affordances of its own: annotations
+          anchor to source offsets, and a translation is not the source. */}
+      {!collapsed && (
+        <LayerBands nodeId={node.id} layerNotes={node.layerNotes} canEdit={canEdit} documentId={documentId} />
+      )}
     </>
   );
 
