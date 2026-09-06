@@ -8,7 +8,7 @@ const n = (
   opts: { label?: string | null; alias?: string | null; children?: TreeNode[] } = {},
 ): TreeNode => ({
   id, label: opts.label ?? null, alias: opts.alias ?? null, title: null, text: "",
-  sourceId: "s", startOffset: 0, annotations: [], nodeAnnotation: null, children: opts.children ?? [],
+  sourceId: "s", startOffset: 0, annotations: [], layerNotes: [], nodeAnnotation: null, children: opts.children ?? [],
 });
 
 describe("idPaths", () => {

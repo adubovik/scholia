@@ -13,7 +13,7 @@ const nodeAnn = (over: Partial<NodeAnnotationView>): NodeAnnotationView => ({
 });
 const node = (over: Partial<TreeNode>): TreeNode => ({
   id: "a", label: null, alias: null, title: null, text: "", sourceId: "s", startOffset: 0,
-  annotations: [], nodeAnnotation: null, children: [], ...over,
+  annotations: [], layerNotes: [], nodeAnnotation: null, children: [], ...over,
 });
 const nums = (...ids: string[]) => new Map(ids.map((id) => [id, id.toUpperCase()]));
 const noFilter = { filterTag: null, filterGlyphs: [] };

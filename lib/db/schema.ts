@@ -108,6 +108,24 @@ export const inlineAnnotations = pgTable(
   }),
 );
 
+/**
+ * A named alternative rendition of the document's nodes — a summary pass, a
+ * translation, another edition. Rows in `node_annotations` carrying this layer's id
+ * are that layer's text for a node; `layer_id NULL` is the ordinary node note.
+ */
+export const layers = pgTable(
+  "layers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    documentId: uuid("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color").notNull(), // app-checked enum: see LAYER_COLORS
+    position: integer("position").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({ byDoc: index("layers_document_pos").on(t.documentId, t.position) }),
+);
+
 export const nodeAnnotations = pgTable(
   "node_annotations",
   {
@@ -115,13 +133,20 @@ export const nodeAnnotations = pgTable(
     documentId: uuid("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
     nodeId: uuid("node_id").notNull().references(() => nodes.id, { onDelete: "cascade" }),
     authorId: text("author_id").notNull().references(() => users.id),
+    // null = the ordinary node note; set = this row is that layer's text for the node.
+    layerId: uuid("layer_id").references(() => layers.id, { onDelete: "cascade" }),
     note: text("note").notNull(),
     tags: text("tags").array().notNull().default(sql`ARRAY[]::text[]`),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (t) => ({
-    nodeAuthorUnique: unique("node_annotations_node_author").on(t.nodeId, t.authorId),
+    // NULLS NOT DISTINCT: layer_id is null for the ordinary note, and Postgres would
+    // otherwise treat every such row as unique — letting one node collect many notes
+    // and breaking upsertNodeAnnotation's ON CONFLICT.
+    nodeAuthorUnique: unique("node_annotations_node_author_layer")
+      .on(t.nodeId, t.authorId, t.layerId)
+      .nullsNotDistinct(),
     byAuthor: index("node_annotations_doc_author").on(t.documentId, t.authorId),
     tagsGin: index("node_annotations_tags_gin").using("gin", t.tags),
   }),

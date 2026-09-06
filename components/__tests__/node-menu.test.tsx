@@ -152,7 +152,7 @@ describe("NodeNumber", () => {
 function node(over: Partial<TreeNode> = {}): TreeNode {
   return {
     id: "n1", label: null, alias: null, title: "Title", text: "Title",
-    sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
+    sourceId: "s1", startOffset: 0, annotations: [], layerNotes: [], nodeAnnotation: null,
     children: [], ...over,
   };
 }

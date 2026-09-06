@@ -20,31 +20,31 @@ const renderNode = (n: TreeNode) =>
   );
 
 const node: TreeNode = {
-  id: "a", label: "1", alias: null, title: null, text: "Parent prose.", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
-  children: [{ id: "b", label: "1.1", alias: null, title: null, text: "Child prose.", sourceId: "s1", startOffset: 100, annotations: [], nodeAnnotation: null, children: [] }],
+  id: "a", label: "1", alias: null, title: null, text: "Parent prose.", sourceId: "s1", startOffset: 0, annotations: [], layerNotes: [], nodeAnnotation: null,
+  children: [{ id: "b", label: "1.1", alias: null, title: null, text: "Child prose.", sourceId: "s1", startOffset: 100, annotations: [], layerNotes: [], nodeAnnotation: null, children: [] }],
 };
 
 const leaf: TreeNode = {
   id: "x", label: null, alias: null, title: null, text: "First one. Second two.", sourceId: "s1",
-  startOffset: 0, annotations: [], nodeAnnotation: null, children: [],
+  startOffset: 0, annotations: [], layerNotes: [], nodeAnnotation: null, children: [],
 };
 
 // A heading node: its title equals its own range text (import stores the heading
 // as both), with prose nested as a child.
 const heading: TreeNode = {
   id: "h", label: null, alias: null, title: "CHAPTER I", text: "CHAPTER I", sourceId: "s1", startOffset: 0,
-  annotations: [], nodeAnnotation: null,
-  children: [{ id: "p", label: null, alias: null, title: null, text: "Chapter one prose.", sourceId: "s1", startOffset: 20, annotations: [], nodeAnnotation: null, children: [] }],
+  annotations: [], layerNotes: [], nodeAnnotation: null,
+  children: [{ id: "p", label: null, alias: null, title: null, text: "Chapter one prose.", sourceId: "s1", startOffset: 20, annotations: [], layerNotes: [], nodeAnnotation: null, children: [] }],
 };
 
 // Three direct children (each with a child of its own, to prove the count is direct
 // children only and not the whole subtree).
 const many: TreeNode = {
-  id: "a", label: "1", alias: null, title: null, text: "", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
+  id: "a", label: "1", alias: null, title: null, text: "", sourceId: "s1", startOffset: 0, annotations: [], layerNotes: [], nodeAnnotation: null,
   children: ["b", "c", "d"].map((id) => ({
     id, label: null, alias: null, title: null, text: `${id} prose.`, sourceId: "s1", startOffset: 100,
-    annotations: [], nodeAnnotation: null,
-    children: [{ id: `${id}1`, label: null, alias: null, title: null, text: "grandchild.", sourceId: "s1", startOffset: 200, annotations: [], nodeAnnotation: null, children: [] }],
+    annotations: [], layerNotes: [], nodeAnnotation: null,
+    children: [{ id: `${id}1`, label: null, alias: null, title: null, text: "grandchild.", sourceId: "s1", startOffset: 200, annotations: [], layerNotes: [], nodeAnnotation: null, children: [] }],
   })),
 };
 

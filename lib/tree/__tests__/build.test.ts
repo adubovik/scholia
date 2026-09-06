@@ -73,3 +73,22 @@ it("attaches each node's own note by nodeId, leaving others null", () => {
   expect(tree[0].nodeAnnotation?.note).toBe("on a");
   expect(tree[1].nodeAnnotation).toBeNull();
 });
+
+it("groups each node's layer texts by nodeId, independent of its own note", () => {
+  const nodes: NodeRow[] = [
+    { id: "a", parentId: null, position: 0, label: null, alias: null, title: null },
+    { id: "b", parentId: null, position: 1, label: null, alias: null, title: null },
+  ];
+  const ranges: NodeRange[] = [
+    { nodeId: "a", sourceId: "s1", startOffset: 0, endOffset: 10 },
+    { nodeId: "b", sourceId: "s1", startOffset: 11, endOffset: 22 },
+  ];
+  const layerNotes = [
+    { id: "l1", nodeId: "a", layerId: "sum", note: "the gist" },
+    { id: "l2", nodeId: "a", layerId: "fr", note: "le texte" },
+  ];
+  const tree = buildTree(nodes, ranges, "Root text. Child text.", [], [], layerNotes);
+  expect(tree[0].layerNotes.map((l) => l.layerId)).toEqual(["sum", "fr"]);
+  expect(tree[0].nodeAnnotation).toBeNull(); // layer text is not the node's own note
+  expect(tree[1].layerNotes).toEqual([]);
+});

@@ -5,8 +5,8 @@ import type { TreeNode } from "@/lib/tree/build";
 
 const tree: TreeNode[] = [
   {
-    id: "a", label: "1", alias: null, title: null, text: "Root prose.", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null,
-    children: [{ id: "b", label: "1.1", alias: null, title: null, text: "Child prose.", sourceId: "s1", startOffset: 0, annotations: [], nodeAnnotation: null, children: [] }],
+    id: "a", label: "1", alias: null, title: null, text: "Root prose.", sourceId: "s1", startOffset: 0, annotations: [], layerNotes: [], nodeAnnotation: null,
+    children: [{ id: "b", label: "1.1", alias: null, title: null, text: "Child prose.", sourceId: "s1", startOffset: 0, annotations: [], layerNotes: [], nodeAnnotation: null, children: [] }],
   },
 ];
 

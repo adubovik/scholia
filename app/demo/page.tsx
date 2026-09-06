@@ -42,7 +42,7 @@ function nodeNote(nodeId: string, note: string, tags: string[] = []): NodeAnnota
 function node(n: Partial<TreeNode> & { id: string }): TreeNode {
   return {
     label: null, alias: null, title: null, text: "", sourceId: SOURCE_ID, startOffset: 0,
-    annotations: [], nodeAnnotation: null, children: [],
+    annotations: [], layerNotes: [], nodeAnnotation: null, children: [],
     ...n,
   };
 }

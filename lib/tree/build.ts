@@ -1,4 +1,4 @@
-import type { InlineAnnotationView, NodeAnnotationView } from "@/lib/annotations/types";
+import type { InlineAnnotationView, LayerNoteView, NodeAnnotationView } from "@/lib/annotations/types";
 
 export interface NodeRow {
   id: string;
@@ -26,6 +26,7 @@ export interface TreeNode {
   startOffset: number;
   annotations: InlineAnnotationView[];
   nodeAnnotation: NodeAnnotationView | null;
+  layerNotes: LayerNoteView[]; // this node's text in each alternative layer
   children: TreeNode[];
 }
 
@@ -36,9 +37,16 @@ export function buildTree(
   sourceText: string,
   annotations: InlineAnnotationView[] = [],
   nodeAnnotations: NodeAnnotationView[] = [],
+  layerNotes: LayerNoteView[] = [],
 ): TreeNode[] {
   const rangeById = new Map(ranges.map((r) => [r.nodeId, r]));
   const nodeAnnById = new Map(nodeAnnotations.map((a) => [a.nodeId, a]));
+  const layerNotesByNode = new Map<string, LayerNoteView[]>();
+  for (const l of layerNotes) {
+    const list = layerNotesByNode.get(l.nodeId);
+    if (list) list.push(l);
+    else layerNotesByNode.set(l.nodeId, [l]);
+  }
 
   const byId = new Map<string, TreeNode>();
   for (const n of nodes) {
@@ -58,6 +66,7 @@ export function buildTree(
       startOffset,
       annotations: nodeAnns,
       nodeAnnotation: nodeAnnById.get(n.id) ?? null,
+      layerNotes: layerNotesByNode.get(n.id) ?? [],
       children: [],
     });
   }

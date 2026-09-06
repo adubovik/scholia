@@ -1,9 +1,9 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { documents, sources, paragraphs, nodes, nodeSourceRanges, inlineAnnotations, nodeAnnotations, users } from "@/lib/db/schema";
+import { documents, sources, paragraphs, nodes, nodeSourceRanges, inlineAnnotations, nodeAnnotations, layers, users } from "@/lib/db/schema";
 import { requireUser, getUserId } from "@/lib/auth/current-user";
 import { buildTree } from "@/lib/tree/build";
-import type { Color, InlineAnnotationView, NodeAnnotationView } from "@/lib/annotations/types";
+import type { Color, InlineAnnotationView, LayerColor, LayerNoteView, LayerView, NodeAnnotationView } from "@/lib/annotations/types";
 
 export async function listDocuments() {
   const user = await requireUser();
@@ -32,9 +32,10 @@ export async function listDocuments() {
     db.select({ documentId: inlineAnnotations.documentId, n: count() })
       .from(inlineAnnotations).innerJoin(documents, eq(inlineAnnotations.documentId, documents.id))
       .where(owned).groupBy(inlineAnnotations.documentId),
+    // layer_id null only: layer texts share this table but aren't notes (see getDocument).
     db.select({ documentId: nodeAnnotations.documentId, n: count() })
       .from(nodeAnnotations).innerJoin(documents, eq(nodeAnnotations.documentId, documents.id))
-      .where(owned).groupBy(nodeAnnotations.documentId),
+      .where(and(owned, isNull(nodeAnnotations.layerId))).groupBy(nodeAnnotations.documentId),
   ]);
   const toMap = (rows: { documentId: string; n: number }[]) =>
     new Map(rows.map((r) => [r.documentId, r.n]));
@@ -65,10 +66,11 @@ export async function getDocument(docId: string) {
   // These four depend only on doc.id, so fire them concurrently. neon-http issues
   // one HTTP round-trip per query; awaited one-at-a-time this was the bulk of a
   // ~950ms flat render cost (re-paid on every revalidatePath). Fan out instead.
-  const [src, nodeRows, nodeAnnRows] = await Promise.all([
+  const [src, nodeRows, nodeAnnRows, layerRows] = await Promise.all([
     db.select().from(sources).where(eq(sources.documentId, doc.id)).orderBy(sources.position),
     db.select().from(nodes).where(eq(nodes.documentId, doc.id)).orderBy(nodes.position),
     db.select().from(nodeAnnotations).where(eq(nodeAnnotations.documentId, doc.id)),
+    db.select().from(layers).where(eq(layers.documentId, doc.id)).orderBy(layers.position),
   ]);
   const source = src[0] ?? null;
 
@@ -95,14 +97,28 @@ export async function getDocument(docId: string) {
     authorId: a.authorId,
     createdAt: a.createdAt.toISOString(),
   }));
-  const nodeAnnViews: NodeAnnotationView[] = nodeAnnRows.map((a) => ({
-    id: a.id,
-    nodeId: a.nodeId,
-    note: a.note,
-    tags: a.tags,
-    authorId: a.authorId,
-    createdAt: a.createdAt.toISOString(),
+  // One table, two meanings: layer_id null is the node's own note; set makes the row
+  // that layer's text for the node (see schema.ts). Split them here so the tree gets
+  // each in its own slot.
+  const layerViews: LayerView[] = layerRows.map((l) => ({
+    id: l.id,
+    name: l.name,
+    color: l.color as LayerColor,
+    position: l.position,
   }));
+  const layerNoteViews: LayerNoteView[] = nodeAnnRows
+    .filter((a) => a.layerId !== null)
+    .map((a) => ({ id: a.id, nodeId: a.nodeId, layerId: a.layerId!, note: a.note }));
+  const nodeAnnViews: NodeAnnotationView[] = nodeAnnRows
+    .filter((a) => a.layerId === null)
+    .map((a) => ({
+      id: a.id,
+      nodeId: a.nodeId,
+      note: a.note,
+      tags: a.tags,
+      authorId: a.authorId,
+      createdAt: a.createdAt.toISOString(),
+    }));
   const tree = source
     ? buildTree(
         nodeRows,
@@ -110,8 +126,9 @@ export async function getDocument(docId: string) {
         source.text,
         annViews,
         nodeAnnViews,
+        layerNoteViews,
       )
     : [];
 
-  return { doc, source, paragraphs: paras, tree };
+  return { doc, source, paragraphs: paras, tree, layers: layerViews };
 }

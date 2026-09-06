@@ -11,7 +11,7 @@ const nodeAnn = (note: string, tags: string[] = []): NodeAnnotationView =>
 
 const n = (id: string, text: string, over: Partial<TreeNode> = {}): TreeNode => ({
   id, label: null, alias: null, title: null, text, sourceId: "s", startOffset: 0,
-  annotations: [], nodeAnnotation: null, children: [], ...over,
+  annotations: [], layerNotes: [], nodeAnnotation: null, children: [], ...over,
 });
 
 const numbers = (tree: TreeNode[]) => {

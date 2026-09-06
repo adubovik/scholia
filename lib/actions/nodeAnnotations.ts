@@ -19,14 +19,17 @@ async function loadOwnNodeAnnotation(id: string): Promise<NodeAnnRow> {
 }
 
 /**
- * Create or update the caller's note on a node. The unique (node_id, author_id)
- * constraint makes create and edit the same operation: a conflict updates in place.
+ * Create or update the caller's note on a node. The unique (node_id, author_id,
+ * layer_id) constraint makes create and edit the same operation: a conflict updates
+ * in place. `layerId` set writes that layer's text for the node instead of the
+ * node's own note — same row shape, different slot (see schema.ts).
  */
 export async function upsertNodeAnnotation(input: {
   documentId: string;
   nodeId: string;
   note: string;
   tags?: string[];
+  layerId?: string | null;
 }): Promise<string> {
   const user = await requireUser();
   await authorize(user.id, input.documentId, "annotate");
@@ -40,11 +43,12 @@ export async function upsertNodeAnnotation(input: {
       documentId: input.documentId,
       nodeId: input.nodeId,
       authorId: user.id,
+      layerId: input.layerId ?? null,
       note,
       tags,
     })
     .onConflictDoUpdate({
-      target: [nodeAnnotations.nodeId, nodeAnnotations.authorId],
+      target: [nodeAnnotations.nodeId, nodeAnnotations.authorId, nodeAnnotations.layerId],
       set: { note, tags, updatedAt: new Date() },
     })
     .returning({ id: nodeAnnotations.id });
