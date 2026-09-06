@@ -15,6 +15,18 @@
   --hl-pink:    #f7b8bd;
   --hl-green:   #c0e097;
   --hl-blue:    #b4cdf0;
+  /* view (layer) tints — a wash a whole passage sits on, so far paler than a
+     highlighter mark: ink must stay comfortably readable across the block.
+     sand and clay share --paper's warm-cream hue, so they need more depth than the
+     hue-shifted tints to read as a colour rather than as dirtier paper; sand was
+     #f5edda, ΔE 8 from paper and ΔE 2 from --select — near-identical to the
+     selected-block wash. */
+  --layer-sand:  #f7e7c2;
+  --layer-sage:  #e8efe1;
+  --layer-mist:  #e5ecf3;
+  --layer-blush: #f8e8e7;
+  --layer-lilac: #ede8f4;
+  --layer-clay:  #f4e7dd;
   /* accents & marks — identity colors, constant across surfaces */
   --id-node:        #2a6fdb;  /* plain node numeric id          */
   --id-annotated:   #e23b2e;  /* annotated node numeric id      */
@@ -1439,16 +1451,16 @@ body {
   text-wrap: pretty;
 }
 .dual-note .node-num-id { float: left; margin-right: 0.5em; }
-.dual-note :is(p, ul, ol) { margin: 0 0 0.5rem; }
-.dual-note :is(p, ul, ol):last-child { margin-bottom: 0; }
-.dual-note :is(ul, ol) { padding-left: 1.4rem; }
-.dual-note ul { list-style: disc; }
-.dual-note ol { list-style: decimal; }
-.dual-note :is(code, pre) { font-family: var(--mono); font-size: 0.85em; background: rgba(28, 26, 21, 0.06); border-radius: 3px; }
-.dual-note code { padding: 0.05em 0.3em; }
-.dual-note pre { padding: 0.4rem 0.55rem; overflow-x: auto; }
-.dual-note pre code { background: none; padding: 0; }
-.dual-note blockquote { margin: 0 0 0.5rem; padding-left: 0.6rem; border-left: 2px solid var(--rule); color: var(--muted); }
+:is(.dual-note, .layer-band) :is(p, ul, ol) { margin: 0 0 0.5rem; }
+:is(.dual-note, .layer-band) :is(p, ul, ol):last-child { margin-bottom: 0; }
+:is(.dual-note, .layer-band) :is(ul, ol) { padding-left: 1.4rem; }
+:is(.dual-note, .layer-band) ul { list-style: disc; }
+:is(.dual-note, .layer-band) ol { list-style: decimal; }
+:is(.dual-note, .layer-band) :is(code, pre) { font-family: var(--mono); font-size: 0.85em; background: rgba(28, 26, 21, 0.06); border-radius: 3px; }
+:is(.dual-note, .layer-band) code { padding: 0.05em 0.3em; }
+:is(.dual-note, .layer-band) pre { padding: 0.4rem 0.55rem; overflow-x: auto; }
+:is(.dual-note, .layer-band) pre code { background: none; padding: 0; }
+:is(.dual-note, .layer-band) blockquote { margin: 0 0 0.5rem; padding-left: 0.6rem; border-left: 2px solid var(--rule); color: var(--muted); }
 /* An inline row leads with the highlighted span itself, painted like the reading
    column (.hl → filled or underlined per the display setting); its note reads below. */
 .dual-quote { margin-bottom: 0.3rem; }
@@ -1458,7 +1470,8 @@ body {
    read apart. The subscript is the annotation's 1-based index on its level. */
 .dual-inline-id { color: var(--faint); margin-right: 0.4em; }
 .dual-inline-id:hover { color: var(--muted); }
-.dual-inline-id sub { font-size: 0.7em; }
+/* Annotation index on a section id — ₀ on a node note, ₁… on inline rows. */
+.node-num-id sub { font-size: 0.7em; }
 
 /* Note-less structural node kept only to hold the hierarchy — a dim one-line label. */
 .dual-skel {
@@ -1555,7 +1568,7 @@ body {
 .drawer-scroll {
   padding: 0.6rem 1.25rem 1.5rem;
 }
-.drawer-scroll .reading-p { text-align: left; hyphens: none; }
+.drawer-scroll :is(.reading-p, .layer-band) { text-align: left; hyphens: none; }
 
 /* ══ Library drawer (left) ═══════════════════════════════════ */
 .library-drawer {
@@ -1766,6 +1779,148 @@ body {
 .doc-delete:hover:not(:disabled) { background: var(--error); color: var(--paper); }
 .doc-delete:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ══ Views (alternative renditions) ══════════════════════════ */
+/* A "view" in the UI is a `layer` in the code: a named second rendition of the same
+   text — your own summary, a translation, another edition. The bar selects which are
+   on screen; each selected one renders as a tinted band under the original, ruled off
+   from it. Bands carry no highlight affordances: annotations anchor to source offsets,
+   and a rendition is not the source. */
+
+/* The selector, centred above whichever panel is centred: (original|summary|french)
+   as one segmented pill. Hidden entirely until a document has its first view. */
+.layer-bar {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--paper);
+}
+.layer-chip {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  background: none;
+  border: none;
+  color: var(--faint);
+  padding: 0.22rem 0.7rem;
+  cursor: pointer;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: color 0.12s, background 0.12s;
+}
+.layer-chip + .layer-chip { border-left: 1px solid var(--rule); }
+.layer-chip:hover { color: var(--ink); }
+/* On = filled with the view's own tint, so the chip and its band read as one thing.
+   The original has no tint of its own; it takes the ordinary selected fill. */
+.layer-chip--on { color: var(--ink); background: var(--select); }
+.layer-chip--on[data-layer-color="sand"]  { background: var(--layer-sand); }
+.layer-chip--on[data-layer-color="sage"]  { background: var(--layer-sage); }
+.layer-chip--on[data-layer-color="mist"]  { background: var(--layer-mist); }
+.layer-chip--on[data-layer-color="blush"] { background: var(--layer-blush); }
+.layer-chip--on[data-layer-color="lilac"] { background: var(--layer-lilac); }
+.layer-chip--on[data-layer-color="clay"]  { background: var(--layer-clay); }
+.layer-chip--add { padding-inline: 0.55rem; }
+
+/* One rendition of one passage. Full-bleed tint with a hairline above — the rule the
+   spec draws between layers — and the reading column's own typography, so a
+   translation reads as prose, not as a note about prose. */
+.layer-bands { margin-top: 0.5rem; }
+/* The tint is decoration and nothing else: it must not move a single line. Padding +
+   equal negative margin (the .node-self / .dual-block trick) bleeds the wash past the
+   prose at zero layout cost, at the 0.3rem horizontal bleed those two settled on —
+   0.55 reached into the collapse-toggle column and touched the ▾. Vertically there is
+   no bleed at all: --reading-block-gap goes to 0 at the tightest density, so any
+   vertical bleed makes the next node's tint paint over this one's descenders. The
+   line-height's own half-leading is the breathing room. */
+.layer-band {
+  position: relative;
+  border-radius: 5px;
+  padding: 0 0.3rem;
+  margin: 0 -0.3rem;
+  font-family: var(--serif);
+  font-size: var(--reading-font-size);
+  line-height: var(--reading-line-height);
+  word-spacing: var(--reading-word-spacing);
+  color: var(--ink);
+  text-align: justify;
+  hyphens: auto;
+  text-wrap: pretty;
+  hanging-punctuation: first last;
+}
+.layer-band[data-layer-color="sand"]  { background: var(--layer-sand); }
+.layer-band[data-layer-color="sage"]  { background: var(--layer-sage); }
+.layer-band[data-layer-color="mist"]  { background: var(--layer-mist); }
+.layer-band[data-layer-color="blush"] { background: var(--layer-blush); }
+.layer-band[data-layer-color="lilac"] { background: var(--layer-lilac); }
+.layer-band[data-layer-color="clay"]  { background: var(--layer-clay); }
+/* Stacked views read as ONE block: the group rounds at its outer corners only, and
+   the hairline the spec draws between layers falls inside it. The change of tint is
+   the other half of that separation. The rule is an inset shadow, not a border, so it
+   costs no height either; between two bands the text boxes simply meet, exactly as
+   two paragraphs would. */
+.layer-band:not(:first-child) {
+  box-shadow: inset 0 1px 0 var(--rule);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.layer-band:not(:last-child) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+/* Standing in for the original passage: no gap above (there is nothing to be ruled
+   off from), and the section number runs in — floated ahead of the markdown, the same
+   trick .dual-note uses to lead a note with its number. */
+.layer-bands--lead { margin-top: 0; }
+.layer-band .node-num-id { float: left; margin-right: 0.5em; }
+/* Bands aren't .dual-blocks, so they need their own hover reveal for the ✎/bin. */
+.layer-band:hover .dual-controls,
+.layer-band .dual-controls:focus-within { opacity: 1; }
+
+/* Create / rename a view — the NewDocModal sheet, narrowed for two fields. */
+.layer-sheet { max-width: 26rem; }
+.layer-sheet-hint {
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+}
+.layer-swatches { display: flex; gap: 0.4rem; margin: 0.7rem 0 1.1rem; }
+.layer-swatch {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  transition: box-shadow 0.12s, border-color 0.12s;
+}
+.layer-swatch--active { border-color: var(--ink); box-shadow: 0 0 0 2px var(--paper) inset; }
+.layer-swatch[data-layer-color="sand"]  { background: var(--layer-sand); }
+.layer-swatch[data-layer-color="sage"]  { background: var(--layer-sage); }
+.layer-swatch[data-layer-color="mist"]  { background: var(--layer-mist); }
+.layer-swatch[data-layer-color="blush"] { background: var(--layer-blush); }
+.layer-swatch[data-layer-color="lilac"] { background: var(--layer-lilac); }
+.layer-swatch[data-layer-color="clay"]  { background: var(--layer-clay); }
+
+/* The view's tint as a dot trailing its node-menu entry, so "Add summarization" is
+   recognisable by the same colour as its band. */
+.node-menu-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  flex: 0 0 auto;
+}
+.node-menu-dot[data-layer-color="sand"]  { background: var(--layer-sand); }
+.node-menu-dot[data-layer-color="sage"]  { background: var(--layer-sage); }
+.node-menu-dot[data-layer-color="mist"]  { background: var(--layer-mist); }
+.node-menu-dot[data-layer-color="blush"] { background: var(--layer-blush); }
+.node-menu-dot[data-layer-color="lilac"] { background: var(--layer-lilac); }
+.node-menu-dot[data-layer-color="clay"]  { background: var(--layer-clay); }
+
 /* ══ Drawers on mobile: bottom / top sheets ══════════════════ */
 @media (max-width: 860px) {
   .notes-drawer {
@@ -1786,4 +1941,6 @@ body {
     transform: translateY(-100%);
   }
   .library-drawer[data-open="true"] { transform: translateY(0); }
+  /* The pill is a single row on desktop; on a phone let it wrap instead of clipping. */
+  .layer-bar { flex-wrap: wrap; border-radius: 12px; justify-content: center; }
 }

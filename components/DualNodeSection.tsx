@@ -5,11 +5,14 @@ import type { DualNode } from "@/lib/tree/dual";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { NoteEditor } from "./NoteEditor";
 import { NoteMarkdown } from "./NoteMarkdown";
+import { LayerBands } from "./LayerBands";
 import { GlyphPill } from "./GlyphPill";
 import { displayTags, glyphsInTags } from "@/lib/annotations/glyphs";
 import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/annotations";
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
+import { EditControl, RemoveControl, ConfirmControl, CancelControl } from "./NoteControls";
 import { useCollapse, useCollapsed } from "./CollapseContext";
+import { useVisibleLayers } from "./LayerContext";
 import { useNotesActions, useNotesState, usePanelCentred, useActiveNode, useActiveAnn } from "./NotesContext";
 
 /**
@@ -17,7 +20,8 @@ import { useNotesActions, useNotesState, usePanelCentred, useActiveNode, useActi
  * foldable) but showing annotations. A note (node or inline) is the prose, editable in
  * place with the full editor (tags/glyphs/colour); a bare highlight shows its span,
  * dimmed; a note-less node kept for its subtree is a dim skeleton you can still add a
- * note to. Reacts to the reading-view node menu: `editingId`/`composeNodeId` from
+ * note to — or, when a selected view has text for it, that view's band instead.
+ * Reacts to the reading-view node menu: `editingId`/`composeNodeId` from
  * context open this row's editor, so "Edit note"/"Add note" land here.
  */
 export function DualNodeSection({
@@ -48,16 +52,31 @@ export function DualNodeSection({
 
   const hasChildren = node.children.length > 0;
   const isInline = node.kind === "inline";
+  // The whole-node note, stepped down beside the inline rows because a view took the
+  // node's own row. Renders exactly like a node note, only numbered 2.1₀.
+  const isNoteRow = node.kind === "note";
   const hasNote = node.note.trim() !== "";
-  const isSkeleton = !isInline && node.noteId === null; // note-less node kept for its subtree
+  const isSkeleton = node.kind === "node" && node.noteId === null; // note-less node kept for its subtree
+  // A skeleton's dim first sentence is a placeholder for "there is no note here"; a
+  // selected view with real text for this node is a better one, so it takes the slot
+  // outright — the same swap the reading panel makes when `original` is switched off.
+  // Titled nodes keep their label: that is a structural heading, not a rundown of prose
+  // (NodeSection leaves those alone too).
+  // ponytail: the skeleton's "Add note" ✎ goes with it. The reading panel's node menu
+  // still reaches this row (composeNodeId); give it back a control here if that bites.
+  // (Only node rows carry layerNotes, so `views` is empty for inline and note rows.)
+  const views = useVisibleLayers(node.nodeId, node.layerNotes);
+  const leadsWithView = isSkeleton && node.title === null && views.length > 0;
   const glyphs = glyphsInTags(node.tags);
   const tags = displayTags(node.tags);
 
   // The reading-view node menu drives editing through context: "Edit note" sets
   // editingId to the annotation id; "Add note" sets composeNodeId to the node id.
+  // The composer belongs to the node's own row — never also to the note row that shares
+  // its nodeId, which would open two editors on the one annotation.
   const shouldEdit =
     (editingId !== null && editingId === node.noteId) ||
-    (!isInline && composeNodeId === node.nodeId);
+    (node.kind === "node" && composeNodeId === node.nodeId);
   const [override, setOverride] = useState<boolean | null>(null);
   const [confirmDel, setConfirmDel] = useState(false); // arm the bin before it deletes
   const editing = canEdit && (override ?? shouldEdit);
@@ -91,15 +110,22 @@ export function DualNodeSection({
     close();
   }
 
-  const numberEl = node.number && (
-    <button
-      className="node-num-id node-num-id--runin"
-      aria-label={`Section ${node.number} in the text`}
-      onClick={() => select(node.id, node.id)}
-    >
-      {node.number}
-    </button>
-  );
+  // A node note and a view band both want to stand in for the original passage, so when
+  // a band is on screen the note steps down a level and is numbered as what it actually
+  // is: annotation ₀ of this node — the one covering the whole of it. Inline rows number
+  // from ₁, which is why 0 was free. On its own (no band) the note keeps the node's row
+  // and its bare section number.
+  const numberEl = (sub?: number) =>
+    node.number && (
+      <button
+        className="node-num-id node-num-id--runin"
+        aria-label={`Section ${node.number} in the text`}
+        onClick={() => select(node.id, node.nodeId)}
+      >
+        {node.number}
+        {sub !== undefined && <sub>{sub}</sub>}
+      </button>
+    );
 
   // Inline rows lead with a fake citation id — the parent section number with a
   // subscript index (2.1₁) — dimmed like a skeleton so two adjacent inline annotations
@@ -167,7 +193,7 @@ export function DualNodeSection({
         <div className={active && !isInline ? "dual-block dual-block--active" : "dual-block"}>
           {editing ? (
             <NoteEditor
-              kind={node.kind}
+              kind={isInline ? "inline" : "node"}
               note={node.note}
               tags={node.tags}
               color={node.color}
@@ -176,9 +202,9 @@ export function DualNodeSection({
               onCancel={close}
               onDelete={remove}
             />
-          ) : isSkeleton ? (
+          ) : leadsWithView ? null : isSkeleton ? (
             <div className="dual-skel">
-              {numberEl}
+              {numberEl()}
               <span className="dual-skel-label">{node.title ?? firstSentence(node.source)}</span>
               {canEdit && (
                 <span className="dual-controls">
@@ -209,12 +235,25 @@ export function DualNodeSection({
             </div>
           ) : (
             <div className="dual-note">
-              {numberEl}
+              {numberEl(isNoteRow ? 0 : undefined)}
               {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--lead" />}
               {metaEl}
               <NoteMarkdown note={node.note} />
               {controls}
             </div>
+          )}
+          {/* Same stack as the reading panel — except the first slot above is the
+              node's note (or its rundown), not the original prose. Only the node's own
+              row carries them: a note row shares its nodeId and would duplicate an open
+              view composer. */}
+          {node.kind === "node" && (
+            <LayerBands
+              nodeId={node.nodeId}
+              layerNotes={node.layerNotes}
+              canEdit={canEdit}
+              documentId={documentId}
+              lead={leadsWithView ? numberEl() : undefined}
+            />
           )}
         </div>
 
@@ -233,45 +272,5 @@ export function DualNodeSection({
         )}
       </div>
     </section>
-  );
-}
-
-function EditControl({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button className="dual-ctl" aria-label={label} title={label} onClick={onClick}>
-      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.1" style={{ display: "block" }}>
-        <path d="M9.2 2.4l2.4 2.4M2 12l0.4-2.6 6.4-6.4 2.4 2.4-6.4 6.4L2 12z" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
-}
-
-function RemoveControl({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button className="dual-ctl dual-ctl--danger" aria-label={label} title={label} onClick={onClick}>
-      <svg width="12" height="12" viewBox="0 0 12 13" fill="none" stroke="currentColor" strokeWidth="1.1" style={{ display: "block" }}>
-        <path d="M1 3.2h10M4.2 3.2V1.8h3.6v1.4M2.4 3.2l0.7 8.3h5.8l0.7-8.3M4.7 5.4v4M7.3 5.4v4" />
-      </svg>
-    </button>
-  );
-}
-
-function ConfirmControl({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button className="dual-ctl dual-ctl--danger" aria-label={label} title={label} onClick={onClick}>
-      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ display: "block" }}>
-        <path d="M2.5 7.5l3 3 6-7.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
-}
-
-function CancelControl({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button className="dual-ctl" aria-label={label} title={label} onClick={onClick}>
-      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ display: "block" }}>
-        <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" strokeLinecap="round" />
-      </svg>
-    </button>
   );
 }

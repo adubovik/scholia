@@ -4,9 +4,11 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
 import type { TreeNode } from "@/lib/tree/build";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
+import { LayerBands } from "./LayerBands";
 import { NodeContextMenu, NodeNumber, ChildCount, NumText } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, usePanelCentred, useActiveNode } from "./NotesContext";
+import { useLayersOptional, useVisibleLayers } from "./LayerContext";
 import { glyphsInTags } from "@/lib/annotations/glyphs";
 
 // Every id beneath this node (not the node itself) — the target of Collapse/Expand
@@ -57,13 +59,25 @@ export function NodeSection({
   // an indented head.) The one exception is a legacy heading whose whole range IS its
   // title (stored as both title+text): that shows as a head line, not as prose.
   const isHeadingByTitle = node.title !== null && node.title.trim() === node.text.trim();
-  const runIn = hasText && !isHeadingByTitle;
-  const showHead = !runIn; // heading, or a bodyless structural container → id (+ title) on its own line
+  const showsSource = hasText && !isHeadingByTitle;
+  // The bar's "original" chip switched off swaps the source prose out for the views
+  // stacked beneath it — but only where there IS one to read: an untranslated node
+  // keeps its original rather than going blank (which also covers "all chips off").
+  const layers = useLayersOptional();
+  const views = useVisibleLayers(node.id, node.layerNotes);
+  const hideOriginal = layers !== null && !layers.showOriginal && views.length > 0;
+  const runIn = showsSource && !hideOriginal;
+  // With the original switched off, the first view takes over its slot outright —
+  // same column, same run-in number, same justified prose, only tinted. Collapsed,
+  // there is no prose to lead, so the number falls back to a head line.
+  const leadsWithView = showsSource && hideOriginal && !collapsed;
+  const showHead = !runIn && !leadsWithView; // heading, or a bodyless structural container → id (+ title) on its own line
   // The head, when shown, carries only the legacy title beside the id; a node's own
   // prose never sits in the head now — it flows below as a passage via runIn.
   const headTitle = node.title ?? null;
-  // Foldable when there's a passage to fold and/or a subtree to hide.
-  const collapsible = runIn || hasChildren;
+  // Foldable when there's a passage to fold and/or a subtree to hide. Keyed off the
+  // node's real content, not runIn — collapsing still hides the views.
+  const collapsible = showsSource || hasChildren;
 
   // Compound id path (IV.Prop.LXI full / LXI short — the toggle picks). A run-in
   // passage shows it as a prefix; a head shows it on its own line.
@@ -88,6 +102,7 @@ export function NodeSection({
     canEdit,
     hasNote,
     hasChildren,
+    layerNotes: node.layerNotes,
     onOpenNote: openNote,
     onCollapseChildren: () => setMany(descendantIds(node), true),
     onExpandChildren: () => setMany(descendantIds(node), false),
@@ -105,14 +120,14 @@ export function NodeSection({
         numberShort={short}
         childCount={node.children.length}
         annotated={hasNote}
-        runIn={runIn}
+        runIn={!showHead}
         nodeId={node.id}
         canEdit={canEdit}
         glyphs={nodeAnn ? glyphsInTags(nodeAnn.tags) : []}
         onHighlightNote={nodeAnn ? () => select(nodeAnn.id, node.id) : undefined}
       />
     ) : (
-      <span className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}>
+      <span className={showHead ? "node-num-id" : "node-num-id node-num-id--runin"}>
         <NumText full={num} short={short} />
         <ChildCount n={node.children.length} />
       </span>
@@ -151,6 +166,20 @@ export function NodeSection({
             prefix={runIn ? numberEl : undefined}
           />
         ))}
+
+      {/* The alternative renditions, stacked under the original and ruled off from it.
+          Inside the node's own menu region, so right-clicking a band still offers that
+          view's "Edit …" — but with no highlight affordances of its own: annotations
+          anchor to source offsets, and a translation is not the source. */}
+      {!collapsed && (
+        <LayerBands
+          nodeId={node.id}
+          layerNotes={node.layerNotes}
+          canEdit={canEdit}
+          documentId={documentId}
+          lead={leadsWithView ? numberEl : undefined}
+        />
+      )}
     </>
   );
 

@@ -22,3 +22,26 @@ export interface NodeAnnotationView {
   authorId: string;
   createdAt: string; // ISO — drives the drawer's relative timestamp
 }
+
+/** A layer's tint. Pastel, chosen to sit under reading prose on the cream page
+ * without competing with a highlighter mark. App-checked (see assertLayerColor). */
+export type LayerColor = "sand" | "sage" | "mist" | "blush" | "lilac" | "clay";
+export const LAYER_COLORS: LayerColor[] = ["sand", "sage", "mist", "blush", "lilac", "clay"];
+
+/** A named alternative rendition of the document — a summary pass, a translation,
+ * another edition. Document-scoped; its per-node text lives in node_annotations. */
+export interface LayerView {
+  id: string;
+  name: string;
+  color: LayerColor;
+  position: number;
+}
+
+/** One node's text in one layer. A node_annotation row with a layer_id — the same
+ * storage as a node note, so it edits and deletes through the same actions. */
+export interface LayerNoteView {
+  id: string;
+  nodeId: string;
+  layerId: string;
+  note: string;
+}

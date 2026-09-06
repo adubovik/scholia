@@ -13,7 +13,7 @@ const nodeAnn = (over: Partial<NodeAnnotationView>): NodeAnnotationView => ({
 });
 const node = (over: Partial<TreeNode>): TreeNode => ({
   id: "a", label: null, alias: null, title: null, text: "", sourceId: "s", startOffset: 0,
-  annotations: [], nodeAnnotation: null, children: [], ...over,
+  annotations: [], layerNotes: [], nodeAnnotation: null, children: [], ...over,
 });
 const nums = (...ids: string[]) => new Map(ids.map((id) => [id, id.toUpperCase()]));
 const noFilter = { filterTag: null, filterGlyphs: [] };
@@ -107,5 +107,84 @@ describe("dualTags", () => {
     const { tags, anyGlyphs } = dualTags(buildDual(tree, nums("a")));
     expect(tags.sort()).toEqual(["greek", "latin"]); // :summary excluded (it's a glyph)
     expect(anyGlyphs).toBe(true);
+  });
+});
+
+describe("visibleDual + views", () => {
+  const tree = [node({
+    id: "a", text: "Original.",
+    layerNotes: [{ id: "L1", nodeId: "a", layerId: "fr", note: "Original, en français." }],
+  })];
+
+  it("keeps a note-less node when one of its views is selected, drops it when deselected", () => {
+    const full = buildDual(tree, nums("a"));
+    expect(visibleDual(full, { ...noFilter, layerIds: ["fr"] })).toHaveLength(1);
+    expect(visibleDual(full, { ...noFilter, layerIds: ["de"] })).toHaveLength(0);
+    expect(visibleDual(full, noFilter)).toHaveLength(0);
+  });
+
+  it("still honours the tag filter — a view-only row carries no tags, so it prunes", () => {
+    const full = buildDual(tree, nums("a"));
+    expect(visibleDual(full, { filterTag: "greek", filterGlyphs: [], layerIds: ["fr"] })).toHaveLength(0);
+  });
+
+  it("steps a node's own note down to a 0-indexed child row once one of its views shows", () => {
+    const noted = [node({
+      id: "a", text: "Original.", startOffset: 0,
+      nodeAnnotation: nodeAnn({ nodeId: "a", note: "About the whole thing.", tags: ["greek"] }),
+      annotations: [inline({ id: "i1", startOffset: 0, endOffset: 8, note: "a phrase" })],
+      layerNotes: [{ id: "L1", nodeId: "a", layerId: "fr", note: "Original, en français." }],
+    })];
+    const full = buildDual(noted, nums("a"));
+
+    // No view selected: the note is the row itself, inline row is the only child.
+    const [plain] = visibleDual(full, noFilter);
+    expect(plain.note).toBe("About the whole thing.");
+    expect(plain.children.map((c) => c.kind)).toEqual(["inline"]);
+
+    // View selected: the row is the band's (a skeleton), the note is child 0.
+    const [split] = visibleDual(full, { ...noFilter, layerIds: ["fr"] });
+    expect(split.noteId).toBeNull(); // hands its row to the view band
+    expect(split.note).toBe("");
+    expect(split.layerNotes).toHaveLength(1); // …but keeps the view that took it
+    expect(split.children.map((c) => [c.kind, c.id, c.index])).toEqual([
+      ["note", "n1", 0], // 2.1₀ — the annotation covering the whole node, keyed by its own id
+      ["inline", "i1", 1], // 2.1₁ — and the highlights follow it
+    ]);
+    expect(split.children[0].note).toBe("About the whole thing.");
+  });
+
+  it("keeps the husk under a tag filter the stepped-down note matches", () => {
+    const noted = [node({
+      id: "a", text: "Original.",
+      nodeAnnotation: nodeAnn({ nodeId: "a", note: "n", tags: ["greek"] }),
+      layerNotes: [{ id: "L1", nodeId: "a", layerId: "fr", note: "…en français." }],
+    })];
+    const full = buildDual(noted, nums("a"));
+    const [row] = visibleDual(full, { filterTag: "greek", filterGlyphs: [], layerIds: ["fr"] });
+    expect(row.children.map((c) => c.id)).toEqual(["n1"]); // ancestor kept for its match
+    expect(visibleDual(full, { filterTag: "latin", filterGlyphs: [], layerIds: ["fr"] })).toHaveLength(0);
+  });
+
+  it("leaves a titled node's row alone — a heading is not a rundown of prose", () => {
+    const titled = [node({
+      id: "a", title: "Book III", text: "Original.",
+      nodeAnnotation: nodeAnn({ nodeId: "a", note: "About the book." }),
+      layerNotes: [{ id: "L1", nodeId: "a", layerId: "fr", note: "…en français." }],
+    })];
+    const [row] = visibleDual(buildDual(titled, nums("a")), { ...noFilter, layerIds: ["fr"] });
+    expect(row.noteId).toBe("n1");
+    expect(row.children).toHaveLength(0);
+  });
+
+  it("carries each node's view texts onto its row, and never onto an inline child", () => {
+    const withAnn = [node({
+      id: "a", text: "Original.", startOffset: 0,
+      annotations: [inline({ id: "i1", startOffset: 0, endOffset: 8 })],
+      layerNotes: [{ id: "L1", nodeId: "a", layerId: "fr", note: "…en français." }],
+    })];
+    const [d] = buildDual(withAnn, nums("a"));
+    expect(d.layerNotes.map((l) => l.layerId)).toEqual(["fr"]);
+    expect(d.children[0].layerNotes).toEqual([]);
   });
 });

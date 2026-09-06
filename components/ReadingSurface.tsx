@@ -5,6 +5,7 @@ import { idPaths } from "@/lib/tree/number";
 import { buildDual, sectionIndex } from "@/lib/tree/dual";
 import type { InviteView } from "@/lib/data/invites";
 import type { TreeNode } from "@/lib/tree/build";
+import type { LayerView } from "@/lib/annotations/types";
 
 // Every node id in the document — the target of the reading-canvas Collapse/Expand.
 const allNodeIds = (nodes: TreeNode[]): string[] =>
@@ -22,6 +23,7 @@ export interface ReadingDoc {
   documentId: string;
   createdAt: string;
   updatedAt: string;
+  layers?: LayerView[]; // named alternative renditions; absent = none yet
 }
 
 export function ReadingSurface({
@@ -72,6 +74,7 @@ export function ReadingSurface({
       documentId={document?.documentId}
       canEdit={canEdit}
       docs={docs}
+      layers={document?.layers ?? []}
       currentId={document?.documentId ?? null}
       canInvite={canInvite}
       invites={invites}
