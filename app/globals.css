@@ -16,8 +16,12 @@
   --hl-green:   #c0e097;
   --hl-blue:    #b4cdf0;
   /* view (layer) tints — a wash a whole passage sits on, so far paler than a
-     highlighter mark: ink must stay comfortably readable across the block. */
-  --layer-sand:  #f5edda;
+     highlighter mark: ink must stay comfortably readable across the block.
+     sand and clay share --paper's warm-cream hue, so they need more depth than the
+     hue-shifted tints to read as a colour rather than as dirtier paper; sand was
+     #f5edda, ΔE 8 from paper and ΔE 2 from --select — near-identical to the
+     selected-block wash. */
+  --layer-sand:  #f7e7c2;
   --layer-sage:  #e8efe1;
   --layer-mist:  #e5ecf3;
   --layer-blush: #f8e8e7;
