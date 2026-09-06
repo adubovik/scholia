@@ -1826,7 +1826,7 @@ body {
 .layer-bands { margin-top: 0.5rem; }
 .layer-band {
   position: relative;
-  border-top: 1px solid var(--rule);
+  border-radius: 7px;
   padding: 0.45rem 0.55rem 0.4rem;
   margin: 0 -0.55rem;
   font-family: var(--serif);
@@ -1842,17 +1842,17 @@ body {
 .layer-band[data-layer-color="blush"] { background: var(--layer-blush); }
 .layer-band[data-layer-color="lilac"] { background: var(--layer-lilac); }
 .layer-band[data-layer-color="clay"]  { background: var(--layer-clay); }
-/* The view's name as a run-in label, exactly where a section number sits in reading
-   mode — so the eye reads "summarization ⟨text⟩" as one line. */
-.layer-band-name {
-  float: left;
-  margin-right: 0.5em;
-  font-family: var(--mono);
-  font-size: 0.55rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-  line-height: 2.3;
+/* Stacked views read as ONE block: the group rounds at its outer corners only, and
+   the hairline the spec draws between layers falls inside it. The change of tint is
+   the other half of that separation. */
+.layer-band:not(:first-child) {
+  border-top: 1px solid var(--rule);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.layer-band:not(:last-child) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 /* Bands aren't .dual-blocks, so they need their own hover reveal for the ✎/bin. */
 .layer-band:hover .dual-controls,

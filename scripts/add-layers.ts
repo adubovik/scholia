@@ -14,9 +14,15 @@
  * no data can violate the new constraint.
  */
 import { config } from "dotenv";
-import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import { neon, neonConfig, type NeonQueryFunction } from "@neondatabase/serverless";
 
 config({ path: ".env.local" });
+
+// Same switch as lib/db.ts: point the neon-http driver at the local proxy container
+// when running inside docker compose, instead of Neon's cloud endpoint.
+if (process.env.SCHOLIA_LOCAL_DB === "1") {
+  neonConfig.fetchEndpoint = (host) => `http://${host}:4444/sql`;
+}
 
 const state = (sql: NeonQueryFunction<false, false>) => sql`
   SELECT
@@ -27,6 +33,15 @@ const state = (sql: NeonQueryFunction<false, false>) => sql`
 
 async function main() {
   const sql = neon(process.env.DATABASE_URL!);
+  // A brand-new database has no node_annotations to alter — drizzle-kit push creates
+  // the whole schema (layers included) from scratch there. Bail out quietly so this
+  // can run *before* push in the docker seed, where an existing volume is the case
+  // push can't handle on its own (the truncate prompt needs a TTY).
+  const [{ ready }] = await sql`SELECT to_regclass('public.node_annotations') IS NOT NULL AS ready`;
+  if (!ready) {
+    console.log("no node_annotations table yet — fresh database, nothing to migrate.");
+    return;
+  }
   console.log("before:", (await state(sql))[0]);
 
   await sql`

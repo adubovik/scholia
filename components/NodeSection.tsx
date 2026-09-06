@@ -8,6 +8,7 @@ import { LayerBands } from "./LayerBands";
 import { NodeContextMenu, NodeNumber, ChildCount, NumText } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, usePanelCentred, useActiveNode } from "./NotesContext";
+import { useLayersOptional } from "./LayerContext";
 import { glyphsInTags } from "@/lib/annotations/glyphs";
 
 // Every id beneath this node (not the node itself) — the target of Collapse/Expand
@@ -58,13 +59,23 @@ export function NodeSection({
   // an indented head.) The one exception is a legacy heading whose whole range IS its
   // title (stored as both title+text): that shows as a head line, not as prose.
   const isHeadingByTitle = node.title !== null && node.title.trim() === node.text.trim();
-  const runIn = hasText && !isHeadingByTitle;
-  const showHead = !runIn; // heading, or a bodyless structural container → id (+ title) on its own line
+  const showsSource = hasText && !isHeadingByTitle;
+  // The bar's "original" chip switched off swaps the source prose out for the views
+  // stacked beneath it — but only where there IS one to read: an untranslated node
+  // keeps its original rather than going blank (which also covers "all chips off").
+  const layers = useLayersOptional();
+  const hideOriginal =
+    layers !== null &&
+    !layers.showOriginal &&
+    layers.selected.some((l) => node.layerNotes.some((n) => n.layerId === l.id));
+  const runIn = showsSource && !hideOriginal;
+  const showHead = !runIn; // heading, hidden original, or a bodyless structural container → id (+ title) on its own line
   // The head, when shown, carries only the legacy title beside the id; a node's own
   // prose never sits in the head now — it flows below as a passage via runIn.
   const headTitle = node.title ?? null;
-  // Foldable when there's a passage to fold and/or a subtree to hide.
-  const collapsible = runIn || hasChildren;
+  // Foldable when there's a passage to fold and/or a subtree to hide. Keyed off the
+  // node's real content, not runIn — collapsing still hides the views.
+  const collapsible = showsSource || hasChildren;
 
   // Compound id path (IV.Prop.LXI full / LXI short — the toggle picks). A run-in
   // passage shows it as a prefix; a head shows it on its own line.

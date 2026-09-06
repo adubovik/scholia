@@ -92,8 +92,9 @@ function LayerBand({
   }
 
   return (
-    <div className="layer-band" data-layer-color={layer.color}>
-      <span className="layer-band-name">{layer.name}</span>
+    // No name label: the tint already says which view this is, and the bar's chip
+    // carries the same one. `title` keeps the name reachable on hover / to a reader.
+    <div className="layer-band" data-layer-color={layer.color} title={layer.name}>
       {editing ? (
         <NoteEditor
           kind="layer"
