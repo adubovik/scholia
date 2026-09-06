@@ -12,6 +12,7 @@ import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/an
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
 import { EditControl, RemoveControl, ConfirmControl, CancelControl } from "./NoteControls";
 import { useCollapse, useCollapsed } from "./CollapseContext";
+import { useLayersOptional } from "./LayerContext";
 import { useNotesActions, useNotesState, usePanelCentred, useActiveNode, useActiveAnn } from "./NotesContext";
 
 /**
@@ -19,7 +20,8 @@ import { useNotesActions, useNotesState, usePanelCentred, useActiveNode, useActi
  * foldable) but showing annotations. A note (node or inline) is the prose, editable in
  * place with the full editor (tags/glyphs/colour); a bare highlight shows its span,
  * dimmed; a note-less node kept for its subtree is a dim skeleton you can still add a
- * note to. Reacts to the reading-view node menu: `editingId`/`composeNodeId` from
+ * note to — or, when a selected view has text for it, that view's band instead.
+ * Reacts to the reading-view node menu: `editingId`/`composeNodeId` from
  * context open this row's editor, so "Edit note"/"Add note" land here.
  */
 export function DualNodeSection({
@@ -52,6 +54,19 @@ export function DualNodeSection({
   const isInline = node.kind === "inline";
   const hasNote = node.note.trim() !== "";
   const isSkeleton = !isInline && node.noteId === null; // note-less node kept for its subtree
+  // A skeleton's dim first sentence is a placeholder for "there is no note here"; a
+  // selected view with real text for this node is a better one, so it takes the slot
+  // outright — the same swap the reading panel makes when `original` is switched off.
+  // Titled nodes keep their label: that is a structural heading, not a rundown of prose
+  // (NodeSection leaves those alone too).
+  // ponytail: the skeleton's "Add note" ✎ goes with it. The reading panel's node menu
+  // still reaches this row (composeNodeId); give it back a control here if that bites.
+  const layers = useLayersOptional();
+  const leadsWithView =
+    isSkeleton &&
+    node.title === null &&
+    layers !== null &&
+    layers.selected.some((l) => node.layerNotes.some((n) => n.layerId === l.id));
   const glyphs = glyphsInTags(node.tags);
   const tags = displayTags(node.tags);
 
@@ -178,7 +193,7 @@ export function DualNodeSection({
               onCancel={close}
               onDelete={remove}
             />
-          ) : isSkeleton ? (
+          ) : leadsWithView ? null : isSkeleton ? (
             <div className="dual-skel">
               {numberEl}
               <span className="dual-skel-label">{node.title ?? firstSentence(node.source)}</span>
@@ -221,7 +236,13 @@ export function DualNodeSection({
           {/* Same stack as the reading panel — except the first slot above is the
               node's note (or its rundown), not the original prose. */}
           {!isInline && (
-            <LayerBands nodeId={node.nodeId} layerNotes={node.layerNotes} canEdit={canEdit} documentId={documentId} />
+            <LayerBands
+              nodeId={node.nodeId}
+              layerNotes={node.layerNotes}
+              canEdit={canEdit}
+              documentId={documentId}
+              lead={leadsWithView ? numberEl : undefined}
+            />
           )}
         </div>
 
