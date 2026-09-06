@@ -52,8 +52,11 @@ export function DualNodeSection({
 
   const hasChildren = node.children.length > 0;
   const isInline = node.kind === "inline";
+  // The whole-node note, stepped down beside the inline rows because a view took the
+  // node's own row. Renders exactly like a node note, only numbered 2.1₀.
+  const isNoteRow = node.kind === "note";
   const hasNote = node.note.trim() !== "";
-  const isSkeleton = !isInline && node.noteId === null; // note-less node kept for its subtree
+  const isSkeleton = node.kind === "node" && node.noteId === null; // note-less node kept for its subtree
   // A skeleton's dim first sentence is a placeholder for "there is no note here"; a
   // selected view with real text for this node is a better one, so it takes the slot
   // outright — the same swap the reading panel makes when `original` is switched off.
@@ -61,7 +64,7 @@ export function DualNodeSection({
   // (NodeSection leaves those alone too).
   // ponytail: the skeleton's "Add note" ✎ goes with it. The reading panel's node menu
   // still reaches this row (composeNodeId); give it back a control here if that bites.
-  // (Inline rows never carry layerNotes, so `views` is empty for them.)
+  // (Only node rows carry layerNotes, so `views` is empty for inline and note rows.)
   const views = useVisibleLayers(node.nodeId, node.layerNotes);
   const leadsWithView = isSkeleton && node.title === null && views.length > 0;
   const glyphs = glyphsInTags(node.tags);
@@ -69,9 +72,11 @@ export function DualNodeSection({
 
   // The reading-view node menu drives editing through context: "Edit note" sets
   // editingId to the annotation id; "Add note" sets composeNodeId to the node id.
+  // The composer belongs to the node's own row — never also to the note row that shares
+  // its nodeId, which would open two editors on the one annotation.
   const shouldEdit =
     (editingId !== null && editingId === node.noteId) ||
-    (!isInline && composeNodeId === node.nodeId);
+    (node.kind === "node" && composeNodeId === node.nodeId);
   const [override, setOverride] = useState<boolean | null>(null);
   const [confirmDel, setConfirmDel] = useState(false); // arm the bin before it deletes
   const editing = canEdit && (override ?? shouldEdit);
@@ -106,15 +111,16 @@ export function DualNodeSection({
   }
 
   // A node note and a view band both want to stand in for the original passage, so when
-  // a band is on screen the note is numbered as what it actually is: annotation ₀ of
-  // this node — the one covering the whole of it. Inline rows number from ₁, which is
-  // why 0 was free. On its own (no band) the note keeps the bare section number.
+  // a band is on screen the note steps down a level and is numbered as what it actually
+  // is: annotation ₀ of this node — the one covering the whole of it. Inline rows number
+  // from ₁, which is why 0 was free. On its own (no band) the note keeps the node's row
+  // and its bare section number.
   const numberEl = (sub?: number) =>
     node.number && (
       <button
         className="node-num-id node-num-id--runin"
         aria-label={`Section ${node.number} in the text`}
-        onClick={() => select(node.id, node.id)}
+        onClick={() => select(node.id, node.nodeId)}
       >
         {node.number}
         {sub !== undefined && <sub>{sub}</sub>}
@@ -187,7 +193,7 @@ export function DualNodeSection({
         <div className={active && !isInline ? "dual-block dual-block--active" : "dual-block"}>
           {editing ? (
             <NoteEditor
-              kind={node.kind}
+              kind={isInline ? "inline" : "node"}
               note={node.note}
               tags={node.tags}
               color={node.color}
@@ -229,7 +235,7 @@ export function DualNodeSection({
             </div>
           ) : (
             <div className="dual-note">
-              {numberEl(views.length > 0 ? 0 : undefined)}
+              {numberEl(isNoteRow ? 0 : undefined)}
               {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--lead" />}
               {metaEl}
               <NoteMarkdown note={node.note} />
@@ -237,8 +243,10 @@ export function DualNodeSection({
             </div>
           )}
           {/* Same stack as the reading panel — except the first slot above is the
-              node's note (or its rundown), not the original prose. */}
-          {!isInline && (
+              node's note (or its rundown), not the original prose. Only the node's own
+              row carries them: a note row shares its nodeId and would duplicate an open
+              view composer. */}
+          {node.kind === "node" && (
             <LayerBands
               nodeId={node.nodeId}
               layerNotes={node.layerNotes}

@@ -9,22 +9,23 @@ import { displayTags, glyphTag, glyphsInTags } from "@/lib/annotations/glyphs";
  * skeletons that hold the hierarchy together.
  *
  * `buildDual` produces the *full* tree; `visibleDual` prunes/filters it at render time
- * (client-side) so filter chips and the compose flow can reveal or hide branches
- * without a refetch. Numbers come from the *reading* tree, so a note on §2.1 is still
- * labelled 2.1 here — the two panels agree. Inline rows carry the *parent's* number
- * plus a 1-based `index`, so the panel can label them 2.1₁, 2.1₂ … as fake citation
- * ids (nodes have index 0). The index is fixed at build time so it stays stable when
- * `visibleDual` filters siblings out.
+ * (client-side) so filter chips, the compose flow and the selected views can reveal,
+ * hide or restructure branches without a refetch. Numbers come from the *reading* tree,
+ * so a note on §2.1 is still labelled 2.1 here — the two panels agree. Inline rows carry
+ * the *parent's* number plus a 1-based `index`, so the panel can label them 2.1₁, 2.1₂ …
+ * as fake citation ids (nodes keep index 0, which is why a demoted node note reads 2.1₀).
+ * The index is fixed at build time so it stays stable when `visibleDual` filters siblings
+ * out.
  *
  * A separate type from TreeNode on purpose: this reuses the tree's *shape* (nesting,
  * collapse) but none of reading mode's per-node logic, keeping the reading path
  * untouched.
  */
 export interface DualNode {
-  id: string; // dual identity: the source node id (node) or the inline annotation id (inline)
+  id: string; // dual identity: the source node id (node) or the annotation id (inline, note)
   number: string; // reading section number: the node's own (node) or its parent's (inline)
   index: number; // inline rows: 1-based position among the parent's inline annotations; nodes: 0
-  kind: "node" | "inline";
+  kind: "node" | "inline" | "note"; // structural row / a highlight / the whole-node note, stepped down (see demote)
   nodeId: string; // owning source node — target for upsertNodeAnnotation / cross-panel select
   noteId: string | null; // real annotation row to edit; null = node has no note (skeleton)
   note: string; // the editable prose; "" when the block has no note
@@ -109,10 +110,11 @@ export function sectionIndex(nodes: DualNode[]): Record<string, SectionTarget> {
   return out;
 }
 
-/** Does this row carry an annotation of its own? An inline row is itself a highlight;
- * a node counts only if it has a note. Note-less nodes are skeletons. */
+/** Does this row carry an annotation of its own? An inline row is itself a highlight and
+ * a note row is a note; a node counts only if it still holds one. Note-less nodes are
+ * skeletons. */
 function ownAnnotated(d: DualNode): boolean {
-  return d.kind === "inline" || d.noteId !== null;
+  return d.kind !== "node" || d.noteId !== null;
 }
 
 function matches(d: DualNode, f: DualFilter): boolean {
@@ -134,6 +136,25 @@ export interface DualFilter {
 }
 
 /**
+ * With a selected view on screen the node's own row belongs to that view's text — so the
+ * note about the *whole* node steps down beside the inline ones as annotation 0: 2.1₀
+ * ahead of 2.1₁, 2.1₂. What is left of the node is a skeleton, which is exactly the row
+ * DualNodeSection hands over to the first band. Keyed by the annotation's own id, like an
+ * inline row, so a cross-panel select lands on the note and not on the band above it.
+ *
+ * Titled nodes are left alone: their row is a structural heading, not a rundown of the
+ * prose, so no band displaces it there either (DualNodeSection's `leadsWithView`).
+ */
+function demote(d: DualNode, layerIds: string[]): DualNode {
+  if (d.kind !== "node" || d.noteId === null || d.title !== null) return d;
+  if (!d.layerNotes.some((n) => layerIds.includes(n.layerId))) return d;
+  const note: DualNode = { ...d, id: d.noteId, kind: "note", layerNotes: [], children: [] };
+  // The husk keeps its views (the band is its row now) and loses the note — including its
+  // tags, so a tag filter matches the note row and reaches this one as its ancestor.
+  return { ...d, noteId: null, note: "", tags: [], children: [note, ...d.children] };
+}
+
+/**
  * Prune the full dual tree to what should show: rows that carry a matching annotation,
  * plus every ancestor holding a match (so the hierarchy stays intact), plus any forced
  * id (a compose target that has no annotation yet). With no filter, this is the base
@@ -141,8 +162,10 @@ export interface DualFilter {
  */
 export function visibleDual(nodes: DualNode[], f: DualFilter): DualNode[] {
   const force = f.forceIds ?? new Set<string>();
+  const layerIds = f.layerIds ?? [];
   const walk = (list: DualNode[]): DualNode[] =>
-    list.flatMap((d) => {
+    list.flatMap((d0) => {
+      const d = demote(d0, layerIds);
       const kids = walk(d.children);
       if (matches(d, f) || force.has(d.id) || kids.length > 0) {
         return [{ ...d, children: kids }];
