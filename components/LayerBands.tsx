@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { LayerNoteView, LayerView } from "@/lib/annotations/types";
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
 import { NoteEditor } from "./NoteEditor";
@@ -22,11 +22,13 @@ export function LayerBands({
   layerNotes,
   canEdit,
   documentId,
+  lead,
 }: {
   nodeId: string;
   layerNotes: LayerNoteView[];
   canEdit: boolean;
   documentId: string;
+  lead?: ReactNode; // run-in section number, when this stack replaces the original
 }) {
   const ctx = useLayersOptional();
   if (!ctx || ctx.selected.length === 0) return null;
@@ -38,8 +40,8 @@ export function LayerBands({
   if (bands.length === 0) return null;
 
   return (
-    <div className="layer-bands">
-      {bands.map((l) => (
+    <div className={lead ? "layer-bands layer-bands--lead" : "layer-bands"}>
+      {bands.map((l, i) => (
         <LayerBand
           key={l.id}
           layer={l}
@@ -47,6 +49,7 @@ export function LayerBands({
           note={layerNotes.find((n) => n.layerId === l.id) ?? null}
           canEdit={canEdit}
           documentId={documentId}
+          lead={i === 0 ? lead : undefined}
         />
       ))}
     </div>
@@ -59,12 +62,14 @@ function LayerBand({
   note,
   canEdit,
   documentId,
+  lead,
 }: {
   layer: LayerView;
   nodeId: string;
   note: LayerNoteView | null;
   canEdit: boolean;
   documentId: string;
+  lead?: ReactNode;
 }) {
   const { composing, compose, stopComposing } = useLayersOptional()!;
   // The node menu opens an editor through context ("Add summarization"); a click on ✎
@@ -108,6 +113,9 @@ function LayerBand({
         />
       ) : (
         <>
+          {/* Standing in for the original: the section number runs in at the head of
+              the prose, exactly where SourcePassage puts it. */}
+          {lead}
           <NoteMarkdown note={note?.note ?? ""} />
           {canEdit && (
             <span className={confirmDel ? "dual-controls dual-controls--confirm" : "dual-controls"}>

@@ -69,7 +69,11 @@ export function NodeSection({
     !layers.showOriginal &&
     layers.selected.some((l) => node.layerNotes.some((n) => n.layerId === l.id));
   const runIn = showsSource && !hideOriginal;
-  const showHead = !runIn; // heading, hidden original, or a bodyless structural container → id (+ title) on its own line
+  // With the original switched off, the first view takes over its slot outright —
+  // same column, same run-in number, same justified prose, only tinted. Collapsed,
+  // there is no prose to lead, so the number falls back to a head line.
+  const leadsWithView = showsSource && hideOriginal && !collapsed;
+  const showHead = !runIn && !leadsWithView; // heading, or a bodyless structural container → id (+ title) on its own line
   // The head, when shown, carries only the legacy title beside the id; a node's own
   // prose never sits in the head now — it flows below as a passage via runIn.
   const headTitle = node.title ?? null;
@@ -118,14 +122,14 @@ export function NodeSection({
         numberShort={short}
         childCount={node.children.length}
         annotated={hasNote}
-        runIn={runIn}
+        runIn={!showHead}
         nodeId={node.id}
         canEdit={canEdit}
         glyphs={nodeAnn ? glyphsInTags(nodeAnn.tags) : []}
         onHighlightNote={nodeAnn ? () => select(nodeAnn.id, node.id) : undefined}
       />
     ) : (
-      <span className={runIn ? "node-num-id node-num-id--runin" : "node-num-id"}>
+      <span className={showHead ? "node-num-id" : "node-num-id node-num-id--runin"}>
         <NumText full={num} short={short} />
         <ChildCount n={node.children.length} />
       </span>
@@ -170,7 +174,13 @@ export function NodeSection({
           view's "Edit …" — but with no highlight affordances of its own: annotations
           anchor to source offsets, and a translation is not the source. */}
       {!collapsed && (
-        <LayerBands nodeId={node.id} layerNotes={node.layerNotes} canEdit={canEdit} documentId={documentId} />
+        <LayerBands
+          nodeId={node.id}
+          layerNotes={node.layerNotes}
+          canEdit={canEdit}
+          documentId={documentId}
+          lead={leadsWithView ? numberEl : undefined}
+        />
       )}
     </>
   );

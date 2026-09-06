@@ -1563,7 +1563,7 @@ body {
 .drawer-scroll {
   padding: 0.6rem 1.25rem 1.5rem;
 }
-.drawer-scroll .reading-p { text-align: left; hyphens: none; }
+.drawer-scroll :is(.reading-p, .layer-band) { text-align: left; hyphens: none; }
 
 /* ══ Library drawer (left) ═══════════════════════════════════ */
 .library-drawer {
@@ -1834,7 +1834,10 @@ body {
   line-height: var(--reading-line-height);
   word-spacing: var(--reading-word-spacing);
   color: var(--ink);
+  text-align: justify;
+  hyphens: auto;
   text-wrap: pretty;
+  hanging-punctuation: first last;
 }
 .layer-band[data-layer-color="sand"]  { background: var(--layer-sand); }
 .layer-band[data-layer-color="sage"]  { background: var(--layer-sage); }
@@ -1854,6 +1857,11 @@ body {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
+/* Standing in for the original passage: no gap above (there is nothing to be ruled
+   off from), and the section number runs in — floated ahead of the markdown, the same
+   trick .dual-note uses to lead a note with its number. */
+.layer-bands--lead { margin-top: 0; }
+.layer-band .node-num-id { float: left; margin-right: 0.5em; }
 /* Bands aren't .dual-blocks, so they need their own hover reveal for the ✎/bin. */
 .layer-band:hover .dual-controls,
 .layer-band .dual-controls:focus-within { opacity: 1; }
