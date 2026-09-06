@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { LayerView } from "@/lib/annotations/types";
+import type { LayerNoteView, LayerView } from "@/lib/annotations/types";
 
 /**
  * Which alternative renditions ("views" in the UI, layers in the code) are on screen,
@@ -44,6 +44,22 @@ export function useLayers(): LayerCtx {
  * inside surfaces that have none (the demo's static shell, tests). */
 export function useLayersOptional(): LayerCtx | null {
   return useContext(Ctx);
+}
+
+/** The views that actually put a band on this node: selected, and either holding text
+ *  for it or with an open composer. One source of truth for "is there a view to read
+ *  here" — it decides whether a band replaces the original passage (reading-first) or
+ *  the rundown (annotation-first), and whether a node note takes the ₀ subscript that
+ *  says it is no longer the only thing standing in for the passage. Empty without a
+ *  provider, like useLayersOptional. */
+export function useVisibleLayers(nodeId: string, layerNotes: LayerNoteView[]): LayerView[] {
+  const ctx = useContext(Ctx);
+  if (!ctx) return [];
+  return ctx.selected.filter(
+    (l) =>
+      layerNotes.some((n) => n.layerId === l.id) ||
+      (ctx.composing?.nodeId === nodeId && ctx.composing.layerId === l.id),
+  );
 }
 
 export function LayerProvider({ layers, children }: { layers: LayerView[]; children: ReactNode }) {

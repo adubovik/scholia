@@ -6,7 +6,7 @@ import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAn
 import { NoteEditor } from "./NoteEditor";
 import { NoteMarkdown } from "./NoteMarkdown";
 import { EditControl, RemoveControl, ConfirmControl, CancelControl } from "./NoteControls";
-import { useLayersOptional } from "./LayerContext";
+import { useLayersOptional, useVisibleLayers } from "./LayerContext";
 
 /**
  * A node's text in the selected alternative views, stacked under the original and
@@ -30,13 +30,7 @@ export function LayerBands({
   documentId: string;
   lead?: ReactNode; // run-in section number, when this stack replaces the original
 }) {
-  const ctx = useLayersOptional();
-  if (!ctx || ctx.selected.length === 0) return null;
-  const bands = ctx.selected.filter(
-    (l) =>
-      layerNotes.some((n) => n.layerId === l.id) ||
-      (ctx.composing?.nodeId === nodeId && ctx.composing.layerId === l.id),
-  );
+  const bands = useVisibleLayers(nodeId, layerNotes);
   if (bands.length === 0) return null;
 
   return (

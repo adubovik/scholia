@@ -12,7 +12,7 @@ import { updateInlineAnnotation, deleteInlineAnnotation } from "@/lib/actions/an
 import { upsertNodeAnnotation, deleteNodeAnnotation } from "@/lib/actions/nodeAnnotations";
 import { EditControl, RemoveControl, ConfirmControl, CancelControl } from "./NoteControls";
 import { useCollapse, useCollapsed } from "./CollapseContext";
-import { useLayersOptional } from "./LayerContext";
+import { useVisibleLayers } from "./LayerContext";
 import { useNotesActions, useNotesState, usePanelCentred, useActiveNode, useActiveAnn } from "./NotesContext";
 
 /**
@@ -61,12 +61,9 @@ export function DualNodeSection({
   // (NodeSection leaves those alone too).
   // ponytail: the skeleton's "Add note" ✎ goes with it. The reading panel's node menu
   // still reaches this row (composeNodeId); give it back a control here if that bites.
-  const layers = useLayersOptional();
-  const leadsWithView =
-    isSkeleton &&
-    node.title === null &&
-    layers !== null &&
-    layers.selected.some((l) => node.layerNotes.some((n) => n.layerId === l.id));
+  // (Inline rows never carry layerNotes, so `views` is empty for them.)
+  const views = useVisibleLayers(node.nodeId, node.layerNotes);
+  const leadsWithView = isSkeleton && node.title === null && views.length > 0;
   const glyphs = glyphsInTags(node.tags);
   const tags = displayTags(node.tags);
 
@@ -108,15 +105,21 @@ export function DualNodeSection({
     close();
   }
 
-  const numberEl = node.number && (
-    <button
-      className="node-num-id node-num-id--runin"
-      aria-label={`Section ${node.number} in the text`}
-      onClick={() => select(node.id, node.id)}
-    >
-      {node.number}
-    </button>
-  );
+  // A node note and a view band both want to stand in for the original passage, so when
+  // a band is on screen the note is numbered as what it actually is: annotation ₀ of
+  // this node — the one covering the whole of it. Inline rows number from ₁, which is
+  // why 0 was free. On its own (no band) the note keeps the bare section number.
+  const numberEl = (sub?: number) =>
+    node.number && (
+      <button
+        className="node-num-id node-num-id--runin"
+        aria-label={`Section ${node.number} in the text`}
+        onClick={() => select(node.id, node.id)}
+      >
+        {node.number}
+        {sub !== undefined && <sub>{sub}</sub>}
+      </button>
+    );
 
   // Inline rows lead with a fake citation id — the parent section number with a
   // subscript index (2.1₁) — dimmed like a skeleton so two adjacent inline annotations
@@ -195,7 +198,7 @@ export function DualNodeSection({
             />
           ) : leadsWithView ? null : isSkeleton ? (
             <div className="dual-skel">
-              {numberEl}
+              {numberEl()}
               <span className="dual-skel-label">{node.title ?? firstSentence(node.source)}</span>
               {canEdit && (
                 <span className="dual-controls">
@@ -226,7 +229,7 @@ export function DualNodeSection({
             </div>
           ) : (
             <div className="dual-note">
-              {numberEl}
+              {numberEl(views.length > 0 ? 0 : undefined)}
               {glyphs.length > 0 && <GlyphPill glyphs={glyphs} className="glyph-pill--lead" />}
               {metaEl}
               <NoteMarkdown note={node.note} />
@@ -241,7 +244,7 @@ export function DualNodeSection({
               layerNotes={node.layerNotes}
               canEdit={canEdit}
               documentId={documentId}
-              lead={leadsWithView ? numberEl : undefined}
+              lead={leadsWithView ? numberEl() : undefined}
             />
           )}
         </div>

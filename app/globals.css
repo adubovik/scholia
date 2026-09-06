@@ -1470,7 +1470,8 @@ body {
    read apart. The subscript is the annotation's 1-based index on its level. */
 .dual-inline-id { color: var(--faint); margin-right: 0.4em; }
 .dual-inline-id:hover { color: var(--muted); }
-.dual-inline-id sub { font-size: 0.7em; }
+/* Annotation index on a section id — ₀ on a node note, ₁… on inline rows. */
+.node-num-id sub { font-size: 0.7em; }
 
 /* Note-less structural node kept only to hold the hierarchy — a dim one-line label. */
 .dual-skel {

@@ -8,7 +8,7 @@ import { LayerBands } from "./LayerBands";
 import { NodeContextMenu, NodeNumber, ChildCount, NumText } from "./NodeMenu";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, usePanelCentred, useActiveNode } from "./NotesContext";
-import { useLayersOptional } from "./LayerContext";
+import { useLayersOptional, useVisibleLayers } from "./LayerContext";
 import { glyphsInTags } from "@/lib/annotations/glyphs";
 
 // Every id beneath this node (not the node itself) — the target of Collapse/Expand
@@ -64,10 +64,8 @@ export function NodeSection({
   // stacked beneath it — but only where there IS one to read: an untranslated node
   // keeps its original rather than going blank (which also covers "all chips off").
   const layers = useLayersOptional();
-  const hideOriginal =
-    layers !== null &&
-    !layers.showOriginal &&
-    layers.selected.some((l) => node.layerNotes.some((n) => n.layerId === l.id));
+  const views = useVisibleLayers(node.id, node.layerNotes);
+  const hideOriginal = layers !== null && !layers.showOriginal && views.length > 0;
   const runIn = showsSource && !hideOriginal;
   // With the original switched off, the first view takes over its slot outright —
   // same column, same run-in number, same justified prose, only tinted. Collapsed,
