@@ -8,6 +8,7 @@ import {
   type AiNode,
 } from "../ai-structure";
 import type { ParaInput } from "../plan";
+import { AI_EFFORT } from "../ai-model";
 
 const paras: ParaInput[] = [
   { start: 0, end: 10, text: "DEDICATION" }, // 1
@@ -116,7 +117,7 @@ describe("aiStructure (structured output plumbing)", () => {
       const body = JSON.parse(init.body as string);
       expect(body.response_format.type).toBe("json_schema");
       expect(body.response_format.json_schema.strict).toBe(true);
-      expect(body.reasoning_effort).toBe("medium");
+      expect(body.reasoning_effort).toBe(AI_EFFORT);
       return {
         ok: true,
         json: async () => ({
@@ -129,6 +130,25 @@ describe("aiStructure (structured output plumbing)", () => {
     expect(got).toHaveLength(2);
     expect(usage.totalTokens).toBe(1234);
     expect(fetchImpl).toHaveBeenCalledOnce();
+  });
+
+  it("replays the conversation on a follow-up: anchored text, each proposed tree, each request", async () => {
+    let sent: { role: string; content: string }[] = [];
+    const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
+      sent = JSON.parse(init.body as string).messages;
+      return {
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: JSON.stringify({ nodes: tree }) } }], usage: {} }),
+      } as unknown as Response;
+    });
+    await aiStructure(paras, { apiKey: "sk-test", fetchImpl: fetchImpl as unknown as typeof fetch }, [
+      { tree, prompt: "Remove everything after anchor 4" },
+    ]);
+    expect(sent.map((m) => m.role)).toEqual(["system", "user", "assistant", "user"]);
+    expect(sent[1].content).toContain("1: DEDICATION"); // the anchored text stays turn one
+    expect(JSON.parse(sent[2].content)).toEqual({ nodes: tree }); // what the model already proposed
+    expect(sent[3].content).toContain("Remove everything after anchor 4");
+    expect(sent[3].content).toContain("not a diff"); // nudged to restate the whole tree
   });
 
   it("throws on a non-ok response", async () => {

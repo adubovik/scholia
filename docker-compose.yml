@@ -38,6 +38,12 @@ services:
       SCHOLIA_AUTH: dev
       SCHOLIA_LOCAL_DB: "1"
       DATABASE_URL: postgres://postgres:postgres@neon-proxy:5432/scholia
+      # AI structure detection without pasting a key into the form. Compose does not
+      # read .env.local, so export it first:
+      #   set -a; . ./.env.local; set +a; docker compose up --build -d app
+      # Unset is fine — the form's own key field still works.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
     ports:
       - "3000:3000"
     volumes:

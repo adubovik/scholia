@@ -139,10 +139,24 @@ export interface AiUsage {
   reasoningTokens?: number;
 }
 
-/** Call OpenAI once; return the raw assistant text + token usage. Throws on transport/HTTP errors. */
+/** One completed exchange: the tree the model returned, then what the reader asked next. */
+export interface AiTurn {
+  tree: AiNode[];
+  prompt: string;
+}
+
+// Appended to every follow-up so the model restates the whole tree instead of a
+// patch — the schema has no way to express a diff.
+const FOLLOWUP_SUFFIX =
+  "\n\nRe-emit the COMPLETE structure for the whole text under the same rules — a full tree, not a diff.";
+
+/** Call OpenAI once; return the raw assistant text + token usage. Throws on transport/HTTP errors.
+ * `history` replays earlier exchanges (the API is stateless), so a follow-up sees the
+ * anchored text, every tree already proposed, and every instruction given since. */
 async function callOpenAI(
   anchored: string,
   opts: AiOptions,
+  history: AiTurn[] = [],
 ): Promise<{ content: string; usage: AiUsage }> {
   const f = opts.fetchImpl ?? fetch;
   const res = await f(ENDPOINT, {
@@ -159,6 +173,10 @@ async function callOpenAI(
       messages: [
         { role: "system", content: PROMPT },
         { role: "user", content: anchored },
+        ...history.flatMap((t) => [
+          { role: "assistant", content: JSON.stringify({ nodes: t.tree }) },
+          { role: "user", content: t.prompt + FOLLOWUP_SUFFIX },
+        ]),
       ],
     }),
   });
@@ -345,10 +363,11 @@ export interface AiResult {
   usage: AiUsage;
 }
 
-/** AI structure pass: anchored text → OpenAI (structured output) → validated tree + usage. */
-export async function aiStructure(paras: ParaInput[], opts: AiOptions): Promise<AiResult> {
+/** AI structure pass: anchored text (+ any prior exchanges) → OpenAI (structured output)
+ * → validated tree + usage. */
+export async function aiStructure(paras: ParaInput[], opts: AiOptions, history: AiTurn[] = []): Promise<AiResult> {
   if (paras.length === 0) return { tree: [], usage: { totalTokens: 0, promptTokens: 0, completionTokens: 0 } };
-  const { content, usage } = await callOpenAI(buildAnchored(paras), opts);
+  const { content, usage } = await callOpenAI(buildAnchored(paras), opts, history);
   const tree = parseTree(content);
   validateTree(tree, paras.length);
   return { tree, usage };

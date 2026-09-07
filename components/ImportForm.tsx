@@ -2,9 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createDocument } from "@/lib/actions/documents";
 import { extractHtml, extractEpub } from "@/lib/actions/extract";
-import { previewAiStructure, type AiPreviewResult } from "@/lib/actions/ai-preview";
+import { previewAiStructure } from "@/lib/actions/ai-preview";
 import { AI_MODEL } from "@/lib/tree/ai-model";
-import { TreePreviewModal } from "./TreePreviewModal";
+import { TreePreviewModal, type PreviewTurn } from "./TreePreviewModal";
 
 /** The "add a text to the library" form — paste / file / URL funnel into one
  * { title, author, text } commit. Hosted by NewDocModal (the standalone /new route
@@ -22,9 +22,10 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
   // never persisted server-side, never logged.
   const [useAi, setUseAi] = useState(false);
   const [apiKey, setApiKey] = useState("");
-  // The AI preview (proposed tree + dropped lines + token usage) awaiting Accept.
-  // Pinned to the text it was computed from, so editing the textarea invalidates it.
-  const [preview, setPreview] = useState<{ text: string; result: AiPreviewResult } | null>(null);
+  // The AI preview awaiting Accept: the whole conversation (opening pass, then each
+  // follow-up and the tree it produced). Pinned to the text it was computed from, so
+  // editing the textarea invalidates it.
+  const [preview, setPreview] = useState<{ text: string; turns: PreviewTurn[] } | null>(null);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration mirror from sessionStorage
     setApiKey(sessionStorage.getItem("openai_key") ?? "");
@@ -128,12 +129,29 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
     }
   }
 
-  async function doPreview() {
+  /**
+   * Ask the AI for a structure and put the answer at turn `index`, discarding any
+   * turns from there on. `index === 0` (prompt null) is the opening pass; anything
+   * later replays the conversation up to that point — which doubles as "edit an
+   * earlier message and resend", since that too is just "redo from turn i".
+   *
+   * A turn stores the prompt that *produced* it, while the API wants (reply, next
+   * question) pairs, hence the one-step shift when building `history`.
+   */
+  async function runPreview(index: number, prompt: string | null) {
+    const base = preview?.turns ?? [];
+    const history =
+      prompt === null
+        ? []
+        : base.slice(0, index).map((t, k) => ({
+            tree: t.result.tree,
+            prompt: k === index - 1 ? prompt : base[k + 1].prompt!,
+          }));
     setBusy(true);
     setError(null);
     try {
-      const result = await previewAiStructure({ text, aiKey: apiKey.trim() });
-      setPreview({ text, result });
+      const result = await previewAiStructure({ text, aiKey: apiKey.trim(), history });
+      setPreview({ text, turns: [...base.slice(0, index), { prompt, result }] });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -150,7 +168,7 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
         title: title.trim(),
         author: author.trim(),
         text: preview.text,
-        aiTree: preview.result.tree,
+        aiTree: preview.turns[preview.turns.length - 1].result.tree, // the newest reply wins
         drop,
       });
       onDone(id);
@@ -169,10 +187,9 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
   }
 
   // Title and author are both required (author matches the library-row subtitle).
-  // With AI on, a key is required too.
-  const canImport = Boolean(
-    title.trim() && author.trim() && text.trim() && (!useAi || apiKey.trim()),
-  );
+  // A key is not: leave it blank and the server falls back to its own OPENAI_API_KEY
+  // (if it has one) — it says so plainly if it doesn't.
+  const canImport = Boolean(title.trim() && author.trim() && text.trim());
   // The preview is only valid while the text still matches what it was built from;
   // editing the textarea silently invalidates it (no effect needed).
   const showPreview = preview !== null && preview.text === text;
@@ -263,7 +280,7 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
             className="input"
             type="password"
             autoComplete="off"
-            placeholder="OpenAI API key (sk-…)"
+            placeholder="OpenAI API key (sk-…) — blank uses the server's, if set"
             value={apiKey}
             onChange={(e) => {
               setApiKey(e.target.value);
@@ -282,7 +299,7 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
           type="button"
           className="btn"
           disabled={busy || !canImport}
-          onClick={useAi ? doPreview : doImport}
+          onClick={useAi ? () => runPreview(0, null) : doImport}
         >
           {useAi ? "Preview with AI" : "Import"}
         </button>
@@ -292,10 +309,11 @@ export function ImportForm({ onDone }: { onDone: (id: string) => void }) {
 
       {showPreview && (
         <TreePreviewModal
-          result={preview!.result}
+          turns={preview!.turns}
           busy={busy}
           error={error}
           onAccept={acceptPreview}
+          onSend={runPreview}
           onCancel={() => {
             setPreview(null);
             setError(null);

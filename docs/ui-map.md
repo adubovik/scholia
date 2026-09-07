@@ -114,8 +114,12 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the title / author / paste / URL fields in it | **import form** | `ImportForm.tsx` | `.source`, `.url-row` |
 | the drop zone that takes `.txt` / `.md` / `.html` / `.epub` | **file drop canvas** | `ImportForm.tsx` → `extractHtml` / `extractEpub` (`lib/actions/extract.ts`) | `.source`, `.source-overlay` |
 | the "Use AI to detect structure" checkbox + key field in it | **AI toggle** | `ImportForm.tsx` (BYOK key in `sessionStorage`) | `.ai-toggle`, `.ai-key-note` |
-| the "AI-detected structure" confirm dialog (tree preview + removed lines + tokens, Accept/Cancel) | **tree preview modal** | `TreePreviewModal.tsx` | `.tprev-sheet`, `.tprev-line`, `.tprev-dropped` |
-| the `✕` / `↩` at the end of a preview line (strike a section out by hand, or put it back) | **strike button** | `TreePreviewModal.tsx` (anchors → `createDocument({ drop })`) | `.tprev-cut`, `.tprev-body` |
+| the "AI-detected structure" confirm dialog — a **conversation**: the opening pass, then any follow-up and the reply it drew (tree preview + removed lines + tokens, Accept/Cancel) | **tree preview modal** | `TreePreviewModal.tsx` (turns held by `ImportForm.tsx::runPreview`) | `.tprev-sheet`, `.tprev-line`, `.tprev-dropped` |
+| the `✕` / `↩` at the end of a preview line (strike a section out by hand, or put it back) — newest reply only | **strike button** | `TreePreviewModal.tsx` (anchors → `createDocument({ drop })`) | `.tprev-cut`, `.tprev-body` |
+| one AI answer inside that dialog, folded shut (`<details>`) once a newer one arrives; the newest is the one Accept builds from | **reply block** | `TreePreviewModal.tsx` | `.tprev-resp`, `.tprev-resp-head` |
+| the `⧉` / `{}` buttons on a reply's header row (copy it as rendered text / as the raw JSON tree) | **copy buttons** | `TreePreviewModal.tsx` → `CopyButton` (text via `asText`) | `.tprev-copy` |
+| one of the reader's own requests in that dialog, and the `✎` that reopens it for editing + resending (resending discards every later turn) | **request bubble** | `TreePreviewModal.tsx` | `.tprev-msg`, `.tprev-msg-edit` |
+| the "Ask for a change…" box at the foot of that dialog (⌘↵ sends) | **follow-up composer** | `TreePreviewModal.tsx` → `onSend` → `previewAiStructure({ history })` | `.tprev-ask`, `.tprev-ask-input` |
 | the sliders button next to `＋` | **invite sheet** | `InviteSettings.tsx` (glyph: `SettingsIcon.tsx`) | `.invite-dialog` |
 
 ---
