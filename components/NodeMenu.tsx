@@ -18,9 +18,12 @@ type MenuProps = {
   hasNote: boolean;
   hasChildren: boolean;
   layerNotes?: LayerNoteView[]; // this node's text per view — picks "Add" vs "Edit"
-  /** false when the passage has no prose, or highlights the bracket markup can't
-   *  express (overlapping / running past the node) — see NodeEdit.canEditText. */
+  /** false when the highlights are ones the bracket markup can't express (overlapping /
+   *  running past the node) — see NodeEdit.canEditText. */
   canEditText?: boolean;
+  /** false for a bodyless section (only subsections, no prose of its own): same sheet,
+   *  but it reads as "Add text…" because there is nothing there to edit yet. */
+  hasText?: boolean;
   onOpenNote: () => void;
   onEditText?: () => void;
   onDelete?: () => void;
@@ -44,7 +47,7 @@ function Key({ children }: { children: ReactNode }) {
 }
 
 export function MenuItems({
-  nodeId, canEdit, hasNote, hasChildren, layerNotes = [], canEditText = false,
+  nodeId, canEdit, hasNote, hasChildren, layerNotes = [], canEditText = false, hasText = true,
   onOpenNote, onEditText, onDelete, onCollapseChildren, onExpandChildren,
   Item, Separator,
 }: MenuProps & ItemParts) {
@@ -92,7 +95,7 @@ export function MenuItems({
             title={canEditText ? undefined : "Overlapping highlights — editing this passage isn't supported yet"}
             onSelect={() => onEditText?.()}
           >
-            <span className="node-menu-label">Edit text…</span>
+            <span className="node-menu-label">{hasText ? "Edit text…" : "Add text…"}</span>
           </Item>
           <Item className="node-menu-item" onSelect={onOpenNote}>
             <span className="node-menu-label">{hasNote ? "Edit note" : "Add note"}</span>

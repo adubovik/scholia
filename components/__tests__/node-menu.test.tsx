@@ -41,6 +41,7 @@ function renderItems(props: {
   hasNote: boolean;
   hasChildren?: boolean;
   canEditText?: boolean;
+  hasText?: boolean;
   onOpenNote?: () => void;
   onEditText?: () => void;
   onDelete?: () => void;
@@ -57,6 +58,7 @@ function renderItems(props: {
       hasNote={props.hasNote}
       hasChildren={props.hasChildren ?? false}
       canEditText={props.canEditText}
+      hasText={props.hasText}
       onEditText={props.onEditText}
       onDelete={props.onDelete}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -115,6 +117,14 @@ describe("MenuItems", () => {
 
     renderItems({ canEdit: true, hasNote: false, canEditText: true, onEditText });
     fireEvent.click(screen.getAllByRole("button", { name: "Edit text…" })[1]);
+    expect(onEditText).toHaveBeenCalledOnce();
+  });
+
+  it("reads 'Add text…' on a bodyless section, and still opens the sheet", () => {
+    const onEditText = vi.fn();
+    renderItems({ canEdit: true, hasNote: false, canEditText: true, hasText: false, onEditText });
+    expect(screen.queryByRole("button", { name: "Edit text…" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add text…" }));
     expect(onEditText).toHaveBeenCalledOnce();
   });
 

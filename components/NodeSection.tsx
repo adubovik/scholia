@@ -108,6 +108,7 @@ export function NodeSection({
     hasChildren,
     layerNotes: node.layerNotes,
     canEditText: canEditText(node),
+    hasText,
     onOpenNote: openNote,
     onEditText: () => setSheet("edit"),
     onDelete: () => setSheet("delete"),

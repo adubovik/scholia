@@ -165,6 +165,10 @@ export async function deleteNode(nodeId: string): Promise<void> {
  * Rewrite one node's prose from the bracket markup (see lib/annotations/markup.ts),
  * which carries the node's highlights along with the text.
  *
+ * Also how a bodyless section (a container whose range is zero-length — an epub chapter
+ * head whose whole paragraph was the label) gets prose of its own for the first time:
+ * the text is inserted at that empty point and the node grows to hold it.
+ *
  * Two jobs. The node's own highlights are re-anchored from where their markers landed
  * — no character arithmetic, so a phrase can move or be rewritten and its highlight
  * goes with it. Everything downstream of the node is a pure slide: the source changes
@@ -215,6 +219,13 @@ export async function updateNodeText(nodeId: string, markup: string): Promise<vo
       .where(and(eq(nodeSourceRanges.sourceId, source.id), gte(nodeSourceRanges.startOffset, past))),
     db.update(nodeSourceRanges).set({ endOffset: shift(nodeSourceRanges.endOffset) })
       .where(and(eq(nodeSourceRanges.sourceId, source.id), gte(nodeSourceRanges.endOffset, past))),
+    // Then pin the edited node's own range (batch statements run in order, so this
+    // wins). A node that had prose is unaffected — its start is < past and its end
+    // lands on exactly this. A bodyless one needs it: its start sits ON past, so the
+    // slide above carries it along with everything downstream and it stays empty.
+    db.update(nodeSourceRanges)
+      .set({ startOffset: range.startOffset, endOffset: range.startOffset + parsed.text.length })
+      .where(eq(nodeSourceRanges.nodeId, node.id)),
     db.update(paragraphs).set({ charStart: shift(paragraphs.charStart) })
       .where(and(eq(paragraphs.sourceId, source.id), gte(paragraphs.charStart, past))),
     db.update(paragraphs).set({ charEnd: shift(paragraphs.charEnd) })

@@ -127,4 +127,28 @@ describe("deleteNode / updateNodeText", () => {
 
     await expect(updateNodeText(node.id, "[alpha beta gamma][1]")).rejects.toThrow("overlapping");
   });
+
+  it("gives a bodyless section prose of its own, keeping its children and what follows", async () => {
+    // The shape the AI importer produces for an epub chapter head: `cut` eats the whole
+    // heading paragraph, so the node's range is zero-length and it renders as a bare id.
+    const id = await createDocument({
+      title: "D7",
+      text: "I\n\nThe traditional disputes.\n\nII\n\nA later chapter.",
+      aiTree: [
+        { h: 1, id: "I", cut: "I", body: [2, 2] },
+        { h: 3, id: "II", cut: "II", body: [4, 4] },
+      ],
+    });
+    created.push(id);
+    const chapter = (await getDocument(id))!.tree[0];
+    expect(chapter.text).toBe(""); // nothing to edit — until now
+
+    await updateNodeText(chapter.id, "A lead-in written long after the import.");
+
+    const after = (await getDocument(id))!.tree;
+    expect(after[0].text).toBe("A lead-in written long after the import.");
+    expect(after[0].children.map((c) => c.text)).toEqual(["The traditional disputes."]);
+    expect(after[1].children.map((c) => c.text)).toEqual(["A later chapter."]); // downstream slid intact
+    expect(await srcText(id)).toContain("IA lead-in written long after the import.");
+  });
 });

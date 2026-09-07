@@ -7,12 +7,13 @@ import { firstSentence } from "@/lib/tree/firstSentence";
 import { fromMarkup, isMarkupEditable, toMarkup } from "@/lib/annotations/markup";
 import { deleteNode, updateNodeText } from "@/lib/actions/tree";
 
-/** True when this passage's prose can be edited: its highlights must be writable as
- *  markup (none overlapping, none running past the node). Used by the node menu to
- *  disable "Edit text…" and by the sheet itself. */
+/** True when this passage's prose can be edited: it needs a source range to write into
+ *  (a node without one has nothing to anchor to), and its highlights must be writable as
+ *  markup (none overlapping, none running past the node). Empty text is fine and means
+ *  "add" rather than "edit" — that is how a bodyless section gets prose of its own. */
 export function canEditText(node: TreeNode): boolean {
   return (
-    Boolean(node.text) &&
+    Boolean(node.sourceId) &&
     isMarkupEditable(node.annotations, node.startOffset, node.startOffset + node.text.length)
   );
 }
@@ -55,13 +56,18 @@ function Sheet({
  */
 export function EditTextSheet({ node, number, onClose }: { node: TreeNode; number: string; onClose: () => void }) {
   const marks = node.annotations.length;
+  // A bodyless section — a container whose range is empty — opens the same sheet on a
+  // blank textarea: the prose it takes is inserted at that point and becomes its own.
+  const adding = node.text === "";
   const [value, setValue] = useState(() => toMarkup(node.text, node.startOffset, node.annotations));
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
 
   const parsed = fromMarkup(value, marks);
   const empty = parsed.ok && parsed.text.trim().length === 0;
-  const error = failed ?? (parsed.ok ? (empty ? "The passage can't be left empty — use Delete instead." : null) : parsed.error);
+  // Blank always keeps Save shut, but only *say* something when there was prose to lose
+  // — an add starts blank, and scolding someone before they've typed is noise.
+  const error = failed ?? (parsed.ok ? (empty && !adding ? "The passage can't be left empty — use Delete instead." : null) : parsed.error);
 
   async function save() {
     if (!parsed.ok || empty || busy) return;
@@ -77,15 +83,21 @@ export function EditTextSheet({ node, number, onClose }: { node: TreeNode; numbe
   }
 
   return (
-    <Sheet label={`Edit passage ${number}`} onClose={onClose} wide>
+    <Sheet label={adding ? `Add text to section ${number}` : `Edit passage ${number}`} onClose={onClose} wide>
       <div className="newdoc-head">
         <div>
-          <p className="import-eyebrow">Passage {number}</p>
-          <h2 className="newdoc-title">Edit the text</h2>
+          <p className="import-eyebrow">{adding ? `Section ${number}` : `Passage ${number}`}</p>
+          <h2 className="newdoc-title">{adding ? "Add the text" : "Edit the text"}</h2>
         </div>
         <button type="button" className="glyph" aria-label="Close" onClick={onClose}>✕</button>
       </div>
       <div className="newdoc-rule" />
+      {adding && (
+        <p className="node-sheet-hint">
+          This section has no prose of its own yet — only its subsections. What you write
+          here becomes its own passage, leading them.
+        </p>
+      )}
       {marks > 0 && (
         <p className="node-sheet-hint">
           <code>[phrase][1]</code> is a highlight — the brackets say where it sits, so moving or
@@ -102,7 +114,7 @@ export function EditTextSheet({ node, number, onClose }: { node: TreeNode; numbe
       />
       {error && <p className="error">{error}</p>}
       <div className="note-actions">
-        <button className="btn" type="button" onClick={save} disabled={busy || Boolean(error)}>Save</button>
+        <button className="btn" type="button" onClick={save} disabled={busy || empty || Boolean(error)}>Save</button>
         <button className="link-btn" type="button" onClick={onClose}>Cancel</button>
       </div>
     </Sheet>
