@@ -1,11 +1,12 @@
 "use client";
 
-import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useState, type HTMLAttributes, type ReactNode } from "react";
 import type { TreeNode } from "@/lib/tree/build";
 import { firstSentence } from "@/lib/tree/firstSentence";
 import { SourcePassage } from "./SourcePassage";
 import { LayerBands } from "./LayerBands";
 import { NodeContextMenu, NodeNumber, ChildCount, NumText } from "./NodeMenu";
+import { DeleteNodeSheet, EditTextSheet, canEditText } from "./NodeEdit";
 import { useCollapse, useCollapsed } from "./CollapseContext";
 import { useNotesActions, usePanelCentred, useActiveNode } from "./NotesContext";
 import { useLayersOptional, useVisibleLayers } from "./LayerContext";
@@ -47,6 +48,9 @@ export function NodeSection({
   numbersShort: Map<string, string>; // own segment (LXI); toggle picks which shows
 }) {
   const { toggle, setMany } = useCollapse();
+  // The two sheets the node menu opens. Local state: the menu is rendered by this
+  // node, so nothing else needs to know which passage is being edited or dropped.
+  const [sheet, setSheet] = useState<null | "edit" | "delete">(null);
   const { openAnnotation, toggleAnnotation, composeNode } = useNotesActions();
   // Centred reading panel toggles the drawer on re-click; the drawer copy just selects.
   const select = usePanelCentred() ? toggleAnnotation : openAnnotation;
@@ -103,7 +107,10 @@ export function NodeSection({
     hasNote,
     hasChildren,
     layerNotes: node.layerNotes,
+    canEditText: canEditText(node),
     onOpenNote: openNote,
+    onEditText: () => setSheet("edit"),
+    onDelete: () => setSheet("delete"),
     onCollapseChildren: () => setMany(descendantIds(node), true),
     onExpandChildren: () => setMany(descendantIds(node), false),
   };
@@ -205,6 +212,13 @@ export function NodeSection({
           </NodeContextMenu>
         ) : (
           <NodeSelf nodeId={node.id}>{self}</NodeSelf>
+        )}
+
+        {canEdit && sheet === "edit" && (
+          <EditTextSheet node={node} number={num || "—"} onClose={() => setSheet(null)} />
+        )}
+        {canEdit && sheet === "delete" && (
+          <DeleteNodeSheet node={node} number={num || "—"} onClose={() => setSheet(null)} />
         )}
 
         {!collapsed && hasChildren && (

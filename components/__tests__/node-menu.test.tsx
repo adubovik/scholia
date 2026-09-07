@@ -9,6 +9,8 @@ vi.mock("@/lib/actions/tree", () => ({
   outdentNode: vi.fn(),
   moveNodeUp: vi.fn(),
   moveNodeDown: (...a: unknown[]) => moveDown(...a),
+  deleteNode: vi.fn(),
+  updateNodeText: vi.fn(),
 }));
 // NodeSection → NodeNote pulls these in; keep them inert in jsdom.
 vi.mock("@/lib/actions/nodeAnnotations", () => ({
@@ -23,8 +25,12 @@ import { NotesProvider } from "@/components/NotesContext";
 
 // Stub Radix's Item/Separator so we can exercise item logic without opening a
 // portal-based menu in jsdom.
-const StubItem = ({ children, onSelect }: { children: React.ReactNode; onSelect?: () => void }) => (
-  <button onClick={() => onSelect?.()}>{children}</button>
+const StubItem = ({
+  children,
+  onSelect,
+  disabled,
+}: { children: React.ReactNode; onSelect?: () => void; disabled?: boolean }) => (
+  <button disabled={disabled} onClick={() => onSelect?.()}>{children}</button>
 );
 const StubSep = () => <hr />;
 
@@ -34,7 +40,10 @@ function renderItems(props: {
   canEdit: boolean;
   hasNote: boolean;
   hasChildren?: boolean;
+  canEditText?: boolean;
   onOpenNote?: () => void;
+  onEditText?: () => void;
+  onDelete?: () => void;
   onCollapseChildren?: () => void;
   onExpandChildren?: () => void;
 }) {
@@ -47,6 +56,9 @@ function renderItems(props: {
       canEdit={props.canEdit}
       hasNote={props.hasNote}
       hasChildren={props.hasChildren ?? false}
+      canEditText={props.canEditText}
+      onEditText={props.onEditText}
+      onDelete={props.onDelete}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Item={StubItem as any}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,6 +105,27 @@ describe("MenuItems", () => {
     fireEvent.click(screen.getByRole("button", { name: "Expand children" }));
     expect(onCollapseChildren).toHaveBeenCalledOnce();
     expect(onExpandChildren).toHaveBeenCalledOnce();
+  });
+
+  it("disables 'Edit text…' when the passage's highlights can't be written as markup", () => {
+    const onEditText = vi.fn();
+    renderItems({ canEdit: true, hasNote: false, canEditText: false, onEditText });
+    fireEvent.click(screen.getByRole("button", { name: "Edit text…" }));
+    expect(onEditText).not.toHaveBeenCalled();
+
+    renderItems({ canEdit: true, hasNote: false, canEditText: true, onEditText });
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit text…" })[1]);
+    expect(onEditText).toHaveBeenCalledOnce();
+  });
+
+  it("offers Delete only to editors, and only when a handler is wired", () => {
+    renderItems({ canEdit: false, hasNote: false, onDelete: vi.fn() });
+    expect(screen.queryByRole("button", { name: "Delete section…" })).toBeNull();
+
+    const onDelete = vi.fn();
+    renderItems({ canEdit: true, hasNote: false, onDelete });
+    fireEvent.click(screen.getByRole("button", { name: "Delete section…" }));
+    expect(onDelete).toHaveBeenCalledOnce();
   });
 
   it("keeps shortcut hints out of the item's accessible name", () => {

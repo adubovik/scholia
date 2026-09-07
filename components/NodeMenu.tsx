@@ -8,7 +8,7 @@ import { useCollapse } from "./CollapseContext";
 import { useLayersOptional } from "./LayerContext";
 import { GlyphPill } from "./GlyphPill";
 
-// The five node actions, shared verbatim by the right-click ContextMenu (row) and
+// The node actions, shared verbatim by the right-click ContextMenu (row) and
 // the ⋯ DropdownMenu (hint). Radix's ContextMenu.* and DropdownMenu.* item parts
 // have the same API but aren't interchangeable inside each other's Content, so the
 // concrete Item/Separator components are passed in by each host.
@@ -18,7 +18,12 @@ type MenuProps = {
   hasNote: boolean;
   hasChildren: boolean;
   layerNotes?: LayerNoteView[]; // this node's text per view — picks "Add" vs "Edit"
+  /** false when the passage has no prose, or highlights the bracket markup can't
+   *  express (overlapping / running past the node) — see NodeEdit.canEditText. */
+  canEditText?: boolean;
   onOpenNote: () => void;
+  onEditText?: () => void;
+  onDelete?: () => void;
   onCollapseChildren: () => void;
   onExpandChildren: () => void;
 };
@@ -39,8 +44,8 @@ function Key({ children }: { children: ReactNode }) {
 }
 
 export function MenuItems({
-  nodeId, canEdit, hasNote, hasChildren, layerNotes = [],
-  onOpenNote, onCollapseChildren, onExpandChildren,
+  nodeId, canEdit, hasNote, hasChildren, layerNotes = [], canEditText = false,
+  onOpenNote, onEditText, onDelete, onCollapseChildren, onExpandChildren,
   Item, Separator,
 }: MenuProps & ItemParts) {
   // Optional: the menu also renders on surfaces with no layer provider (tests, the
@@ -78,6 +83,17 @@ export function MenuItems({
       {canEdit && (
         <>
           <Separator className="node-menu-sep" />
+          {/* Disabled rather than hidden when the markup can't hold this passage's
+              highlights: the reason is worth saying, and hiding it would just read as
+              a missing feature. */}
+          <Item
+            className="node-menu-item"
+            disabled={!canEditText}
+            title={canEditText ? undefined : "Overlapping highlights — editing this passage isn't supported yet"}
+            onSelect={() => onEditText?.()}
+          >
+            <span className="node-menu-label">Edit text…</span>
+          </Item>
           <Item className="node-menu-item" onSelect={onOpenNote}>
             <span className="node-menu-label">{hasNote ? "Edit note" : "Add note"}</span>
           </Item>
@@ -102,6 +118,15 @@ export function MenuItems({
           ))}
           <Item className="node-menu-item" onSelect={() => layers.openSheet(null, nodeId)}>
             <span className="node-menu-label">Create a view…</span>
+          </Item>
+        </>
+      )}
+      {canEdit && onDelete && (
+        <>
+          <Separator className="node-menu-sep" />
+          {/* Last, and on its own: the only item here that destroys anything. */}
+          <Item className="node-menu-item node-menu-item--danger" onSelect={onDelete}>
+            <span className="node-menu-label">Delete section…</span>
           </Item>
         </>
       )}

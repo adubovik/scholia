@@ -2017,6 +2017,65 @@ body {
 .node-menu-dot[data-layer-color="lilac"] { background: var(--layer-lilac); }
 .node-menu-dot[data-layer-color="clay"]  { background: var(--layer-clay); }
 
+/* ══ Node sheets: edit the passage / delete the section ═════ */
+/* Radix portals Content to <body>, so the sheet centres itself — .aa-backdrop is
+   its sibling there, not its parent, and its flex centring can't reach it. */
+.node-sheet {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 81; /* just over .aa-backdrop (z80) */
+  width: min(30rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: 0 24px 60px rgba(28, 26, 21, 0.12);
+  padding: 1.6rem 1.8rem 1.7rem;
+}
+.node-sheet--wide { width: min(44rem, calc(100vw - 2rem)); }
+.node-sheet .newdoc-title { font-size: 1.5rem; }
+.node-sheet-hint {
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+}
+.node-sheet-hint code {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  background: var(--field);
+  padding: 0.05rem 0.25rem;
+}
+/* The opening words of what is about to go — the one thing worth seeing before
+   confirming, and cheaper to read than the whole passage. */
+.node-sheet-quote {
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink);
+  border-left: 2px solid var(--rule);
+  padding-left: 0.85rem;
+  margin: 0 0 1rem;
+}
+.node-sheet-warn { color: var(--error); }
+/* Mono in the editor: [phrase][1] markers are structure, not prose, and they have
+   to be countable at a glance. */
+.node-sheet-text {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  min-height: 14rem;
+}
+.btn--danger { background: var(--error); }
+/* Destructive items keep the menu's grey until they are the one under the cursor. */
+.node-menu-item--danger[data-highlighted] { color: var(--error); }
+.node-menu-item[data-disabled] { opacity: 0.38; cursor: default; }
+
+
 /* ══ Drawers on mobile: bottom / top sheets ══════════════════ */
 @media (max-width: 860px) {
   .notes-drawer {

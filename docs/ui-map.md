@@ -79,6 +79,8 @@ Left column is how you'd *describe* it; **Call it** is the name to use with Clau
 | the `(original\|summary\|french)` pill above the column | **view bar** (multi-select; picks which **views** show) | `LayerBar.tsx` (state in `LayerContext.tsx`) | `.layer-bar`, `.layer-chip` |
 | a tinted block of alternative text under a paragraph | **view band** (one **view**'s text for that node) | `LayerBands.tsx` | `.layer-band` (tint only — no name label; the bar's chip carries the name) |
 | the "Create a view" name+colour dialog | **view sheet** | `LayerModal.tsx` | `.layer-sheet`, `.layer-swatches` |
+| the box you retype a paragraph in (node menu → "Edit text…") | **edit-text sheet** (its `[phrase][1]` syntax = **bracket markup**) | `NodeEdit.tsx` → `EditTextSheet` (logic: `lib/annotations/markup.ts`) | `.node-sheet--wide`, `.node-sheet-text`, `.node-sheet-hint` |
+| the "are you sure" before removing a paragraph (node menu → "Delete section…") | **delete-section sheet** | `NodeEdit.tsx` → `DeleteNodeSheet` | `.node-sheet`, `.node-sheet-quote`, `.btn--danger` |
 | the "No text open ❦" screen | **blank surface** | `ReadingSurface.tsx` | `.reading-blank` |
 
 ### Right drawer + annotation panel
@@ -133,6 +135,7 @@ The three most common sources of "we're talking about different things":
 - **Two edge tabs.** Both use `.notes-edge` and share one pointer handler (`components/useEdgeDrag.ts::makeEdgeHandler`): a click toggles, a drag while open resizes (left grows rightward, right grows leftward). Widths live in `NotesContext` (`leftWidth` / `panelWidth`).
 - **"View" (UI) = "layer" (code).** Everything the user sees says *view* — "Create a view", the view bar. Everything in the code says `layer`: the `layers` table, `LayerView`, `LayerContext`, `layerNotes`, `--layer-sand`. (`…View` already means "shaped for rendering" here — `InlineAnnotationView`, `NodeAnnotationView` — so a type called `View` would have read as that.) Also distinct from **annotation-first view**, which is a *mode*, not a rendition: grep `dualMode` for the mode, `layers` for renditions.
 - **A view's text is a node annotation.** `node_annotations` rows with `layer_id` set ARE the view texts (`layer_id NULL` = the ordinary node note), sharing one table, one unique constraint (`UNIQUE NULLS NOT DISTINCT (node_id, author_id, layer_id)`) and one action (`upsertNodeAnnotation`). So "how many notes" queries must filter `layer_id IS NULL` — `listDocuments` does.
+- **Two "edits" in the node menu.** **"Edit text…"** rewrites the *passage itself* (the source prose) through the **bracket markup**; **"Edit note"** opens this node's note in the drawer, and **"Edit ⟨view⟩"** its text in that view. Only the first touches the source.
 - **Glyphs ARE tags.** The three preset marks (≡ summary, ? question, ! insight) aren't a separate column — they're `":summary"`/`":question"`/`":insight"` system tags inside an annotation's `tags`. `lib/annotations/glyphs.ts` splits a tag list into display (`#`) tags and glyphs. So "tags" spans both: the `#tag` chips exclude glyph tags, and the glyph pill/marker render the glyph tags. Adding the tag is what turns on the mark.
 
 ---
@@ -177,6 +180,8 @@ Most "it doesn't react right" bugs are in a context, not a component.
 | highlight renders in the wrong place, overlaps look wrong | `lib/annotations/spans.ts::splitSpans` — the load-bearing one |
 | section numbers / compound ids wrong (path, alias, short vs full) | `lib/tree/number.ts::idPaths` (ids come from `nodes.label`/`nodes.alias`, set at import by `lib/tree/ai-structure.ts` / `plan.ts`) |
 | Markdown shortcuts in the note editor (Cmd+B, paste-to-link) | `components/MarkdownTextarea.tsx` |
+| "Edit text…" is greyed out; a passage edit is refused ("missing"/"more than once"/"no highlight") | `lib/annotations/markup.ts` (`isMarkupEditable` gates the item, `fromMarkup` refuses the save) |
+| after an edit or a delete, highlights sit on the wrong words | `lib/actions/tree.ts::updateNodeText` / `deleteNode` — every anchor at or past the node's end slides by one delta |
 
 `NotesContext` deliberately splits into three: **actions** (never changes — the prose tree consumes only this), **state** (drawer/filter — only drawer + chrome subscribe), and an **external store** for "which annotation is selected" so a single highlight re-renders alone. If you add a re-render, check which of the three you subscribed to.
 
@@ -184,7 +189,7 @@ Most "it doesn't react right" bugs are in a context, not a component.
 
 All of it is one file, `app/globals.css`, in `/* ══ Section ══ */` blocks. Grep the banner, not a line number:
 
-`Reading header` · `Preset glyph marks` · `Drawers (shared)` · `Notes drawer (right)` · `Annotation-first (dual) view` · `Library drawer (left)` · `Document info sheet` · `Views (alternative renditions)` · `Drawers on mobile: bottom / top sheets`
+`Reading header` · `Preset glyph marks` · `Drawers (shared)` · `Notes drawer (right)` · `Annotation-first (dual) view` · `Library drawer (left)` · `Document info sheet` · `Views (alternative renditions)` · `Node sheets: edit the passage / delete the section` · `Drawers on mobile: bottom / top sheets`
 
 Two standing hazards:
 
